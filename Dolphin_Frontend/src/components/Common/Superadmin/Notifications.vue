@@ -27,23 +27,28 @@
                 />
 
                 <tbody>
-                  <tr v-for="item in paginatedNotifications" :key="item.id">
+                  <tr v-for="item in paginatedNotifications" :key="(item.id || (item.announcement && item.announcement.id))">
                     <td class="notification-body-cell">
                       <span
                         class="notification-body-truncate"
-                        :title="item.body"
+                        :title="(item.announcement && (item.announcement.body || item.announcement.title || item.announcement.message)) || item.body || item.title || item.message || ''"
+                        @click.stop="openDetail(item.announcement || item)"
                       >
-                        {{ item.body }}
+                        {{ (item.announcement && (item.announcement.body || item.announcement.title || item.announcement.message)) || item.body || item.title || item.message || '—' }}
                       </span>
                     </td>
-                    <td>{{ formatLocalDateTime(item.scheduled_at) || "-" }}</td>
                     <td>
-                      {{
-                        item.sent_at ? formatLocalDateTime(item.sent_at) : "-"
-                      }}
+                      {{ formatLocalDateTime(
+                        (item.announcement && (item.announcement.scheduled_at || item.announcement.schedule_date || item.announcement.schedule_time)) || item.scheduled_at || item.schedule_date || item.schedule_time
+                      ) || "-" }}
                     </td>
                     <td>
-                      <button class="btn-view" @click="openDetail(item)">
+                      {{ formatLocalDateTime(
+                        (item.announcement && (item.announcement.sent_at || item.announcement.updated_at || item.announcement.created_at)) || item.sent_at || item.updated_at || item.created_at
+                      ) || "-" }}
+                    </td>
+                    <td>
+                      <button class="btn-view" @click="openDetail(item.announcement || item)">
                         <img
                           src="@/assets/images/Detail.svg"
                           alt="View"
@@ -96,6 +101,7 @@
         <textarea
           class="modal-textarea"
           placeholder="Type your notification here..."
+          v-model="messageBody"
         />
 
         <!-- Organization selector -->
@@ -301,7 +307,9 @@ export default {
 
       // Scheduling
       scheduledDate: "",
-      scheduledTime: "",
+  scheduledTime: "",
+  // Bound message for send modal
+  messageBody: "",
 
       // Data collections from API
       organizations: [],
@@ -789,18 +797,30 @@ export default {
           scheduled_at = `${YYYY}-${MM}-${DD} ${hh}:${mm}:${ss}`;
         }
 
-        const bodyEl = this.$el.querySelector(".modal-textarea");
         const payload = {
           organization_ids: this.selectedOrganizations.map((org) => org.id),
           group_ids: this.selectedGroups.map((group) => group.id),
           admin_ids: this.selectedAdmins.map((admin) => admin.id),
-          body: bodyEl ? bodyEl.value : "",
+          body: this.messageBody || "",
         };
         if (scheduled_at) payload.scheduled_at = scheduled_at;
 
-        await axios.post(apiUrl + "/notifications/send", payload, {
+        const res = await axios.post(apiUrl + "/notifications/send", payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
+        // Respect server's success flag when present. Older endpoints may still
+        // return success:false with a helpful error message in `res.data.error`.
+        const serverSuccess = res && res.data && (res.data.success === true || res.status === 200 && !res.data.error);
+
+        if (!serverSuccess) {
+          const errMsg = (res && res.data && res.data.error) || "Failed to send announcement";
+          if (this.isAlive && this.$toast && this.$toast.add) {
+            this.$toast.add({ severity: "error", summary: "Error", detail: errMsg, life: 5000 });
+          }
+          // keep modal open so user can retry or adjust
+          return;
+        }
 
         if (this.isAlive) {
           this.showSendModal = false;
@@ -834,8 +854,7 @@ export default {
       this.selectedGroups = [];
       this.scheduledDate = "";
       this.scheduledTime = "";
-      const textarea = this.$el.querySelector(".modal-textarea");
-      if (textarea) textarea.value = "";
+      this.messageBody = "";
     },
   },
 

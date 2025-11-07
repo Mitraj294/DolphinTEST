@@ -323,36 +323,10 @@ class AssessmentCalculationService
         ];
     }
 
-    /**
-     * Parse words from the output text file (optional enhancement)
-     * 
-     * @param string $filePath
-     * @param string $section
-     * @return array
-     */
-    protected function parseWordsFromOutputFile($filePath, $section = 'self')
-    {
-        if (!file_exists($filePath)) {
-            Log::warning('Output file not found', ['path' => $filePath]);
-            return [];
-        }
-
-        $content = file_get_contents($filePath);
-        $words = [];
-
-        // Parse based on section markers in the output file
-        // Example: "---------- Self A words ----------"
-        $pattern = '/---------- ' . ucfirst($section) . ' \w words ----------\n(.*?)\n---------------------------------/s';
-
-        if (preg_match_all($pattern, $content, $matches)) {
-            foreach ($matches[1] as $match) {
-                $sectionWords = array_filter(array_map('trim', explode("\n", $match)));
-                $words = array_merge($words, $sectionWords);
-            }
-        }
-
-        return array_unique($words);
-    }
+    // Optional: parsing helper for output files was removed because the
+    // current pipeline reads categorized words from the input/results DB
+    // tables. Keep this placeholder in mind if you later want to parse
+    // algorithm output files directly.
 
     /**
      * Check if the C++ executable exists

@@ -36,16 +36,8 @@ class SubscriptionController extends Controller
      *
      * @return bool True if active, false if expired
      */
-    public function checkAndUpdateStatus(Subscription $subscription): bool
-    {
-        if ($this->hasExpired($subscription) && $subscription->status === 'active') {
-            $subscription->update(['status' => 'canceled']);
-
-            return false;
-        }
-
-        return $subscription->status === 'active';
-    }
+    // checkAndUpdateStatus() removed: not referenced. Subscription lifecycle is handled by
+    // webhook processing and scheduled jobs; keep helper methods minimal.
 
     // Get the current active subscription plan for the relevant user.
     // Accessible by the user or by a superadmin viewing a specific organization.

@@ -67,7 +67,9 @@
           @click="toggleItem(item)"
           @mouseenter="focusedIndex = index"
         >
-          <span>{{ item[optionLabel] }}</span>
+          <!-- Use the robust label helper so missing fields (e.g. organization_name)
+               fall back to name, label, title, nested values, or a safe stringify -->
+          <span>{{ labelFor(item) }}</span>
           <span
             class="dropdown-checkbox"
             :class="{

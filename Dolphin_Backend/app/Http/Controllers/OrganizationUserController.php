@@ -243,32 +243,7 @@ class OrganizationUserController extends Controller
     /**
      * Add user to organization via organization_users pivot (with status tracking)
      */
-    public function addOrganizationUser(Request $request): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'user_id' => 'required|exists:users,id',
-                'status' => 'sometimes|in:active,inactive',
-            ]);
-
-            $user = $request->user();
-            $orgId = $this->getOrganizationIdForCurrentUser($user);
-
-            $organization = Organization::findOrFail($orgId);
-
-            // Add user to organization with status
-            $organization->organizationUsers()->syncWithoutDetaching([
-                $validated['user_id'] => ['status' => $validated['status'] ?? 'active']
-            ]);
-
-            return response()->json([
-                'message' => 'User added to organization successfully.',
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to add user to organization.', ['error' => $e->getMessage()]);
-            return response()->json(['error' => $e->getMessage()], 400);
-        }
-    }
+    // addOrganizationUser() removed: unused; prefer addOrganizationMember()/organization member flows.
 
     /**
      * Add user to organization as member via organization_member pivot
@@ -352,42 +327,12 @@ class OrganizationUserController extends Controller
     /**
      * Get all organization users (via organization_users pivot)
      */
-    public function getOrganizationUsers(Request $request): JsonResponse
-    {
-        try {
-            $user = $request->user();
-            $orgId = $this->getOrganizationIdForCurrentUser($user);
-
-            $organization = Organization::findOrFail($orgId);
-            $users = $organization->organizationUsers()
-                ->withPivot('status')
-                ->get();
-
-            return response()->json(['data' => $users]);
-        } catch (\Exception $e) {
-            Log::error('Failed to retrieve organization users.', ['error' => $e->getMessage()]);
-            return response()->json(['error' => $e->getMessage()], 400);
-        }
-    }
+    // getOrganizationUsers() removed: not referenced by routes; use index() or getOrganizationMembers()
 
     /**
      * Get all organization members (via organization_member pivot)
      */
-    public function getOrganizationMembers(Request $request): JsonResponse
-    {
-        try {
-            $user = $request->user();
-            $orgId = $this->getOrganizationIdForCurrentUser($user);
-
-            $organization = Organization::findOrFail($orgId);
-            $members = $organization->members()->get();
-
-            return response()->json(['data' => $members]);
-        } catch (\Exception $e) {
-            Log::error('Failed to retrieve organization members.', ['error' => $e->getMessage()]);
-            return response()->json(['error' => $e->getMessage()], 400);
-        }
-    }
+    // getOrganizationMembers() removed: duplicate of index() which returns member payload.
 
     /**
      * Get the organization ID for the currently authenticated user.
