@@ -185,6 +185,8 @@ class SubscriptionController extends Controller
     /**
      * Format the payload for a billing history item.
      * Returns an array of invoice records for the subscription.
+     * - If subscription has no invoices: returns array with 1 record (subscription details)
+     * - If subscription has invoices: returns array with N records (one per invoice)
      */
     private function formatHistoryPayload(Subscription $subscription): array
     {
@@ -223,6 +225,6 @@ class SubscriptionController extends Controller
                 'invoice_id' => $invoice->id,
                 'stripe_invoice_id' => $invoice->stripe_invoice_id,
             ];
-        })->values()->toArray();
+        })->toArray();
     }
 }
