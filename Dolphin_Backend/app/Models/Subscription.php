@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Subscription extends Model
 {
@@ -64,7 +64,7 @@ class Subscription extends Model
     public function isActive(): bool
     {
         $active = $this->status === 'active';
-        if (!$active) {
+        if (! $active) {
             return false;
         }
 
@@ -91,9 +91,10 @@ class Subscription extends Model
     /** Remaining trial days (integer) or null if not in trial. */
     public function remainingTrialDays(): ?int
     {
-        if (!$this->isInTrial()) {
+        if (! $this->isInTrial()) {
             return null;
         }
+
         return now()->diffInDays($this->trial_ends_at, false);
     }
 
@@ -101,12 +102,13 @@ class Subscription extends Model
     public function remainingPeriodDays(): ?int
     {
         $end = $this->current_period_end ?? $this->ends_at;
-        if (!$end) {
+        if (! $end) {
             return null;
         }
         if ($end->isPast()) {
             return 0;
         }
+
         return now()->diffInDays($end, false);
     }
 

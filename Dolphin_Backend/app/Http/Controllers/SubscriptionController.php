@@ -2,26 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Subscription;
 use App\Models\Organization;
+use App\Models\Subscription;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class SubscriptionController extends Controller
 {
-
     /**
      * Check if a subscription has expired.
-     *
-     * @param Subscription $subscription
-     * @return bool
      */
     public function hasExpired(Subscription $subscription): bool
     {
         // If no end date is set, consider it as never expiring
-        if (!$subscription->ends_at) {
+        if (! $subscription->ends_at) {
             return false;
         }
 
@@ -31,39 +25,36 @@ class SubscriptionController extends Controller
 
     /**
      * Check if a subscription is currently active (not expired).
-     *
-     * @param Subscription $subscription
-     * @return bool
      */
     public function isActive(Subscription $subscription): bool
     {
-        return $subscription->isActive() && !$this->hasExpired($subscription);
+        return $subscription->isActive() && ! $this->hasExpired($subscription);
     }
 
     /**
      * Update subscription status if it has expired and return the status.
      *
-     * @param Subscription $subscription
      * @return bool True if active, false if expired
      */
     public function checkAndUpdateStatus(Subscription $subscription): bool
     {
         if ($this->hasExpired($subscription) && $subscription->status === 'active') {
             $subscription->update(['status' => 'canceled']);
+
             return false;
         }
 
         return $subscription->status === 'active';
     }
 
-    //Get the current active subscription plan for the relevant user.
-    //Accessible by the user or by a superadmin viewing a specific organization.
+    // Get the current active subscription plan for the relevant user.
+    // Accessible by the user or by a superadmin viewing a specific organization.
 
     public function getCurrentPlan(Request $request)
     {
         $user = $this->resolveUser($request);
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(null);
         }
 
@@ -72,7 +63,7 @@ class SubscriptionController extends Controller
             ->latest('created_at')
             ->first();
 
-        if (!$currentSubscription) {
+        if (! $currentSubscription) {
             return response()->json(null);
         }
 
@@ -80,25 +71,25 @@ class SubscriptionController extends Controller
         return response()->json($this->formatPlanPayload($currentSubscription));
     }
 
-    //Get the entire billing history for the relevant user.
+    // Get the entire billing history for the relevant user.
 
     public function getBillingHistory(Request $request)
     {
         $user = $this->resolveUser($request);
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([]);
         }
 
         $history = $user->subscriptions()
             ->latest('created_at')
             ->get()
-            ->flatMap(fn($subscription) => $this->formatHistoryPayload($subscription));
+            ->flatMap(fn ($subscription) => $this->formatHistoryPayload($subscription));
 
         return response()->json($history);
     }
 
-    //Get a simple subscription status for the relevant user.
+    // Get a simple subscription status for the relevant user.
 
     public function subscriptionStatus(Request $request)
     {
@@ -154,6 +145,7 @@ class SubscriptionController extends Controller
 
         if ($orgId && $authenticatedUser->hasRole('superadmin')) {
             $organization = Organization::find($orgId);
+
             return $organization?->user;
         }
 
@@ -197,7 +189,7 @@ class SubscriptionController extends Controller
     private function formatHistoryPayload(Subscription $subscription): array
     {
         $invoices = $subscription->invoices;
-        
+
         // If there are no invoices, return a single record for the subscription
         if ($invoices->isEmpty()) {
             return [[
