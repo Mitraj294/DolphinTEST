@@ -192,17 +192,19 @@ class SubscriptionController extends Controller
 
         // If there are no invoices, return a single record for the subscription
         if ($invoices->isEmpty()) {
-            return [[
-                'subscription_id' => $subscription->id,
-                'plan_id' => $subscription->plan_id,
-                'status' => $subscription->status,
-                'subscriptionEnd' => $subscription->ends_at?->toDateTimeString(),
-                'paymentDate' => $subscription->started_at?->toDateTimeString(),
-                'payment_method' => $subscription->payment_method_label,
-                'amount' => null,
-                'pdfUrl' => null,
-                'description' => null,
-            ]];
+            return [
+                [
+                    'subscription_id' => $subscription->id,
+                    'plan_id' => $subscription->plan_id,
+                    'status' => $subscription->status,
+                    'subscriptionEnd' => $subscription->ends_at?->toDateTimeString(),
+                    'paymentDate' => $subscription->started_at?->toDateTimeString(),
+                    'payment_method' => $subscription->payment_method_label,
+                    'amount' => null,
+                    'pdfUrl' => null,
+                    'description' => null,
+                ],
+            ];
         }
 
         // Map each invoice to a billing history record
@@ -221,6 +223,6 @@ class SubscriptionController extends Controller
                 'invoice_id' => $invoice->id,
                 'stripe_invoice_id' => $invoice->stripe_invoice_id,
             ];
-        })->toArray();
+        })->values()->toArray();
     }
 }
