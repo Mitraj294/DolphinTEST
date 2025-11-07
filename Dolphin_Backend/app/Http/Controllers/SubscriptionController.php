@@ -2,26 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Subscription;
 use App\Models\Organization;
+use App\Models\Subscription;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class SubscriptionController extends Controller
 {
-
     /**
      * Check if a subscription has expired.
-     *
-     * @param Subscription $subscription
-     * @return bool
      */
     public function hasExpired(Subscription $subscription): bool
     {
         // If no end date is set, consider it as never expiring
-        if (!$subscription->ends_at) {
+        if (! $subscription->ends_at) {
             return false;
         }
 
@@ -31,39 +25,36 @@ class SubscriptionController extends Controller
 
     /**
      * Check if a subscription is currently active (not expired).
-     *
-     * @param Subscription $subscription
-     * @return bool
      */
     public function isActive(Subscription $subscription): bool
     {
-        return $subscription->isActive() && !$this->hasExpired($subscription);
+        return $subscription->isActive() && ! $this->hasExpired($subscription);
     }
 
     /**
      * Update subscription status if it has expired and return the status.
      *
-     * @param Subscription $subscription
      * @return bool True if active, false if expired
      */
     public function checkAndUpdateStatus(Subscription $subscription): bool
     {
         if ($this->hasExpired($subscription) && $subscription->status === 'active') {
             $subscription->update(['status' => 'canceled']);
+
             return false;
         }
 
         return $subscription->status === 'active';
     }
 
-    //Get the current active subscription plan for the relevant user.
-    //Accessible by the user or by a superadmin viewing a specific organization.
+    // Get the current active subscription plan for the relevant user.
+    // Accessible by the user or by a superadmin viewing a specific organization.
 
     public function getCurrentPlan(Request $request)
     {
         $user = $this->resolveUser($request);
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(null);
         }
 
@@ -72,7 +63,7 @@ class SubscriptionController extends Controller
             ->latest('created_at')
             ->first();
 
-        if (!$currentSubscription) {
+        if (! $currentSubscription) {
             return response()->json(null);
         }
 
@@ -80,25 +71,25 @@ class SubscriptionController extends Controller
         return response()->json($this->formatPlanPayload($currentSubscription));
     }
 
-    //Get the entire billing history for the relevant user.
+    // Get the entire billing history for the relevant user.
 
     public function getBillingHistory(Request $request)
     {
         $user = $this->resolveUser($request);
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([]);
         }
 
         $history = $user->subscriptions()
             ->latest('created_at')
             ->get()
-            ->map(fn($subscription) => $this->formatHistoryPayload($subscription));
+            ->flatMap(fn ($subscription) => $this->formatHistoryPayload($subscription));
 
         return response()->json($history);
     }
 
-    //Get a simple subscription status for the relevant user.
+    // Get a simple subscription status for the relevant user.
 
     public function subscriptionStatus(Request $request)
     {
@@ -121,6 +112,10 @@ class SubscriptionController extends Controller
             'latest_amount_paid' => $latestInvoice?->amount_paid,
             'currency' => $latestInvoice?->currency,
             'organization_last_contacted' => $org?->last_contacted?->toDateTimeString(),
+            'payment_method' => $subscription?->payment_method_label,
+            'payment_method_type' => $subscription?->payment_method_type,
+            'payment_method_brand' => $subscription?->payment_method_brand,
+            'payment_method_last4' => $subscription?->payment_method_last4,
             'plan' => $plan ? [
                 'id' => $plan->id,
                 'name' => $plan->name,
@@ -150,6 +145,7 @@ class SubscriptionController extends Controller
 
         if ($orgId && $authenticatedUser->hasRole('superadmin')) {
             $organization = Organization::find($orgId);
+
             return $organization?->user;
         }
 
@@ -172,6 +168,10 @@ class SubscriptionController extends Controller
             'trial_ends_at' => $subscription->trial_ends_at,
             'cancel_at_period_end' => $subscription->cancel_at_period_end,
             'is_paused' => $subscription->is_paused,
+            'payment_method' => $subscription->payment_method_label,
+            'payment_method_type' => $subscription->payment_method_type,
+            'payment_method_brand' => $subscription->payment_method_brand,
+            'payment_method_last4' => $subscription->payment_method_last4,
             'latest_invoice' => $latestInvoice ? [
                 'amount' => $latestInvoice->amount_paid,
                 'currency' => $latestInvoice->currency,
@@ -184,30 +184,47 @@ class SubscriptionController extends Controller
 
     /**
      * Format the payload for a billing history item.
+     * Returns an array of invoice records for the subscription.
+     * - If subscription has no invoices: returns array with 1 record (subscription details)
+     * - If subscription has invoices: returns array with N records (one per invoice)
      */
     private function formatHistoryPayload(Subscription $subscription): array
     {
         $invoices = $subscription->invoices;
 
-        return [
-            'subscription_id' => $subscription->id,
-            'plan_id' => $subscription->plan_id,
-            'status' => $subscription->status,
-            'started_at' => $subscription->started_at,
-            'ends_at' => $subscription->ends_at,
-            'current_period_end' => $subscription->current_period_end,
-            'invoices' => $invoices->map(function ($invoice) {
-                return [
-                    'id' => $invoice->id,
-                    'amount_due' => $invoice->amount_due,
-                    'amount_paid' => $invoice->amount_paid,
-                    'currency' => $invoice->currency,
-                    'status' => $invoice->status,
-                    'paid_at' => $invoice->paid_at,
-                    'invoice_url' => $invoice->hosted_invoice_url,
-                    'stripe_invoice_id' => $invoice->stripe_invoice_id,
-                ];
-            }),
-        ];
+        // If there are no invoices, return a single record for the subscription
+        if ($invoices->isEmpty()) {
+            return [
+                [
+                    'subscription_id' => $subscription->id,
+                    'plan_id' => $subscription->plan_id,
+                    'status' => $subscription->status,
+                    'subscriptionEnd' => $subscription->ends_at?->toDateTimeString(),
+                    'paymentDate' => $subscription->started_at?->toDateTimeString(),
+                    'payment_method' => $subscription->payment_method_label,
+                    'amount' => null,
+                    'pdfUrl' => null,
+                    'description' => null,
+                ],
+            ];
+        }
+
+        // Map each invoice to a billing history record
+        return $invoices->map(function ($invoice) use ($subscription) {
+            return [
+                'subscription_id' => $subscription->id,
+                'plan_id' => $subscription->plan_id,
+                'status' => $subscription->status,
+                'subscriptionEnd' => $subscription->ends_at?->toDateTimeString(),
+                'paymentDate' => $invoice->paid_at?->toDateTimeString(),
+                'payment_method' => $subscription->payment_method_label,
+                'amount' => $invoice->amount_paid,
+                'currency' => $invoice->currency,
+                'pdfUrl' => $invoice->hosted_invoice_url,
+                'description' => 'Subscription payment',
+                'invoice_id' => $invoice->id,
+                'stripe_invoice_id' => $invoice->stripe_invoice_id,
+            ];
+        })->toArray();
     }
 }

@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Subscription extends Model
 {
@@ -23,6 +23,11 @@ class Subscription extends Model
         'current_period_end',
         'cancel_at_period_end',
         'is_paused',
+        'default_payment_method_id',
+        'payment_method_type',
+        'payment_method_brand',
+        'payment_method_last4',
+        'payment_method_label',
     ];
 
     protected $casts = [
@@ -58,23 +63,16 @@ class Subscription extends Model
     /** Determine if subscription is currently active. */
     public function isActive(): bool
     {
-        $active = $this->status === 'active';
-        if (!$active) {
-            return false;
-        }
+        $statusActive = $this->status === 'active';
 
         // If paused or canceled at period end and we're past the end date, treat as inactive.
         $periodEnded = $this->cancel_at_period_end && $this->current_period_end && $this->current_period_end->isPast();
-        if ($periodEnded) {
-            return false;
-        }
 
         $hasEnded = $this->ends_at && $this->ends_at->isPast();
-        if ($hasEnded) {
-            return false;
-        }
 
-        return true;
+        $isActive = $statusActive && ! $periodEnded && ! $hasEnded;
+
+        return (bool) $isActive;
     }
 
     /** Determine if subscription is in trial period. */
@@ -86,9 +84,10 @@ class Subscription extends Model
     /** Remaining trial days (integer) or null if not in trial. */
     public function remainingTrialDays(): ?int
     {
-        if (!$this->isInTrial()) {
+        if (! $this->isInTrial()) {
             return null;
         }
+
         return now()->diffInDays($this->trial_ends_at, false);
     }
 
@@ -96,12 +95,13 @@ class Subscription extends Model
     public function remainingPeriodDays(): ?int
     {
         $end = $this->current_period_end ?? $this->ends_at;
-        if (!$end) {
+        if (! $end) {
             return null;
         }
         if ($end->isPast()) {
             return 0;
         }
+
         return now()->diffInDays($end, false);
     }
 
