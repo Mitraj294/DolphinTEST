@@ -71,9 +71,6 @@
                   :disabled="loading"
                 >
                   <template v-if="loading">Checking...</template>
-                  <template v-else-if="isSubscribed"
-                    >Manage Subscription</template
-                  >
                   <template v-else>Explore Subscriptions</template>
                 </button>
 

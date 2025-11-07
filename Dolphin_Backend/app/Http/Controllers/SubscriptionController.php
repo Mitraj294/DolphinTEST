@@ -224,6 +224,11 @@ class SubscriptionController extends Controller
     private function formatHistoryPayload(Subscription $subscription): array
     {
         $invoices = $subscription->invoices;
+        $plan = $subscription->plan;
+        $currency = strtolower($plan->currency ?? 'usd');
+        $symbol = match ($currency) {
+            'usd' => '$', 'eur' => '€', 'gbp' => '£', default => strtoupper($currency) . ' ',
+        };
 
         // If there are no invoices, return a single record for the subscription
         if ($invoices->isEmpty()) {
@@ -235,15 +240,16 @@ class SubscriptionController extends Controller
                     'subscriptionEnd' => $subscription->ends_at?->toDateTimeString(),
                     'paymentDate' => $subscription->started_at?->toDateTimeString(),
                     'payment_method' => $subscription->payment_method_label,
-                    'amount' => null,
+                    'amount' => $plan?->amount,
+                    'currency' => $plan?->currency,
                     'pdfUrl' => null,
-                    'description' => null,
+                    'description' => $plan ? ($plan->name . ' subscription (' . $symbol . $plan->amount . '/' . ($plan->interval ?? '')) : 'Subscription payment',
                 ],
             ];
         }
 
         // Map each invoice to a billing history record
-        return $invoices->map(function ($invoice) use ($subscription) {
+        return $invoices->map(function ($invoice) use ($subscription, $plan, $symbol) {
             return [
                 'subscription_id' => $subscription->id,
                 'plan_id' => $subscription->plan_id,
@@ -254,7 +260,7 @@ class SubscriptionController extends Controller
                 'amount' => $invoice->amount_paid,
                 'currency' => $invoice->currency,
                 'pdfUrl' => $invoice->hosted_invoice_url,
-                'description' => 'Subscription payment',
+                'description' => $plan ? ($plan->name . ' subscription (' . $symbol . ($invoice->amount_paid ?? $plan->amount) . '/' . ($plan->interval ?? '') . ')') : 'Subscription payment',
                 'invoice_id' => $invoice->id,
                 'stripe_invoice_id' => $invoice->stripe_invoice_id,
             ];

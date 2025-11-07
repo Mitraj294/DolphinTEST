@@ -188,7 +188,12 @@
                           : ""
                       }}
                     </td>
-                    <td>{{ item.amount ? `${item.amount}` : "" }}$</td>
+                    <td>
+                      <template v-if="item.amount">
+                        {{ item.currency && item.currency.toLowerCase() === 'usd' ? '$' : '' }}{{ item.amount }}
+                        <template v-if="item.currency && item.currency.toLowerCase() !== 'usd'"> {{ item.currency }}</template>
+                      </template>
+                    </td>
                     <td>
                       <a
                         v-if="item.pdfUrl"
@@ -223,7 +228,7 @@
                         View Receipt
                       </a>
                     </td>
-                    <td>{{ item.description }}</td>
+                    <td>{{ item.description || '' }}</td>
                   </tr>
                 </tbody>
               </table>
