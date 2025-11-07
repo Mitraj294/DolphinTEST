@@ -158,9 +158,13 @@ class SubscriptionController extends Controller
     private function formatPlanPayload(Subscription $subscription): array
     {
         $latestInvoice = $subscription->invoices()->first();
+        $plan = $subscription->plan; // eager access for convenience
 
         return [
+            // Core identifiers
+            'subscription_id' => $subscription->id,
             'plan_id' => $subscription->plan_id,
+            // Status / lifecycle
             'status' => $subscription->status,
             'start' => $subscription->started_at,
             'end' => $subscription->ends_at,
@@ -168,12 +172,41 @@ class SubscriptionController extends Controller
             'trial_ends_at' => $subscription->trial_ends_at,
             'cancel_at_period_end' => $subscription->cancel_at_period_end,
             'is_paused' => $subscription->is_paused,
+            // Payment method flattened (for existing consumers)
             'payment_method' => $subscription->payment_method_label,
             'payment_method_type' => $subscription->payment_method_type,
             'payment_method_brand' => $subscription->payment_method_brand,
             'payment_method_last4' => $subscription->payment_method_last4,
+            // Nested payment method object (new preferred shape)
+            'payment_method_object' => [
+                'id' => $subscription->default_payment_method_id,
+                'type' => $subscription->payment_method_type,
+                'brand' => $subscription->payment_method_brand,
+                'last4' => $subscription->payment_method_last4,
+                'label' => $subscription->payment_method_label,
+            ],
+            // Plan details (nested + convenience top-level amount for legacy front-end code)
+            'plan' => $plan ? [
+                'id' => $plan->id,
+                'name' => $plan->name,
+                'interval' => $plan->interval,
+                'amount' => $plan->amount,
+                'currency' => $plan->currency,
+                'description' => $plan->description,
+                'status' => $plan->status,
+            ] : null,
+            'plan_name' => $plan?->name,
+            'plan_amount' => $plan?->amount, // explicit for front-end parsing
+            'amount' => $plan?->amount, // legacy alias consumed by existing code
+            'plan_interval' => $plan?->interval,
+            'plan_currency' => $plan?->currency,
+            // Latest invoice information (if exists)
             'latest_invoice' => $latestInvoice ? [
-                'amount' => $latestInvoice->amount_paid,
+                'id' => $latestInvoice->id,
+                'stripe_invoice_id' => $latestInvoice->stripe_invoice_id,
+                'amount_due' => $latestInvoice->amount_due,
+                'amount' => $latestInvoice->amount_paid, // convenience alias
+                'amount_paid' => $latestInvoice->amount_paid,
                 'currency' => $latestInvoice->currency,
                 'status' => $latestInvoice->status,
                 'paid_at' => $latestInvoice->paid_at,

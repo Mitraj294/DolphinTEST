@@ -75,6 +75,10 @@
                   {{
                     currentPlan?.nextBill
                       ? formatDate(currentPlan.nextBill)
+                      : currentPlan?.current_period_end
+                      ? formatDate(currentPlan.current_period_end)
+                      : currentPlan?.end
+                      ? formatDate(currentPlan.end)
                       : "N/A"
                   }})
                 </div>
