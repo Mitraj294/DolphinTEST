@@ -1,0 +1,748 @@
+<template>
+  <div
+    class="form-box"
+    ref="dropdownRoot"
+    @click.stop="toggleDropdown"
+    @keydown="handleKeyDown"
+  >
+    <div>
+      <span class="form-input-icon">
+        <i :class="icon"></i>
+      </span>
+    </div>
+    <div class="selected-container" @click="toggleDropdown">
+      <template v-if="selectedItems && selectedItems.length">
+        <span
+          v-for="(s, idx) in selectedItems"
+          :key="idx"
+          class="selected-chip"
+          @click.stop
+        >
+          <span class="chip-label">{{ labelFor(s) }}</span>
+          <button class="chip-remove" @click.stop.prevent="removeSelected(s)">
+            ×
+          </button>
+        </span>
+      </template>
+      <template v-else>
+        <span class="selected-placeholder">{{
+          placeholder || "Select..."
+        }}</span>
+      </template>
+    </div>
+    <Button class="form-dropdown-chevron" type="button" tabindex="0">
+      <i class="fas fa-chevron-down" aria-hidden="true"></i>
+    </Button>
+    <teleport to="body">
+      <div
+        v-if="showDropdown"
+        ref="dropdownEl"
+        class="dropdown-list"
+        :style="dropdownStyle"
+      >
+        <input
+          class="dropdown-search"
+          placeholder="Search"
+          v-model="search"
+          @keydown="handleSearchKeyDown"
+          ref="searchInput"
+        />
+        <div
+          v-if="enableSelectAll"
+          class="dropdown-item"
+          @click="toggleSelectAll"
+        >
+          <span><strong>Select All</strong></span>
+          <span
+            class="dropdown-checkbox"
+            :class="{ checked: isAllSelected }"
+          ></span>
+        </div>
+        <div
+          v-for="(item, index) in filteredItems"
+          :key="item[optionValue]"
+          :ref="`dropdownItem${index}`"
+          class="dropdown-item"
+          :class="{ 'dropdown-item-focused': index === focusedIndex }"
+          @click="toggleItem(item)"
+          @mouseenter="focusedIndex = index"
+        >
+          <span>{{ item[optionLabel] }}</span>
+          <span
+            class="dropdown-checkbox"
+            :class="{
+              checked: selectedItems.some(
+                (i) => i[optionValue] === item[optionValue]
+              ),
+            }"
+          ></span>
+        </div>
+      </div>
+    </teleport>
+  </div>
+</template>
+
+<script>
+import Button from "primevue/button";
+
+export default {
+  name: "MultiSelectDropdown",
+  components: {
+    Button,
+  },
+  props: {
+    options: { type: Array, required: true },
+    selectedItems: { type: Array, required: true },
+    placeholder: { type: String, default: "" },
+    icon: { type: String, default: "fas fa-users" },
+    optionLabel: { type: String, default: "name" },
+    optionValue: { type: String, default: "id" },
+    enableSelectAll: { type: Boolean, default: false },
+  },
+  data() {
+    return {
+      showDropdown: false,
+      search: "",
+      dropdownStyle: {},
+      focusedIndex: -1,
+    };
+  },
+  computed: {
+    filteredItems() {
+      if (!this.search) return this.options;
+      return this.options.filter((item) =>
+        (item[this.optionLabel] || "")
+          .toLowerCase()
+          .includes(this.search.toLowerCase())
+      );
+    },
+    isAllSelected() {
+      if (!this.filteredItems.length) return false;
+      return this.filteredItems.every((item) =>
+        this.selectedItems.some(
+          (i) => i[this.optionValue] === item[this.optionValue]
+        )
+      );
+    },
+    // Build a readable string for selected items; handles primitives, objects, id references,
+    // nested shapes, and circular objects via a safe stringify fallback.
+    selectedLabelString() {
+      if (!Array.isArray(this.selectedItems) || this.selectedItems.length === 0)
+        return "";
+
+      const labels = this.selectedItems
+        .map((s) => this.labelForSelected(s))
+        .filter((x) => x !== "");
+
+      return labels.join(", ");
+    },
+  },
+  mounted() {
+    document.addEventListener("mousedown", this.handleClickOutside);
+    globalThis.addEventListener("resize", this.updateDropdownPosition);
+    globalThis.addEventListener("scroll", this.updateDropdownPosition, true);
+  },
+  beforeUnmount() {
+    document.removeEventListener("mousedown", this.handleClickOutside);
+    globalThis.removeEventListener("resize", this.updateDropdownPosition);
+    globalThis.removeEventListener("scroll", this.updateDropdownPosition, true);
+  },
+  watch: {
+    showDropdown(newVal) {
+      if (newVal) {
+        this.$nextTick(() => this.updateDropdownPosition());
+      } else {
+        this.focusedIndex = -1;
+        this.search = "";
+      }
+    },
+    search() {
+      // Reset focused index when search changes
+      this.focusedIndex = -1;
+    },
+  },
+  methods: {
+    labelFor(s) {
+      if (s === null || s === undefined) return "";
+
+      if (this.isPrimitive(s)) {
+        return this.labelForPrimitive(s);
+      }
+
+      if (typeof s === "object") {
+        return this.labelForObject(s);
+      }
+
+      return String(s);
+    },
+
+    isPrimitive(val) {
+      return typeof val === "string" || typeof val === "number";
+    },
+
+    labelForPrimitive(val) {
+      const opt = this.options.find((o) => o[this.optionValue] === val);
+      if (opt && this.isPrimitive(opt[this.optionLabel])) {
+        return String(opt[this.optionLabel]);
+      }
+      return String(val);
+    },
+
+    labelForObject(obj) {
+      const lbl = obj[this.optionLabel] || obj.name || obj.label || obj.title;
+      if (lbl !== undefined) {
+        return this.stringifyLabel(lbl);
+      }
+
+      if (obj[this.optionValue] !== undefined) {
+        const opt = this.options.find(
+          (o) => o[this.optionValue] === obj[this.optionValue]
+        );
+        if (opt && opt[this.optionLabel]) {
+          return opt[this.optionLabel];
+        }
+      }
+
+      return JSON.stringify(obj);
+    },
+
+    stringifyLabel(lbl) {
+      if (this.isPrimitive(lbl)) return String(lbl);
+      try {
+        return JSON.stringify(lbl);
+      } catch {
+        return String(lbl);
+      }
+    },
+    // --- helper methods extracted to reduce complexity ---
+    safeStringify(obj) {
+      try {
+        const seen = new WeakSet();
+        return JSON.stringify(
+          obj,
+          (k, v) => {
+            if (v && typeof v === "object") {
+              if (seen.has(v)) return "[Circular]";
+              seen.add(v);
+            }
+            return v;
+          },
+          2
+        );
+      } catch (e) {
+        console.error("Error stringifying object", e);
+        try {
+          if (obj && typeof obj === "object") {
+            const parts = Object.keys(obj)
+              .slice(0, 4)
+              .map((k) => `${k}:${String(obj[k])}`);
+            return parts.join(" ");
+          }
+        } catch (error) {
+          console.error("Error in fallback stringify", error);
+        }
+        return String(obj);
+      }
+    },
+
+    getOptionLabelByValue(val) {
+      if (val === undefined || val === null) return null;
+      const opt = this.options.find((o) => o[this.optionValue] === val);
+      if (
+        opt &&
+        (typeof opt[this.optionLabel] === "string" ||
+          typeof opt[this.optionLabel] === "number")
+      )
+        return String(opt[this.optionLabel]);
+      return null;
+    },
+
+    extractCommonLabel(item, commonLabelKeys) {
+      for (const key of commonLabelKeys) {
+        if (item && Object.hasOwn(item, key)) {
+          const v = item[key];
+          if (typeof v === "string" && v.trim()) return v.trim();
+          if (typeof v === "number") return String(v);
+        }
+      }
+      return null;
+    },
+
+    extractNestedLabel(item) {
+      // keep this loop minimal; delegate branching to getLabelFromNested
+      const nestedKeys = ["role", "user", "data"];
+      for (const key of nestedKeys) {
+        const nested = item && item[key];
+        if (nested && typeof nested === "object") {
+          const lbl = this.getLabelFromNested(nested);
+          if (lbl) return lbl;
+        }
+      }
+      return null;
+    },
+
+    getLabelFromNested(nested) {
+      if (!nested || typeof nested !== "object") return null;
+      const tryKeys = [this.optionLabel, "name"];
+      for (const k of tryKeys) {
+        if (Object.hasOwn(nested, k)) {
+          const v = nested[k];
+          if (typeof v === "string" && v.trim()) return v.trim();
+          if (typeof v === "number") return String(v);
+          return this.safeStringify(v);
+        }
+      }
+      return null;
+    },
+
+    extractAnyStringValue(item) {
+      try {
+        const vals = Object.values(item || {});
+        const strVal = vals.find((v) => typeof v === "string" && v.trim());
+        if (strVal) return strVal.trim();
+      } catch (e) {
+        console.error("Error extracting string from object", e);
+      }
+      return null;
+    },
+
+    labelForSelected(s) {
+      const commonLabelKeys = [
+        this.optionLabel,
+        "name",
+        "label",
+        "title",
+        "role",
+        "display_name",
+        "text",
+      ];
+
+      if (s === null || s === undefined) return "";
+
+      // primitive selected (id or label)
+      if (typeof s === "string" || typeof s === "number") {
+        const optLabel = this.getOptionLabelByValue(s);
+        return optLabel ?? String(s);
+      }
+
+      if (typeof s === "object") {
+        const common = this.extractCommonLabel(s, commonLabelKeys);
+        if (common) return common;
+
+        const nested = this.extractNestedLabel(s);
+        if (nested) return nested;
+
+        const optLabel = this.getOptionLabelByValue(s[this.optionValue]);
+        if (optLabel) return optLabel;
+
+        const anyStr = this.extractAnyStringValue(s);
+        if (anyStr) return anyStr;
+
+        return this.safeStringify(s);
+      }
+
+      return String(s);
+    },
+    removeSelected(item) {
+      const newSelected = this.selectedItems.filter((i) => {
+        const a = typeof i === "object" ? i[this.optionValue] : i;
+        const b = typeof item === "object" ? item[this.optionValue] : item;
+        return a !== b;
+      });
+      this.$emit("update:selectedItems", newSelected);
+    },
+    toggleDropdown() {
+      this.showDropdown = !this.showDropdown;
+      if (this.showDropdown) {
+        this.focusedIndex = -1;
+        this.$nextTick(() => {
+          this.updateDropdownPosition();
+          // Focus search input for immediate typing
+          if (this.$refs.searchInput) {
+            this.$refs.searchInput.focus();
+          }
+        });
+      }
+    },
+    toggleItem(item) {
+      // Compare items by the configured optionValue (defaults to 'id')
+      const idx = this.selectedItems.findIndex(
+        (i) => i[this.optionValue] === item[this.optionValue]
+      );
+      if (idx > -1) {
+        this.$emit(
+          "update:selectedItems",
+          this.selectedItems.filter(
+            (i) => i[this.optionValue] !== item[this.optionValue]
+          )
+        );
+      } else {
+        this.$emit("update:selectedItems", [...this.selectedItems, item]);
+      }
+    },
+    selectFocusedOption() {
+      if (
+        this.focusedIndex >= 0 &&
+        this.focusedIndex < this.filteredItems.length
+      ) {
+        this.toggleItem(this.filteredItems[this.focusedIndex]);
+      }
+    },
+    scrollToFocusedItem() {
+      if (this.focusedIndex < 0) return;
+
+      this.$nextTick(() => {
+        const dropdownEl = this.$refs.dropdownEl;
+        const itemRefs = this.$refs[`dropdownItem${this.focusedIndex}`];
+
+        if (dropdownEl && itemRefs && itemRefs.length > 0) {
+          const item = itemRefs[0];
+          const dropdownRect = dropdownEl.getBoundingClientRect();
+          const itemRect = item.getBoundingClientRect();
+
+          // Check if item is above the visible area
+          if (itemRect.top < dropdownRect.top) {
+            dropdownEl.scrollTop = item.offsetTop;
+          }
+          // Check if item is below the visible area
+          else if (itemRect.bottom > dropdownRect.bottom) {
+            dropdownEl.scrollTop =
+              item.offsetTop - dropdownEl.clientHeight + item.clientHeight;
+          }
+        }
+      });
+    },
+    handleKeyDown(event) {
+      switch (event.key) {
+        case "ArrowDown":
+        case "Down":
+          event.preventDefault();
+          if (this.showDropdown) {
+            this.focusedIndex = Math.min(
+              this.focusedIndex + 1,
+              this.filteredItems.length - 1
+            );
+            this.scrollToFocusedItem();
+          } else {
+            this.toggleDropdown();
+          }
+          break;
+        case "ArrowUp":
+        case "Up":
+          event.preventDefault();
+          if (this.showDropdown) {
+            this.focusedIndex = Math.max(this.focusedIndex - 1, 0);
+            this.scrollToFocusedItem();
+          }
+          break;
+        case "Enter":
+          event.preventDefault();
+          if (this.showDropdown) {
+            this.selectFocusedOption();
+          } else {
+            this.toggleDropdown();
+          }
+          break;
+        case "Escape":
+          event.preventDefault();
+          this.showDropdown = false;
+          this.focusedIndex = -1;
+          break;
+        case " ":
+        case "Spacebar":
+          if (this.showDropdown) {
+            // already open — no-op
+            break;
+          }
+          event.preventDefault();
+          this.toggleDropdown();
+          break;
+      }
+    },
+    handleSearchKeyDown(event) {
+      switch (event.key) {
+        case "ArrowDown":
+        case "Down":
+          event.preventDefault();
+          this.focusedIndex = Math.min(
+            this.focusedIndex + 1,
+            this.filteredItems.length - 1
+          );
+          this.scrollToFocusedItem();
+          break;
+        case "ArrowUp":
+        case "Up":
+          event.preventDefault();
+          this.focusedIndex = Math.max(this.focusedIndex - 1, 0);
+          this.scrollToFocusedItem();
+          break;
+        case "Enter":
+          event.preventDefault();
+          this.selectFocusedOption();
+          break;
+        case "Escape":
+          event.preventDefault();
+          this.showDropdown = false;
+          this.focusedIndex = -1;
+          break;
+      }
+    },
+    toggleSelectAll() {
+      if (this.isAllSelected) {
+        // Unselect all filtered — use a Set for faster lookups
+        const filteredIds = new Set(
+          this.filteredItems.map((i) => i[this.optionValue])
+        );
+        const newSelected = this.selectedItems.filter(
+          (i) => !filteredIds.has(i[this.optionValue])
+        );
+        this.$emit("update:selectedItems", newSelected);
+      } else {
+        // Select all filtered
+        // Merge with already selected (avoid duplicates)
+        const merged = [...this.selectedItems];
+        for (const item of this.filteredItems) {
+          if (
+            !merged.some((i) => i[this.optionValue] === item[this.optionValue])
+          ) {
+            merged.push(item);
+          }
+        }
+        this.$emit("update:selectedItems", merged);
+      }
+    },
+    handleClickOutside(event) {
+      if (this.showDropdown) {
+        const root = this.$refs.dropdownRoot;
+        const dropdownEl = this.$refs.dropdownEl;
+        const clickedInsideRoot = root && root.contains(event.target);
+        const clickedInsideDropdown =
+          dropdownEl && dropdownEl.contains(event.target);
+        if (!clickedInsideRoot && !clickedInsideDropdown) {
+          this.showDropdown = false;
+        }
+      }
+    },
+    updateDropdownPosition() {
+      const root = this.$refs.dropdownRoot;
+      const el = this.$refs.dropdownEl;
+      if (!root || !el) return;
+      const rect = root.getBoundingClientRect();
+      const top = rect.bottom + globalThis.scrollY + 6;
+      const left = rect.left + globalThis.scrollX;
+      const width = rect.width;
+      this.dropdownStyle = {
+        position: "absolute",
+        top: `${top}px`,
+        left: `${left}px`,
+        width: `${width}px`,
+        zIndex: 99999,
+      };
+    },
+  },
+};
+</script>
+
+<style scoped>
+.form-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #f6f6f6;
+  border-radius: 10px;
+  border: 1.5px solid #e0e0e0;
+  padding: 0;
+  min-height: 48px;
+  margin-bottom: 0;
+  box-sizing: border-box;
+  transition: border 0.18s;
+  width: 100%;
+}
+.form-input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  pointer-events: none;
+}
+.form-input-with-icon {
+  width: 100%;
+  height: 44px;
+  font-size: 16px;
+  border: none;
+  outline: none;
+  color: #222;
+  background: transparent;
+  font-family: inherit;
+  padding: 0 36px 0 36px;
+  box-sizing: border-box;
+}
+
+.selected-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  margin: 0 36px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 6px 0;
+
+  min-height: 44px;
+  white-space: nowrap;
+}
+.selected-chip {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  background: #0074c2;
+  border-radius: 18px;
+  padding: 6px 10px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #ffffff;
+}
+.chip-label {
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chip-remove {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 4px;
+}
+.selected-container::-webkit-scrollbar {
+  height: 4px;
+}
+.selected-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+}
+.selected-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.selected-placeholder {
+  color: #9a9a9a;
+  font-size: 14px;
+  padding-left: 2px;
+}
+.form-dropdown-chevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+  cursor: pointer;
+  height: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  outline: none;
+  box-shadow: none;
+}
+/* Prevent visible focus rings from showing a blue border on keyboard or programmatic focus */
+.form-dropdown-chevron:focus,
+.form-dropdown-chevron:focus-visible,
+.form-dropdown-chevron:active {
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  border-color: transparent !important;
+}
+.modal-icon {
+  margin-right: 10px;
+  margin-left: 12px;
+  color: #888;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  position: absolute;
+  left: 0;
+  height: 100%;
+}
+.dropdown-list {
+  position: absolute;
+  top: 54px;
+  left: 0;
+  width: 100%;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(33, 150, 243, 0.08);
+  border: 1px solid #eee;
+  z-index: 10;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 8px 0 8px 0;
+  box-sizing: border-box;
+}
+.dropdown-search {
+  width: 96%;
+  margin: 0 2% 12px 2%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  font-size: 15px;
+  outline: none;
+  background: #f6f6f6;
+  box-sizing: border-box;
+}
+.dropdown-item {
+  width: 100%;
+  padding: 8px 16px;
+  font-size: 15px;
+  color: #222;
+  cursor: pointer;
+  transition: background 0.15s;
+  background: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+.dropdown-item:hover {
+  background: #f6f6f6;
+}
+.dropdown-item-focused {
+  background: #f6f6f6 !important;
+  color: #000000 !important;
+}
+.dropdown-checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid #bbb;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border 0.15s;
+}
+.dropdown-checkbox.checked {
+  background: #f6f6f6;
+  border-color: #888;
+}
+.dropdown-checkbox.checked:after {
+  content: "\2713";
+  color: #888;
+  font-size: 13px;
+  font-weight: bold;
+}
+.dropdown-checkbox:after {
+  content: "";
+}
+</style>

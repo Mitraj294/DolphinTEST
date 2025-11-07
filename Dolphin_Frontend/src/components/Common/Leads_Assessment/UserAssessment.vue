@@ -1,0 +1,665 @@
+<template>
+  <div class="user-assessment-outer">
+    <div class="user-assessment-card">
+      <template v-if="!submitted">
+        <div class="user-assessment-header">
+          <div class="user-assessment-title">
+            {{ currentQuestion.question || `Question ${step}` }}
+          </div>
+        </div>
+        <div class="user-assessment-table-container">
+          <div class="user-assessment-words-grid">
+            <label
+              v-for="option in currentQuestion.options"
+              :key="option"
+              class="user-assessment-checkbox-label"
+              :class="{ checked: currentSelectedWords.includes(option) }"
+            >
+              <span class="user-assessment-checkbox-custom"></span>
+              <input
+                type="checkbox"
+                :value="option"
+                v-model="selectedWords[step - 1]"
+              />
+              {{ option }}
+            </label>
+          </div>
+        </div>
+        <div class="user-assessment-footer">
+          <div style="flex: 1; display: flex; align-items: center">
+            <span class="user-assessment-step-btn">
+              Question {{ step }} of {{ totalSteps }}
+            </span>
+          </div>
+          <div
+            style="
+              flex: 1;
+              display: flex;
+              justify-content: flex-end;
+              align-items: center;
+              gap: 12px;
+            "
+          >
+            <button
+              v-if="step > 1"
+              class="user-assessment-back-btn"
+              @click="goToBack"
+            >
+              Back
+            </button>
+            <button
+              v-if="step < totalSteps"
+              class="user-assessment-next-btn"
+              :disabled="!canProceed"
+              @click="goToNext"
+            >
+              Next
+            </button>
+            <button
+              v-else
+              class="user-assessment-next-btn"
+              :disabled="!canProceed"
+              @click="handleSubmit"
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      </template>
+      <template v-else>
+        <div class="user-assessment-success-card">
+          <div class="user-assessment-success-icon">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+              <circle cx="40" cy="40" r="40" fill="#2ECC40" />
+              <path
+                d="M25 42l13 13 17-23"
+                stroke="#fff"
+                stroke-width="5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <div class="user-assessment-success-title">
+            Assessment submitted successfully and processed!
+          </div>
+          <div class="user-assessment-success-desc">
+            Lorem Ipsum is simply dummy text of the printing and typesetting
+            industry. Lorem Ipsum has been the industry's standard dummy text
+            ever since the 1500s, when an unknown printer took a galley of type
+            and scrambled it to make a type specimen book. It has survived not
+            only five centuries, but also the leap into electronic typesetting,
+            remaining essentially unchanged
+          </div>
+          <button
+            v-if="isSubscribed"
+            class="user-assessment-success-btn"
+            @click="goToManageSubscription"
+          >
+            Manage Subscription
+          </button>
+          <button
+            v-else
+            class="user-assessment-success-btn"
+            @click="explorePlans"
+          >
+            Explore Subscriptions
+          </button>
+          <div style="margin-top: 16px"></div>
+        </div>
+      </template>
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from "axios";
+import Toast from "primevue/toast";
+import { useToast } from "primevue/usetoast";
+import { computed, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
+
+const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || "";
+
+export default {
+  name: "UserAssessment",
+  components: { Toast },
+  setup() {
+    const router = useRouter();
+    const toast = useToast();
+    const step = ref(1);
+    const questions = ref([]);
+    const selectedWords = ref([]); // Array of arrays, one per question
+    const submitted = ref(false);
+
+    // Track user subscription status
+    const isSubscribed = ref(false); // Default: not subscribed
+
+    // Track timing for each question
+    const questionStartTimes = ref([]); // Array of start times, one per question
+    const questionEndTimes = ref([]); // Array of end times, one per question
+
+    const totalSteps = computed(() => questions.value.length);
+    const currentQuestion = computed(
+      () => questions.value[step.value - 1] || { question: "", options: [] }
+    );
+    const currentSelectedWords = computed(
+      () => selectedWords.value[step.value - 1] || []
+    );
+    const canProceed = computed(() => {
+      // Require at least one word selected for the current question
+      return (
+        selectedWords.value[step.value - 1] &&
+        selectedWords.value[step.value - 1].length > 0
+      );
+    });
+
+    // Fetch assessments and previous responses from backend
+    const fetchQuestionsAndAnswers = async () => {
+      // Helper to fetch assessments (replacing questions)
+      const loadQuestions = async (headers, params) => {
+        const resQ = await axios.get(`${API_BASE_URL}/api/assessments-list`, {
+          headers,
+          params,
+        });
+        if (Array.isArray(resQ.data)) {
+          // Transform assessment data to match old question format for compatibility
+          questions.value = resQ.data.map((assessment) => {
+            let options = [];
+            // Parse form_definition if it's a JSON string
+            if (typeof assessment.form_definition === "string") {
+              try {
+                options = JSON.parse(assessment.form_definition);
+              } catch (e) {
+                console.error("Failed to parse form_definition:", e);
+                options = [];
+              }
+            } else if (Array.isArray(assessment.form_definition)) {
+              options = assessment.form_definition;
+            }
+
+            return {
+              id: assessment.id,
+              question: assessment.title,
+              options: options,
+            };
+          });
+          // Initialize selectedWords, start times, and end times arrays
+          selectedWords.value = resQ.data.map(() => []);
+          questionStartTimes.value = resQ.data.map(() => null);
+          questionEndTimes.value = resQ.data.map(() => null);
+          // Set start time for first question
+          if (resQ.data.length > 0) {
+            questionStartTimes.value[0] = new Date().toISOString();
+          }
+        }
+      };
+
+      // Helper to fetch previous responses (replacing answers)
+      const loadAnswers = async (headers, params) => {
+        const resA = await axios.get(
+          `${API_BASE_URL}/api/assessment-responses`,
+          {
+            headers,
+            params,
+          }
+        );
+        if (Array.isArray(resA.data)) {
+          for (const response of resA.data) {
+            const idx = questions.value.findIndex(
+              (q) => String(q.id) === String(response.assessment_id)
+            );
+            if (idx !== -1 && Array.isArray(response.selected_options)) {
+              selectedWords.value[idx] = response.selected_options;
+            }
+          }
+        }
+      };
+
+      try {
+        const storage = require("@/services/storage").default;
+        const authToken = storage.get("authToken");
+        const userId = storage.get("user_id");
+        const headers = {};
+        if (authToken) {
+          headers["Authorization"] = `Bearer ${authToken}`;
+        }
+        const params = {};
+        if (userId) {
+          params["user_id"] = userId;
+        }
+
+        await loadQuestions(headers, params);
+        await loadAnswers(headers, params);
+
+        // Fetch subscription status (extracted to keep complexity down)
+        const fetchSub = async () => {
+          try {
+            const resSub = await axios.get(
+              `${API_BASE_URL}/api/subscription/status`,
+              {
+                headers,
+              }
+            );
+            // Adjust this logic based on your backend response
+            isSubscribed.value = !!(
+              resSub.data &&
+              (resSub.data.active ||
+                resSub.data.status === "active" ||
+                resSub.data.subscribed)
+            );
+          } catch (err) {
+            // Log the error for debugging and set a safe fallback
+            // eslint-disable-next-line no-console
+            console.warn("Failed to fetch subscription status:", err);
+            isSubscribed.value = "expired";
+          }
+        };
+
+        await fetchSub();
+      } catch (error) {
+        if (error.response?.status === 401) {
+          router.push("/login");
+          return;
+        }
+        if (toast && typeof toast.add === "function") {
+          toast.add({
+            severity: "error",
+            summary: "Load failed",
+            detail: "Failed to load assessment questions or answers.",
+            sticky: true,
+          });
+        }
+      }
+    };
+
+    // Navigation
+    const goToNext = () => {
+      if (step.value < totalSteps.value && canProceed.value) {
+        // Record end time for current question
+        questionEndTimes.value[step.value - 1] = new Date().toISOString();
+        step.value++;
+        // Record start time for next question
+        if (!questionStartTimes.value[step.value - 1]) {
+          questionStartTimes.value[step.value - 1] = new Date().toISOString();
+        }
+      }
+    };
+    const goToBack = () => {
+      if (step.value > 1) {
+        step.value--;
+        // Update start time if going back to a question
+        if (!questionStartTimes.value[step.value - 1]) {
+          questionStartTimes.value[step.value - 1] = new Date().toISOString();
+        }
+      }
+    };
+
+    // Submit
+    const handleSubmit = async () => {
+      if (!canProceed.value) return;
+      const storage = require("@/services/storage").default;
+      const authToken = storage.get("authToken");
+      if (!authToken) {
+        if (toast && typeof toast.add === "function") {
+          toast.add({
+            severity: "warn",
+            summary: "Not logged in",
+            detail: "You must be logged in to submit an assessment.",
+            sticky: true,
+          });
+        }
+        router.push("/login");
+        return;
+      }
+
+      // Record end time for the last question
+      questionEndTimes.value[step.value - 1] = new Date().toISOString();
+
+      // Build responses array as expected by new backend (assessment-based)
+      const buildResponsesPayload = () =>
+        questions.value.map((q, idx) => ({
+          assessment_id: q.id,
+          selected_options: selectedWords.value[idx] || [],
+          start_time: questionStartTimes.value[idx],
+          end_time: questionEndTimes.value[idx],
+        }));
+
+      const responsesPayload = buildResponsesPayload();
+
+      const submitAnswers = async (payload, token) => {
+        try {
+          await axios.post(
+            `${API_BASE_URL}/api/assessment-responses`,
+            { responses: payload },
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          submitted.value = true;
+        } catch (error) {
+          const isAuthError = error.response?.status === 401;
+          const errorMessage = isAuthError
+            ? "Your session has expired. Please log in again."
+            : "Failed to submit assessment. Please try again.";
+          if (isAuthError) router.push("/login");
+
+          if (toast && typeof toast.add === "function") {
+            toast.add({
+              severity: isAuthError ? "warn" : "error",
+              summary: "Submission failed",
+              detail: errorMessage,
+              sticky: true,
+            });
+          }
+        }
+      };
+
+      await submitAnswers(responsesPayload, authToken);
+    };
+
+    onMounted(fetchQuestionsAndAnswers);
+
+    // Success page navigation handlers
+    const goToManageSubscription = () => {
+      router.push({ name: "ManageSubscription" });
+    };
+
+    const explorePlans = () => {
+      router.push({ name: "SubscriptionPlans" });
+    };
+
+    return {
+      step,
+      questions,
+      selectedWords,
+      submitted,
+      totalSteps,
+      currentQuestion,
+      currentSelectedWords,
+      canProceed,
+      goToNext,
+      goToBack,
+      handleSubmit,
+      goToManageSubscription,
+      explorePlans,
+      isSubscribed,
+    };
+  },
+};
+</script>
+
+<style scoped>
+/* Success page styles */
+.assessment-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.success-icon {
+  margin-bottom: 24px;
+}
+
+.success-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 24px;
+}
+
+.success-text {
+  max-width: 800px;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.manage-subscription-btn {
+  background: #0074c2;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 32px;
+  transition: background 0.2s;
+}
+
+.manage-subscription-btn:hover {
+  background: #005fa3;
+}
+
+.copyright-text {
+  color: #787878;
+  font-size: 14px;
+}
+
+/* --- Base layout and card structure (matches Leads/OrganizationTable/Notifications) --- */
+.user-assessment-outer {
+  width: 100%;
+
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.user-assessment-card {
+  width: 100%;
+  background: #fff;
+  border-radius: 24px;
+  border: 1px solid #ebebeb;
+  box-shadow: 0 2px 16px 0 rgba(33, 150, 243, 0.04);
+  margin: 0 auto;
+  box-sizing: border-box;
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  padding: 0;
+}
+
+.user-assessment-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 46px 0 24px;
+  background: #fff;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  min-height: 64px;
+  box-sizing: border-box;
+}
+
+.user-assessment-title {
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  width: 100%;
+}
+
+.user-assessment-table-container {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 24px 24px 24px;
+  background: #fff;
+  border-bottom-left-radius: 24px;
+  border-bottom-right-radius: 24px;
+  margin-top: 32px;
+}
+
+.user-assessment-words-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px 24px;
+  margin: 0 auto 32px auto;
+  max-width: 900px;
+}
+
+.user-assessment-word-cell {
+  display: flex;
+  align-items: center;
+}
+
+.user-assessment-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding: 0 24px 24px 24px;
+}
+
+.user-assessment-step-btn {
+  background: #f5f5f5;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 24px;
+  font-size: 15px;
+  color: #888;
+  font-weight: 500;
+  cursor: default;
+}
+
+.user-assessment-next-btn {
+  background: #0074c2;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 32px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.user-assessment-next-btn:hover {
+  background: #005fa3;
+}
+.user-assessment-back-btn {
+  background: #fff;
+  color: #222;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 999px;
+  padding: 10px 32px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+
+  transition: background 0.18s, border 0.18s;
+}
+.user-assessment-back-btn:hover {
+  background: #f5f5f5;
+  border: 1.5px solid #0074c2;
+}
+
+/* Success Card */
+.user-assessment-success-card {
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: none;
+  padding: 48px 32px 40px 32px;
+  max-width: 700px;
+  width: 100%;
+  text-align: center;
+  margin: 0 auto;
+}
+.user-assessment-success-icon {
+  margin-bottom: 32px;
+}
+.user-assessment-success-title {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 24px;
+  color: #234056;
+}
+.user-assessment-success-desc {
+  font-size: 1.1rem;
+  color: #444;
+  margin-bottom: 32px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.user-assessment-success-btn {
+  background: #0074c2;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 36px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.user-assessment-success-btn:hover {
+  background: #005fa3;
+}
+
+/* --- Responsive styles to match base pages --- */
+@media (max-width: 1400px) {
+  .user-assessment-card {
+    border-radius: 14px;
+    max-width: 100%;
+  }
+  .user-assessment-header {
+    padding: 8px 8px 0 8px;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+  }
+  .user-assessment-table-container {
+    padding: 0 8px 8px 8px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+  }
+  .user-assessment-footer {
+    padding: 0 18px 18px 18px;
+  }
+  .user-assessment-success-card {
+    border-radius: 14px;
+    padding: 18px 8px 18px 8px;
+    max-width: 100%;
+  }
+  .user-assessment-words-grid {
+    gap: 12px 12px;
+  }
+}
+@media (max-width: 900px) {
+  .user-assessment-card {
+    border-radius: 10px;
+  }
+  .user-assessment-header {
+    padding: 8px 4px 0 4px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+  .user-assessment-table-container {
+    padding: 0 4px 4px 4px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+  }
+  .user-assessment-footer {
+    padding: 0 14px 14px 14px;
+  }
+  .user-assessment-success-card {
+    border-radius: 10px;
+    padding: 8px 4px 8px 4px;
+    max-width: 100%;
+  }
+  .user-assessment-words-grid {
+    grid-template-columns: 1fr;
+    gap: 8px 8px;
+  }
+}
+</style>

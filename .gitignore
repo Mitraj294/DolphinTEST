@@ -1,0 +1,92 @@
+### General
+.DS_Store
+.env
+.env.*
+.vscode/
+.idea/
+.cache/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+### Laravel / PHP
+/vendor/
+/storage/
+/bootstrap/cache/
+/.phpunit.result.cache
+/.phpunit/
+/.php_cs.cache
+/.env.testing
+Homestead.json
+Homestead.yaml
+/.vagrant/
+/.phpunit.result.cache
+
+### Public uploads and runtime
+/public/storage
+/storage/app/public
+
+### Composer
+composer.lock
+
+### OS files
+Thumbs.db
+ehthumbs.db
+
+### Misc
+/tests/_output/
+/.idea/
+Dolphin_Backup/
+
+# Environment files with sensitive data
+.env
+.env.local
+.env.*.local
+
+# Node modules (root + subprojects)
+node_modules/
+Dolphin_Backend/node_modules/
+Dolphin_Frontend/node_modules/
+
+# PHP vendor (Laravel backend)
+Dolphin_Backend/vendor/
+
+# Build outputs
+Dolphin_Frontend/dist/
+Dolphin_Backend/public/build/
+Dolphin_Backend/public/hot
+Dolphin_Backend/mix-manifest.json
+
+# Laravel caches and logs
+Dolphin_Backend/storage/logs/
+Dolphin_Backend/storage/framework/cache/
+Dolphin_Backend/storage/framework/sessions/
+Dolphin_Backend/storage/framework/views/
+Dolphin_Backend/bootstrap/cache/
+
+# Misc OS/editor cruft
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local/temporary backups
+**/*.sqlite
+Dolphin_Backend/backup.sql
+
+# Python virtual envs
+venv/
+.venv/
+env/
+ENV/

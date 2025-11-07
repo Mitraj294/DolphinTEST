@@ -1,0 +1,109 @@
+// This is a list of the weight for Concept words
+//
+// Template:
+// word,category number
+//
+// Examples:
+// test,A 12
+// another-test,B 3
+//
+// Caution:
+//  - No spaces within a word
+//     * Example:
+//     * DO   "easy-going"
+//     * DONT "easy going"
+//
+//  - No spaces between word,category
+//
+//  - A single space between category and number
+//
+submissive,A 4
+meek,A 16
+docile,A 22
+humble,A 27
+timid,A 32
+unassuming,A 37
+accommodating,A 43
+harmonious,A 47
+agreeable,A 51
+confident,A 57
+independent,A 62
+competitive,A 67
+selfstarter,A 72
+assertive,A 77
+individualistic,A 83
+resourceful,A 86
+demanding,A 88
+audacious,A 89
+daring,A 90
+constrained,B 6
+silent,B 9
+deeplyreserved,B 14
+shy,B 16
+logical,B 20
+reflective,B 24
+thoughtful,B 30
+introspective,B 34
+serious,B 40
+quiet,B 45
+reserved,B 49
+friendly,B 54
+sociable,B 59
+persuasive,B 64
+optimistic,B 69
+outgoing,B 75
+stimulating,B 80
+sophisticated,B 85
+enthusiastic,B 87
+gregarious,B 88
+captivating,B 89
+charismatic,B 90
+volatile,C 1
+highstrung,C 6
+forceful,C 13
+intense,C 20
+driving,C 27
+fastpaced,C 32
+tense,C 40
+quick,C 47
+relaxed,C 54
+patient,C 62
+stable,C 69
+calm,C 75
+methodical,C 80
+passive,C 83
+arbitrary,D 1
+rebellious,D 4
+undisciplined,D 6
+disorganized,D 12
+nonconfirming,D 14
+unrestrained,D 16
+unconventional,D 20
+frank,D 22
+unstructured,D 24
+uninhibited,D 27
+casual,D 30
+informal,D 32
+flexible,D 34
+conscientious,D 37
+dutiful,D 40
+thorough,D 43
+loyal,D 45
+polite,D 47
+careful,D 49
+neat,D 51
+accurate,D 54
+precise,D 59
+cautious,D 62
+fussy,D 64
+formal,D 67
+worrier,D 69
+persistent,D 72
+conventional,D 75
+organized,D 77
+responsive,D 80
+respectful,D 83
+confirming,D 85
+meticulous,D 86
+disciplined,D 87
+inflexible,D 88

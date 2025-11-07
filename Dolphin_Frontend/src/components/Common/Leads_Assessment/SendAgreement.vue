@@ -1,0 +1,474 @@
+<template>
+  <!-- Main Layout Wrapper -->
+  <MainLayout>
+    <div class="page">
+      <div class="send-agreement-table-outer">
+        <div class="send-agreement-table-card">
+          <!-- Header Section -->
+          <div class="send-agreement-table-header">
+            <div class="send-agreement-title">Send Agreement/Payment Link</div>
+          </div>
+
+          <!-- Agreement Form -->
+          <form
+            class="send-agreement-form"
+            @submit.prevent="handleSendAgreement"
+          >
+            <!-- Recipient and Subject Row -->
+            <FormRow>
+              <div class="send-agreement-field">
+                <FormLabel>To</FormLabel>
+                <FormInput
+                  v-model="to"
+                  type="email"
+                  placeholder="recipient@example.com"
+                />
+              </div>
+              <div class="send-agreement-field">
+                <FormLabel>Subject</FormLabel>
+                <FormInput
+                  v-model="subject"
+                  type="text"
+                  placeholder="Type subject"
+                />
+              </div>
+            </FormRow>
+
+            <!-- Editable Email Template Section -->
+            <div class="send-agreement-label">Editable Template</div>
+            <div class="send-agreement-template-box">
+              <!-- TinyMCE Editor (loaded dynamically) -->
+              <template v-if="tinyMceLoaded">
+                <Editor
+                  v-model="templateContent"
+                  :init="tinymceConfigSelfHosted"
+                  @onInit="onTinyMCEInit"
+                />
+              </template>
+              <!-- Fallback textarea if TinyMCE fails to load -->
+              <template v-else>
+                <textarea
+                  v-model="templateContent"
+                  style="
+                    width: 100%;
+                    min-height: 240px;
+                    padding: 12px;
+                    border-radius: 8px;
+                    border: 1px solid #ddd;
+                  "
+                />
+              </template>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="send-agreement-link-actions-row">
+              <div class="send-agreement-actions">
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  :disabled="sending"
+                >
+                  {{ sending ? "Sending..." : "Send Agreement" }}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </MainLayout>
+</template>
+
+<script>
+// Layout and Form UI imports
+import {
+  FormInput,
+  FormLabel,
+  FormRow,
+} from "@/components/Common/Common_UI/Form";
+import MainLayout from "@/components/layout/MainLayout.vue";
+import Editor from "@tinymce/tinymce-vue";
+import axios from "axios";
+
+// Component: SendAgreement
+// Purpose: Send agreement/payment link email to leads. Supports TinyMCE editor
+//          with dynamic asset loading and passive event shimming.
+export default {
+  name: "SendAgreement",
+  components: { MainLayout, Editor, FormInput, FormRow, FormLabel },
+
+  data() {
+    return {
+      leadId: null, // Lead ID (from route param or query)
+      to: "", // Recipient email
+      recipientName: "", // Recipient name
+      subject: "Agreement and Payment Link", // Default subject
+      templateContent: "", // Email template HTML content
+      sending: false, // Sending state
+
+      // TinyMCE Configuration (Self-hosted assets)
+      tinymceConfigSelfHosted: {
+        height: 500,
+        base_url: "/tinymce",
+        suffix: ".min",
+        skin_url: "/tinymce/skins/ui/oxide",
+        content_css: "/tinymce/skins/content/default/content.css",
+        menubar: "edit view insert format tools table help",
+        plugins: [
+          "advlist",
+          "autolink",
+          "lists",
+          "link",
+          "image",
+          "charmap",
+          "preview",
+          "anchor",
+          "searchreplace",
+          "visualblocks",
+          "code",
+          "fullscreen",
+          "insertdatetime",
+          "media",
+          "table",
+          "wordcount",
+          "help",
+        ],
+        toolbar:
+          "undo redo | formatselect | bold italic underline strikethrough | " +
+          "alignleft aligncenter alignright alignjustify | " +
+          "bullist numlist outdent indent | link image table | " +
+          "code preview fullscreen | help",
+        valid_elements: "*[*]",
+        cleanup: false,
+        convert_urls: false,
+        remove_script_host: false,
+        relative_urls: false,
+        block_formats:
+          "Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3; Heading 4=h4; Heading 5=h5; Heading 6=h6; Preformatted=pre",
+        branding: false,
+        statusbar: false,
+        elementpath: false,
+        resize: "both",
+        promotion: false,
+        content_style:
+          "body { font-family: Arial, sans-serif; font-size: 14px; margin: 20px; }",
+        license_key: "gpl",
+      },
+      tinyMceLoaded: false, // Whether TinyMCE assets are loaded
+      tinyMceShimPatched: false, // Whether passive event shim is patched
+      tinyMceShimRestoreTimer: null, // Timer for restoring event shim
+    };
+  },
+
+  // Lifecycle Hooks
+  mounted() {
+    // Get leadId from route param or query
+    const leadId = this.$route.params.id || this.$route.query.lead_id || null;
+    this.leadId = leadId;
+
+    // Dynamically load TinyMCE assets and patch passive event listeners
+    this.loadTinyMceAssets()
+      .then(() => {
+        this.tinyMceLoaded = true;
+      })
+      .catch((e) => {
+        console.warn("Failed to load TinyMCE assets:", e);
+        this.tinyMceLoaded = false;
+      });
+
+    // Load lead data if leadId is present, else fetch generic template
+    if (leadId) {
+      this.loadInitialLeadData(leadId);
+    } else {
+      this.fetchServerTemplate();
+    }
+  },
+
+  // Watchers
+  watch: {
+    // Whenever recipient email changes (and no leadId), re-fetch template
+    to(newEmail, oldEmail) {
+      if (newEmail && newEmail !== oldEmail && !this.leadId) {
+        this.fetchServerTemplate();
+      }
+    },
+  },
+
+  // Methods
+  methods: {
+    // Load initial lead data from backend
+    async loadInitialLeadData(leadId) {
+      try {
+        const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
+        const storage = require("@/services/storage").default;
+        const token = storage.get("authToken");
+        const res = await axios.get(`${API_BASE_URL}/api/leads/${leadId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const leadObj = res.data?.lead;
+        if (leadObj) {
+          this.to = leadObj.email || "";
+          this.recipientName = `${leadObj.first_name || ""} ${
+            leadObj.last_name || ""
+          }`.trim();
+          // Fetch template using lead's data
+          this.fetchServerTemplate();
+        }
+      } catch (e) {
+        console.error("Failed to load initial lead data:", e);
+        this.templateContent = "<p>Error: Could not load lead data.</p>";
+      }
+    },
+
+    // Fetch agreement email template from server
+    async fetchServerTemplate() {
+      try {
+        const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
+        const name =
+          this.recipientName ||
+          this.to.substring(0, this.to.indexOf("@")) ||
+          "";
+        // Preview URL for plans (used in template)
+        const frontendBase = "http://127.0.0.1:8080";
+        const previewPlansLink = `${frontendBase}/subscriptions/plans`;
+        const params = { checkout_url: previewPlansLink, name };
+        const res = await axios.get(
+          `${API_BASE_URL}/api/email-template/lead-agreement`,
+          { params }
+        );
+        let html = res?.data ? String(res.data) : "";
+
+        // Only extract the .email-container inner HTML for editor
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        const container = doc.querySelector(".email-container");
+        if (container) html = container.innerHTML;
+
+        this.templateContent = html;
+      } catch (e) {
+        console.error("Failed to fetch server template:", e?.message || e);
+        this.templateContent =
+          "<p>Error: Could not load the email template.</p>";
+      }
+    },
+
+    // Handle form submission: send agreement email
+    async handleSendAgreement() {
+      if (this.sending) return;
+      this.sending = true;
+      try {
+        const name =
+          this.recipientName ||
+          this.to.substring(0, this.to.indexOf("@")) ||
+          "";
+        // Replace # placeholder links with real plans link
+        const plansLink = "http://127.0.0.1:8080/subscriptions/plans";
+        const bodyWithLinks = String(this.templateContent).replaceAll(
+          /href=(["'])#(?:0)?\1/g,
+          `href=$1${plansLink}$1`
+        );
+
+        const payload = {
+          to: this.to,
+          subject: this.subject,
+          body: bodyWithLinks,
+          name,
+          checkout_url: plansLink,
+        };
+        if (this.leadId) payload.lead_id = this.leadId;
+
+        await axios.post(
+          `${process.env.VUE_APP_API_BASE_URL}/api/leads/send-agreement`,
+          payload
+        );
+
+        this.$toast.add({
+          severity: "success",
+          summary: "Agreement Sent",
+          detail: "Agreement/payment link sent successfully!",
+          life: 3500,
+        });
+      } catch (error) {
+        let detail = "Failed to send agreement email.";
+        if (error?.response?.data?.error) {
+          detail += ` ${error.response.data.error}`;
+        } else if (error?.message) {
+          detail += ` ${error.message}`;
+        } else {
+          throw error;
+        }
+        this.$toast.add({
+          severity: "error",
+          summary: "Send Error",
+          detail,
+          life: 3500,
+        });
+      } finally {
+        this.sending = false;
+      }
+    },
+
+    // TinyMCE initialization handler: restore original addEventListener
+    onTinyMCEInit(event, editor) {
+      console.log("TinyMCE initialized:", editor);
+      this.restoreTinyMceShim();
+    },
+
+    // Dynamically load TinyMCE core JS and patch event listeners for mobile
+    async loadTinyMceAssets() {
+      // Shim addEventListener to force passive for touch events during TinyMCE init
+      const origAdd = EventTarget.prototype.addEventListener;
+      const patched = function (type, listener, options) {
+        try {
+          if (type === "touchstart" || type === "touchmove") {
+            if (typeof options === "boolean") {
+              return origAdd.call(this, type, listener, {
+                passive: true,
+                capture: options,
+              });
+            }
+            if (options === undefined) {
+              return origAdd.call(this, type, listener, { passive: true });
+            }
+            if (typeof options === "object" && options !== null) {
+              if (options.passive === true) {
+                return origAdd.call(this, type, listener, options);
+              }
+              const newOpts = { ...options, passive: true };
+              return origAdd.call(this, type, listener, newOpts);
+            }
+          }
+        } catch (err) {
+          console.warn("Passive event shim error", err);
+          return origAdd.call(this, type, listener, options);
+        }
+        return origAdd.call(this, type, listener, options);
+      };
+
+      // Patch addEventListener until Editor init
+      EventTarget.prototype.addEventListener = patched;
+      try {
+        // Load tinyMCE core and plugins from public/tinymce
+        await this.loadScript("/tinymce/tinymce.min.js");
+        await new Promise((r) => setTimeout(r, 50));
+
+        this._origAdd = origAdd;
+        this.tinyMceShimPatched = true;
+
+        // Safety: restore after 5s if onInit never fires
+        this.tinyMceShimRestoreTimer = setTimeout(() => {
+          console.warn(
+            "TinyMCE shim safety timeout reached; restoring original addEventListener"
+          );
+          this.restoreTinyMceShim();
+        }, 5000);
+      } catch (e) {
+        EventTarget.prototype.addEventListener = origAdd;
+        throw e;
+      }
+    },
+
+    // Restore original addEventListener after TinyMCE loads
+    restoreTinyMceShim() {
+      try {
+        if (this.tinyMceShimPatched && this._origAdd) {
+          EventTarget.prototype.addEventListener = this._origAdd;
+        }
+      } catch (err) {
+        console.warn("Error restoring TinyMCE shim", err);
+      } finally {
+        this.tinyMceShimPatched = false;
+        this._origAdd = null;
+        if (this.tinyMceShimRestoreTimer) {
+          clearTimeout(this.tinyMceShimRestoreTimer);
+          this.tinyMceShimRestoreTimer = null;
+        }
+      }
+    },
+
+    // Helper: load external JS script
+    loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = src;
+        s.async = true;
+        s.onload = () => resolve();
+        s.onerror = (e) => reject(e);
+        document.head.appendChild(s);
+      });
+    },
+  },
+};
+</script>
+
+<style scoped>
+/* Layout/Structure styles */
+.send-agreement-table-outer {
+  width: 100%;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  background: none !important;
+  padding: 0;
+}
+.send-agreement-table-card {
+  width: 100%;
+  background: #fff;
+  border-radius: 24px;
+  border: 1px solid #ebebeb;
+  box-shadow: 0 2px 16px 0 rgba(33, 150, 243, 0.04);
+  margin: 0 auto;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+@media (max-width: 600px) {
+  .send-agreement-table-card {
+    padding: 8px;
+  }
+}
+.send-agreement-table-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 0 18px 0;
+  background: #fff;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+}
+.send-agreement-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-align: left;
+  color: #222;
+}
+.send-agreement-label {
+  font-size: 15px;
+  color: #222;
+  margin-bottom: 8px;
+  margin-top: 18px;
+  text-align: left;
+}
+.send-agreement-template-box {
+  background: #fafafa;
+  border-radius: 12px;
+  border: 1.5px solid #e0e0e0;
+  box-shadow: 0 1px 8px 0 rgba(33, 150, 243, 0.06);
+  padding: 18px;
+  margin-bottom: 18px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.send-agreement-link-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 24px;
+}
+</style>

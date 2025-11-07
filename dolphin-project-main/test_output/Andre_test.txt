@@ -1,0 +1,155 @@
+-----------------Test Results for Andre------------------
+
+Test Subject: Andre
+
+Self Total Words: 33
+Concept Total Words: 27
+Adjusted Total Words: 18
+
+################################
+####### Weight Results #########
+################################
+
+******* Self Projection *******
+
+A percent: 22.74%
+
+B percent: 53.98%
+
+C percent: 43.50%
+
+D percent: 32.98%
+
+Average: 38.30%
+
+Decision Approach: 30.12%
+
+A | ----------------------0-----------------------------------------------------------------------------
+B | -----------------------------------------------------0----------------------------------------------
+C | ------------------------------------------0---------------------------------------------------------
+D | --------------------------------0-------------------------------------------------------------------
+DA| -----------------------------0----------------------------------------------------------------------
+L | -------------------------------------|--------------------------------------------------------------
+
+******* Concept Projection *******
+
+A percent: 27.62%
+
+B percent: 36.29%
+
+C percent: 14.94%
+
+D percent: 38.99%
+
+Average: 29.46%
+
+A | ---------------------------0------------------------------------------------------------------------
+B | -----------------------------------0----------------------------------------------------------------
+C | --------------0-------------------------------------------------------------------------------------
+D | --------------------------------------0-------------------------------------------------------------
+L | ----------------------------|-----------------------------------------------------------------------
+
+######################################
+### Count for Self word categories ###
+######################################
+A Count: 5
+B Count: 11
+C Count: 6
+D Count: 11
+
+---------- Self A words ----------
+accommodating
+agreeable
+confident
+humble
+independent
+---------------------------------
+
+---------- Self B words ----------
+charismatic
+enthusiastic
+friendly
+introspective
+logical
+optimistic
+outgoing
+persuasive
+reflective
+sociable
+thoughtful
+---------------------------------
+
+---------- Self C words ----------
+calm
+patient
+relaxed
+restless
+stable
+tranquil
+---------------------------------
+
+---------- Self D words ----------
+careful
+casual
+cautious
+conscientious
+flexible
+informal
+loyal
+neat
+polite
+respectful
+responsive
+---------------------------------
+
+#########################################
+### Count for Concept word categories ###
+#########################################
+A Count: 6
+B Count: 7
+C Count: 2
+D Count: 12
+
+---------- Concept A words ----------
+accommodating
+agreeable
+confident
+harmonious
+humble
+independent
+---------------------------------
+
+---------- Concept B words ----------
+enthusiastic
+friendly
+introspective
+optimistic
+outgoing
+sociable
+thoughtful
+---------------------------------
+
+---------- Concept C words ----------
+patient
+relaxed
+---------------------------------
+
+---------- Concept D words ----------
+careful
+cautious
+conscientious
+dutiful
+flexible
+loyal
+neat
+persistent
+polite
+respectful
+responsive
+thorough
+---------------------------------
+
+----------------- End of Andre's test! ------------------
+
+
+

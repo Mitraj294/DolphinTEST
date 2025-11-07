@@ -1,0 +1,61 @@
+// This is a list of the weight for Adjusted words
+//
+// Template:
+// word,category number
+//
+// Examples:
+// test,A 12
+// another-test,B 3
+//
+// Caution:
+//  - No spaces within a word
+//     * Example:
+//     * DO   "easy-going"
+//     * DONT "easy going"
+//
+//  - No spaces between word,category
+//
+//  - A single space between category and number
+//
+submissive,A 6
+meek,A 16
+docile,A 22
+humble,A 27
+timid,A 32
+unassuming,A 37
+accommodating,A 43
+harmonious,A 48
+agreeable,A 52
+friendly,B 55
+sociable,B 60
+persuasive,B 65
+optimistic,B 70
+outgoing,B 73
+stimulating,B 78
+sophisticated,B 83
+enthusiastic,B 87
+gregarious,B 89
+captivating,B 91
+charismatic,B 93
+relaxed,C 43
+patient,C 48
+stable,C 52
+calm,C 58
+methodical,C 62
+passive,C 67
+consistent,C 73
+deliberate,C 75
+tranquil,C 80
+arbitrary,D 3
+rebellious,D 4
+undisciplined,D 6
+disorganized,D 12
+nonconfirming,D 14
+unrestrained,D 16
+unconventional,D 20
+frank,D 22
+unstructured,D 24
+uninhibited,D 27
+casual,D 29
+informal,D 32
+flexible,D 35
