@@ -23,6 +23,11 @@ class Subscription extends Model
         'current_period_end',
         'cancel_at_period_end',
         'is_paused',
+        'default_payment_method_id',
+        'payment_method_type',
+        'payment_method_brand',
+        'payment_method_last4',
+        'payment_method_label',
     ];
 
     protected $casts = [

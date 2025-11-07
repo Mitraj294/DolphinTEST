@@ -121,6 +121,10 @@ class SubscriptionController extends Controller
             'latest_amount_paid' => $latestInvoice?->amount_paid,
             'currency' => $latestInvoice?->currency,
             'organization_last_contacted' => $org?->last_contacted?->toDateTimeString(),
+            'payment_method' => $subscription?->payment_method_label,
+            'payment_method_type' => $subscription?->payment_method_type,
+            'payment_method_brand' => $subscription?->payment_method_brand,
+            'payment_method_last4' => $subscription?->payment_method_last4,
             'plan' => $plan ? [
                 'id' => $plan->id,
                 'name' => $plan->name,
@@ -172,6 +176,10 @@ class SubscriptionController extends Controller
             'trial_ends_at' => $subscription->trial_ends_at,
             'cancel_at_period_end' => $subscription->cancel_at_period_end,
             'is_paused' => $subscription->is_paused,
+            'payment_method' => $subscription->payment_method_label,
+            'payment_method_type' => $subscription->payment_method_type,
+            'payment_method_brand' => $subscription->payment_method_brand,
+            'payment_method_last4' => $subscription->payment_method_last4,
             'latest_invoice' => $latestInvoice ? [
                 'amount' => $latestInvoice->amount_paid,
                 'currency' => $latestInvoice->currency,
@@ -196,6 +204,10 @@ class SubscriptionController extends Controller
             'started_at' => $subscription->started_at,
             'ends_at' => $subscription->ends_at,
             'current_period_end' => $subscription->current_period_end,
+            'payment_method' => $subscription->payment_method_label,
+            'payment_method_type' => $subscription->payment_method_type,
+            'payment_method_brand' => $subscription->payment_method_brand,
+            'payment_method_last4' => $subscription->payment_method_last4,
             'invoices' => $invoices->map(function ($invoice) {
                 return [
                     'id' => $invoice->id,
