@@ -11,9 +11,11 @@ class WebhookLog extends Model
         'type',
         'payload',
         'processed',
+        'error',
     ];
 
     protected $casts = [
         'processed' => 'boolean',
+        'payload' => 'array',
     ];
 }

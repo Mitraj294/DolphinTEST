@@ -106,6 +106,8 @@ class SubscriptionController extends Controller
 
         $subscription = $user?->subscriptions()->latest('created_at')->first();
         $latestInvoice = $subscription?->invoices()->first();
+        $org = $user ? Organization::where('user_id', $user->id)->first() : null;
+        $plan = $subscription?->plan;
 
         return response()->json([
             'status' => $subscription?->status ?? 'none',
@@ -118,6 +120,15 @@ class SubscriptionController extends Controller
             'cancel_at_period_end' => $subscription?->cancel_at_period_end ?? false,
             'latest_amount_paid' => $latestInvoice?->amount_paid,
             'currency' => $latestInvoice?->currency,
+            'organization_last_contacted' => $org?->last_contacted?->toDateTimeString(),
+            'plan' => $plan ? [
+                'id' => $plan->id,
+                'name' => $plan->name,
+                'interval' => $plan->interval,
+                'amount' => $plan->amount,
+                'currency' => $plan->currency,
+                'description' => $plan->description,
+            ] : null,
         ]);
     }
 

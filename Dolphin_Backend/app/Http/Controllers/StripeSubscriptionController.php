@@ -303,6 +303,13 @@ class StripeSubscriptionController extends Controller
                 'error' => $e->getMessage(),
                 'payload' => $request->getContent()
             ]);
+            // Persist raw log on invalid payload
+            $this->persistRawWebhookLog(
+                'invalid_payload',
+                $request->getContent(),
+                false,
+                $e->getMessage()
+            );
             $responseMessage = 'Invalid payload';
             $responseCode = 400;
         } catch (SignatureVerificationException $e) {
@@ -310,6 +317,13 @@ class StripeSubscriptionController extends Controller
                 'error' => $e->getMessage(),
                 'signature' => $request->header('Stripe-Signature')
             ]);
+            // Persist raw log on invalid signature
+            $this->persistRawWebhookLog(
+                'invalid_signature',
+                $request->getContent(),
+                false,
+                $e->getMessage()
+            );
             $responseMessage = 'Invalid signature';
             $responseCode = 400;
         }
@@ -319,14 +333,18 @@ class StripeSubscriptionController extends Controller
                 match ($event->type) {
                     'checkout.session.completed' => $this->handleCheckoutSessionCompleted($event->data->object),
                     'invoice.paid' => $this->handleInvoicePaid($event->data->object),
+                    'invoice.payment_succeeded' => $this->handleInvoicePaid($event->data->object),
                     default => Log::info('Unhandled event type', ['type' => $event->type]),
                 };
+                // Persist webhook log as processed
+                $this->persistWebhookLog($event, true, null);
             } catch (Throwable $e) {
                 Log::error('Error processing webhook event', [
                     'event_id' => $event->id,
                     'event_type' => $event->type,
                     'exception' => $e
                 ]);
+                $this->persistWebhookLog($event, false, $e->getMessage());
                 $responseMessage = 'Webhook handled with internal error';
             }
         }
@@ -361,14 +379,23 @@ class StripeSubscriptionController extends Controller
             return;
         }
 
-        $stripeSub = \Stripe\Subscription::retrieve($session->subscription);
+        // Expand latest invoice and its payment_intent for details
+        $stripeSub = \Stripe\Subscription::retrieve($session->subscription, [
+            'expand' => ['latest_invoice.payment_intent']
+        ]);
         $customer = Customer::retrieve($session->customer);
 
         // Try to fetch the latest invoice for this subscription (if available)
         $latestInvoice = null;
         try {
             if (!empty($stripeSub->latest_invoice)) {
-                $latestInvoice = \Stripe\Invoice::retrieve($stripeSub->latest_invoice);
+                $latestInvoice = is_object($stripeSub->latest_invoice)
+                    ? $stripeSub->latest_invoice
+                    : \Stripe\Invoice::retrieve($stripeSub->latest_invoice);
+            } else {
+                // Fallback: list invoices for subscription
+                $list = \Stripe\Invoice::all(['subscription' => $stripeSub->id, 'limit' => 1]);
+                $latestInvoice = $list->data[0] ?? null;
             }
         } catch (Throwable $e) {
             Log::warning('Unable to retrieve latest invoice for subscription: ' . $e->getMessage(), ['sub_id' => $stripeSub->id]);
@@ -392,8 +419,7 @@ class StripeSubscriptionController extends Controller
         $subscriptionData = [
             'user_id' => $user->id,
             'stripe_subscription_id' => $session->subscription,
-            'stripe_customer_id' => $session->customer,
-            'plan' => $stripeSub->items->data[0]->plan->id ?? null,
+            'plan' => $stripeSub->items->data[0]->price->id ?? null,
             'status' => $stripeSub->status ?? 'active',
             'payment_date' => now(),
             'subscription_start' => $start instanceof Carbon ? $start->toDateTimeString() : (string)$start,
@@ -406,6 +432,12 @@ class StripeSubscriptionController extends Controller
             'receipt_url' => $latestInvoice->hosted_invoice_url ?? null,
             'invoice_number' => $latestInvoice->number ?? null,
             'description' => $latestInvoice->lines->data[0]->description ?? null,
+            'stripe_invoice_id' => $latestInvoice->id ?? null,
+            'amount_due' => isset($latestInvoice->amount_due) ? $latestInvoice->amount_due / 100 : null,
+            'amount_paid' => isset($latestInvoice->amount_paid) ? $latestInvoice->amount_paid / 100 : null,
+            'currency' => $latestInvoice->currency ?? null,
+            'invoice_status' => $latestInvoice->status ?? null,
+            'paid_at' => isset($latestInvoice->status_transitions->paid_at) ? date('Y-m-d H:i:s', $latestInvoice->status_transitions->paid_at) : null,
         ];
 
         $paymentMethodDetails = $this->getPaymentMethodDetailsFromSession($session, $stripeSub);
@@ -433,7 +465,9 @@ class StripeSubscriptionController extends Controller
             return;
         }
 
-        $stripeSub = \Stripe\Subscription::retrieve($stripeSubscriptionId);
+        $stripeSub = \Stripe\Subscription::retrieve($stripeSubscriptionId, [
+            'expand' => ['latest_invoice.payment_intent']
+        ]);
         $amount = $invoice->amount_paid / 100;
 
         // Fallback for subscription period if not available on the subscription object
@@ -455,7 +489,7 @@ class StripeSubscriptionController extends Controller
             'user_id' => $user->id,
             'stripe_subscription_id' => $stripeSubscriptionId,
             'stripe_customer_id' => $invoice->customer,
-            'plan' => $stripeSub->items->data[0]->plan->id ?? null,
+            'plan' => $stripeSub->items->data[0]->price->id ?? null,
             'status' => $stripeSub->status ?? null,
             'payment_date' => date('Y-m-d H:i:s', $invoice->status_transitions->paid_at),
             'subscription_start' => $start instanceof Carbon ? $start->toDateTimeString() : (string)$start,
@@ -463,6 +497,12 @@ class StripeSubscriptionController extends Controller
             'amount' => $amount,
             'receipt_url' => $invoice->hosted_invoice_url,
             'invoice_number' => $invoice->number,
+            'stripe_invoice_id' => $invoice->id,
+            'amount_due' => isset($invoice->amount_due) ? ($invoice->amount_due / 100) : null,
+            'amount_paid' => $amount,
+            'currency' => $invoice->currency,
+            'invoice_status' => $invoice->status ?? null,
+            'paid_at' => date('Y-m-d H:i:s', $invoice->status_transitions->paid_at),
             'description' => $invoice->lines->data[0]->description ?? null,
             'customer_name' => $customer->name,
             'customer_email' => $customer->email,
@@ -622,10 +662,48 @@ class StripeSubscriptionController extends Controller
             Log::info('Organization created', ['organization_id' => $organization->id, 'user_id' => $user->id]);
         }
 
-        // Update or create the subscription
-        Subscription::updateOrCreate(
+        // Resolve plan_id from Stripe price id (plan field carries price_xxx)
+        $planId = null;
+        try {
+            $stripePriceId = $data['plan'] ?? null; // price_xxx
+            if ($stripePriceId) {
+                $planModel = \App\Models\Plan::firstOrCreate(
+                    ['stripe_price_id' => $stripePriceId],
+                    [
+                        'name' => $data['plan_name'] ?? $stripePriceId,
+                        'interval' => null,
+                        'amount' => isset($data['amount']) ? $data['amount'] : null,
+                        'currency' => $data['currency'] ?? config('services.stripe.currency', 'usd'),
+                        'status' => 'active',
+                    ]
+                );
+                $planId = $planModel->id;
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to resolve or create plan for subscription', ['error' => $e->getMessage(), 'price_id' => $data['plan'] ?? null]);
+        }
+
+        // Update or create the subscription (align with schema)
+        $subscriptionAttrs = [
+            'user_id' => $user->id,
+            'plan_id' => $planId,
+            'stripe_customer_id' => $data['stripe_customer_id'] ?? null,
+            'status' => $data['status'] ?? 'active',
+            'started_at' => $data['subscription_start'] ?? null,
+            'ends_at' => $data['subscription_end'] ?? null,
+            'current_period_end' => $data['subscription_end'] ?? null,
+            'cancel_at_period_end' => (bool)($data['cancel_at_period_end'] ?? false),
+            'is_paused' => (bool)($data['is_paused'] ?? false),
+            'default_payment_method_id' => $data['default_payment_method_id'] ?? null,
+            'payment_method_type' => $data['payment_method_type'] ?? null,
+            'payment_method_brand' => $data['payment_method_brand'] ?? null,
+            'payment_method_last4' => $data['payment_method_last4'] ?? null,
+            'payment_method_label' => $data['payment_method'] ?? null,
+        ];
+
+        $subscription = Subscription::updateOrCreate(
             ['stripe_subscription_id' => $data['stripe_subscription_id']],
-            $data
+            $subscriptionAttrs
         );
 
         Log::info('Subscription record updated/created successfully.', ['subscription_id' => $data['stripe_subscription_id']]);
@@ -654,6 +732,27 @@ class StripeSubscriptionController extends Controller
         } catch (\Throwable $e) {
             Log::warning('Failed to queue subscription receipt email: ' . $e->getMessage(), ['user_id' => $user->id]);
         }
+
+        // Create or update a subscription invoice when Stripe invoice id is provided
+        try {
+            if (!empty($data['stripe_invoice_id'])) {
+                \App\Models\SubscriptionInvoice::updateOrCreate(
+                    ['stripe_invoice_id' => $data['stripe_invoice_id']],
+                    [
+                        'subscription_id' => $subscription->id,
+                        'amount_due' => $data['amount_due'] ?? null,
+                        'amount_paid' => $data['amount_paid'] ?? $data['amount'] ?? null,
+                        'currency' => $data['currency'] ?? config('services.stripe.currency', 'usd'),
+                        'status' => $data['invoice_status'] ?? 'paid',
+                        'due_date' => null,
+                        'paid_at' => $data['paid_at'] ?? $data['payment_date'] ?? now(),
+                        'hosted_invoice_url' => $data['receipt_url'] ?? null,
+                    ]
+                );
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to upsert subscription invoice', ['error' => $e->getMessage(), 'stripe_invoice_id' => $data['stripe_invoice_id'] ?? null]);
+        }
     }
 
     /**
@@ -670,47 +769,114 @@ class StripeSubscriptionController extends Controller
 
         Stripe::setApiKey(config('services.stripe.secret'));
 
-        try {
-            $session = StripeSession::retrieve($sessionId);
-        } catch (Throwable $e) {
-            Log::warning('Could not retrieve checkout session: ' . $e->getMessage(), ['session_id' => $sessionId]);
-            return response()->json(['error' => 'Could not retrieve session'], 404);
-        }
-
         $result = [
-            'id' => $session->id,
-            'customer_email' => $session->customer_email ?? null,
-            'amount_total' => $session->amount_total ?? null,
-            'currency' => $session->currency ?? null,
-            'line_items' => [],
-            'subscription' => null,
-            'next_billing' => null,
-            'subscription_end' => null,
+            'session_id' => $sessionId,
         ];
 
-        // (Optional) line items retrieval omitted — not needed for compact success page
-
         try {
+            $session = StripeSession::retrieve($sessionId);
+            $result['customer_email'] = $session->customer_email ?? null;
+            $result['amount_total'] = isset($session->amount_total) ? ($session->amount_total / 100) : null;
+
             if (!empty($session->subscription)) {
-                $stripeSub = \Stripe\Subscription::retrieve($session->subscription);
-                $result['subscription'] = [
-                    'id' => $stripeSub->id ?? null,
-                    'status' => $stripeSub->status ?? null,
-                    'current_period_end' => $stripeSub->current_period_end ?? null,
-                    'current_period_start' => $stripeSub->current_period_start ?? null,
-                ];
-                if (!empty($stripeSub->current_period_end)) {
-                    $result['subscription_end'] = \Carbon\Carbon::createFromTimestamp($stripeSub->current_period_end)->toDateTimeString();
-                }
-                // Use subscription current_period_end as next billing estimate/fallback
-                if (!empty($stripeSub->current_period_end)) {
-                    $result['next_billing'] = \Carbon\Carbon::createFromTimestamp($stripeSub->current_period_end)->toDateTimeString();
+                try {
+                    $stripeSub = \Stripe\Subscription::retrieve($session->subscription);
+                    $result['subscription'] = [
+                        'id' => $stripeSub->id ?? null,
+                        'status' => $stripeSub->status ?? null,
+                        'current_period_start' => $stripeSub->current_period_start ?? null,
+                        'current_period_end' => $stripeSub->current_period_end ?? null,
+                    ];
+
+                    if (!empty($stripeSub->current_period_end)) {
+                        $result['subscription_end'] = \Carbon\Carbon::createFromTimestamp($stripeSub->current_period_end)->toDateTimeString();
+                        $result['next_billing'] = \Carbon\Carbon::createFromTimestamp($stripeSub->current_period_end)->toDateTimeString();
+                    }
+
+                    // Plan info from subscription items
+                    $plan = $stripeSub->items->data[0]->plan ?? null;
+                    if ($plan) {
+                        $result['plan'] = [
+                            'id' => $plan->id ?? null,
+                            'nickname' => $plan->nickname ?? null,
+                            'interval' => $plan->interval ?? null,
+                            'amount' => isset($plan->amount) ? ($plan->amount / 100) : null,
+                            'currency' => $plan->currency ?? null,
+                        ];
+                    }
+
+                    // Latest invoice
+                    if (!empty($stripeSub->latest_invoice)) {
+                        try {
+                            $invoice = \Stripe\Invoice::retrieve($stripeSub->latest_invoice);
+                            $result['invoice'] = [
+                                'id' => $invoice->id ?? null,
+                                'number' => $invoice->number ?? null,
+                                'hosted_invoice_url' => $invoice->hosted_invoice_url ?? null,
+                                'amount_paid' => isset($invoice->amount_paid) ? ($invoice->amount_paid / 100) : null,
+                                'currency' => $invoice->currency ?? null,
+                                'paid_at' => isset($invoice->status_transitions->paid_at) ? date('Y-m-d H:i:s', $invoice->status_transitions->paid_at) : null,
+                            ];
+                        } catch (Throwable $e) {
+                            Log::warning('Could not retrieve latest invoice for session', ['session_id' => $sessionId, 'error' => $e->getMessage()]);
+                        }
+                    }
+                } catch (Throwable $e) {
+                    Log::warning('Could not retrieve subscription for session: ' . $e->getMessage(), ['session_id' => $sessionId]);
                 }
             }
-        } catch (Throwable $e) {
-            Log::warning('Could not retrieve subscription for session: ' . $e->getMessage(), ['session_id' => $sessionId]);
-        }
 
-        return response()->json($result);
+            return response()->json($result);
+        } catch (Throwable $e) {
+            Log::error('Failed to retrieve session details', ['session_id' => $sessionId, 'error' => $e->getMessage()]);
+            return response()->json(['error' => 'Could not retrieve session'], 500);
+        }
+    }
+
+    /**
+     * Persist webhook log if WebhookLog model/table exists. Safe no-op if not.
+     */
+    private function persistWebhookLog(Event $event, bool $processed, ?string $errorMessage = null): void
+    {
+        try {
+            if (class_exists('App\\Models\\WebhookLog')) {
+                \App\Models\WebhookLog::create([
+                    'event_id' => $event->id,
+                    'type' => $event->type,
+                    'payload' => (array)($event->data->object ?? []),
+                    'processed' => $processed,
+                    'error' => $errorMessage,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to persist webhook log', [
+                'event_id' => $event->id ?? null,
+                'type' => $event->type ?? null,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Persist raw webhook log when Event couldn't be constructed (invalid payload/signature).
+     */
+    private function persistRawWebhookLog(string $type, $payload, bool $processed, ?string $errorMessage = null): void
+    {
+        try {
+            if (class_exists('App\\Models\\WebhookLog')) {
+                \App\Models\WebhookLog::create([
+                    'event_id' => null,
+                    'type' => $type,
+                    'payload' => is_string($payload) ? ['raw' => $payload] : (array)$payload,
+                    'processed' => $processed,
+                    'error' => $errorMessage,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to persist raw webhook log', [
+                'type' => $type,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

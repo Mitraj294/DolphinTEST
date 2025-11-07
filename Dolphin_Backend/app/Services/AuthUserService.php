@@ -42,26 +42,46 @@ class AuthUserService
             $org = null;
 
             if ($existingOrgId) {
-                // Use existing organization from lead
+                // Use and UPDATE existing organization from lead
                 $org = Organization::find($existingOrgId);
 
-                // Update organization with user_id if not already set
-                if ($org && !$org->user_id) {
-                    $org->user_id = $user->id;
-                    $org->save();
-                }
+                if ($org) {
+                    // Attach user if missing
+                    if (!$org->user_id) {
+                        $org->user_id = $user->id;
+                    }
 
-                // Create organization address if it doesn't exist
-                if ($org && !$org->address) {
-                    \App\Models\OrganizationAddress::create([
-                        'organization_id' => $org->id,
-                        'address_line_1' => $data['address_line_1'] ?? $data['address'] ?? null,
-                        'address_line_2' => $data['address_line_2'] ?? null,
-                        'country_id' => $data['country_id'] ?? $data['country'] ?? null,
-                        'state_id' => $data['state_id'] ?? $data['state'] ?? null,
-                        'city_id' => $data['city_id'] ?? $data['city'] ?? null,
-                        'zip_code' => $data['zip_code'] ?? $data['zip'] ?? null,
+                    // Update core organization fields (allow override via registration form)
+                    // Determine the appropriate referral_other_text
+                    $newReferralSourceId = $data['referral_source_id'] ?? $data['find_us'] ?? $org->referral_source_id;
+                    $newReferralOtherText = null;
+                    if ((int)$newReferralSourceId === 10) {
+                        $newReferralOtherText = $data['referral_other_text'] ?? $org->referral_other_text;
+                    }
+
+                    $org->fill([
+                        'name' => $data['name'] ?? $data['organization_name'] ?? $org->name,
+                        'size' => $data['size'] ?? $data['organization_size'] ?? $org->size,
+                        'referral_source_id' => $newReferralSourceId,
+                        'referral_other_text' => $newReferralOtherText,
                     ]);
+
+                    if ($org->isDirty()) {
+                        $org->save();
+                    }
+
+                    // Update or create organization address (always persist latest form values)
+                    \App\Models\OrganizationAddress::updateOrCreate(
+                        ['organization_id' => $org->id],
+                        [
+                            'address_line_1' => $data['address_line_1'] ?? $data['address'] ?? null,
+                            'address_line_2' => $data['address_line_2'] ?? null,
+                            'country_id' => $data['country_id'] ?? $data['country'] ?? null,
+                            'state_id' => $data['state_id'] ?? $data['state'] ?? null,
+                            'city_id' => $data['city_id'] ?? $data['city'] ?? null,
+                            'zip_code' => $data['zip_code'] ?? $data['zip'] ?? null,
+                        ]
+                    );
                 }
             } else {
                 // Create new organization
@@ -70,6 +90,9 @@ class AuthUserService
                     'name' => $data['name'] ?? $data['organization_name'] ?? null,
                     'size' => $data['size'] ?? $data['organization_size'] ?? null,
                     'referral_source_id' => $data['referral_source_id'] ?? $data['find_us'] ?? null,
+                    'referral_other_text' => (isset($data['referral_source_id']) && (int)$data['referral_source_id'] === 10)
+                        ? ($data['referral_other_text'] ?? null)
+                        : null,
                 ]);
 
                 // Create organization address
@@ -110,8 +133,33 @@ class AuthUserService
 
     public function buildUserPayload(User $user): array
     {
+        // Ensure we have country and roles loaded and fetch the owning organization
         $user->loadMissing(['country', 'roles']);
-        $org = Organization::where('user_id', $user->id)->first();
+        $org = Organization::with('address')->where('user_id', $user->id)->first();
+
+        $orgPayload = null;
+        if ($org) {
+            $orgPayload = [
+                'id' => $org->id,
+                'name' => $org->name,
+                'size' => $org->size,
+                'referral_source_id' => $org->referral_source_id,
+                'referral_other_text' => $org->referral_other_text,
+                'last_contacted' => $org->last_contacted?->toDateTimeString(),
+                'address' => null,
+            ];
+
+            if ($org->address) {
+                $orgPayload['address'] = [
+                    'address_line_1' => $org->address->address_line_1,
+                    'address_line_2' => $org->address->address_line_2,
+                    'zip_code' => $org->address->zip_code,
+                    'country_id' => $org->address->country_id,
+                    'state_id' => $org->address->state_id,
+                    'city_id' => $org->address->city_id,
+                ];
+            }
+        }
 
         return [
             'id' => $user->id,
@@ -125,6 +173,8 @@ class AuthUserService
             'organization_id' => $org?->id,
             'organization_name' => $org?->name, // keep for frontend compatibility
             'name' => $org?->name, // new field name
+            // Helpful organization metadata consumed by the frontend
+            'organization' => $orgPayload,
         ];
     }
 
@@ -147,7 +197,8 @@ class AuthUserService
             return;
         }
 
-        $user->phone = $detailsData['phone'] ?? $user->phone;
+    // Store phone into the users.phone_number column. Accept either 'phone' or 'phone_number'
+    $user->phone_number = $detailsData['phone_number'] ?? $detailsData['phone'] ?? $user->phone_number;
 
         if (isset($detailsData['country'])) {
             $user->country_id = $this->resolveCountryId($detailsData['country']);

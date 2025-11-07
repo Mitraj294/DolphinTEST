@@ -39,6 +39,9 @@ return [
         'key' => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        // preferred version and default currency (optional centralization)
+        'currency' => env('STRIPE_DEFAULT_CURRENCY', 'usd'),
+        'api_version' => env('STRIPE_API_VERSION', null),
     ],
 
 

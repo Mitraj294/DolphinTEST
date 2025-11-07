@@ -25,7 +25,9 @@ class UpdateProfileRequest extends FormRequest
             'user.email' => 'sometimes|string|email|max:255|unique:users,email,' . $userId . ',id,deleted_at,NULL',
             'user_details.first_name' => 'sometimes|nullable|string|max:255',
             'user_details.last_name' => 'sometimes|nullable|string|max:255',
+          
             'user_details.phone' => 'sometimes|nullable|regex:/^[6-9]\d{9}$/',
+            'user_details.phone_number' => 'sometimes|nullable|regex:/^[6-9]\d{9}$/',
             'user_details.country' => 'sometimes|nullable',
         ];
     }

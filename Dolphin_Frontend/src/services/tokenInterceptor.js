@@ -92,7 +92,42 @@ axios.interceptors.request.use(
 axios.interceptors.response.use(
   (response) => response,
   (error) => {
+    // If unauthorized, try refresh token flow once before redirecting to login
     if (error.response?.status === 401) {
+      const refreshToken = storage.get("refreshToken");
+      const originalRequest = error.config;
+
+      // Only attempt refresh if we have a refresh token and haven't retried yet
+      if (refreshToken && !originalRequest._retry) {
+        originalRequest._retry = true;
+        const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
+        return axios
+          .post(`${API_BASE_URL}/oauth/token`, {
+            grant_type: "refresh_token",
+            refresh_token: refreshToken,
+            client_id: process.env.VUE_APP_CLIENT_ID,
+            client_secret: process.env.VUE_APP_CLIENT_SECRET,
+          })
+          .then((res) => {
+            const newAccessToken = res.data.access_token;
+            const newRefreshToken = res.data.refresh_token;
+            if (newAccessToken) {
+              storage.set("authToken", newAccessToken);
+              if (newRefreshToken) storage.set("refreshToken", newRefreshToken);
+              // update default header and original request header
+              axios.defaults.headers.common["Authorization"] =
+                `Bearer ${newAccessToken}`;
+              originalRequest.headers = originalRequest.headers || {};
+              originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+              return axios(originalRequest);
+            }
+            return handleUnauthorized(error);
+          })
+          .catch((e) => {
+            console.error("Refresh token failed:", e);
+            return handleUnauthorized(error);
+          });
+      }
       return handleUnauthorized(error);
     }
 

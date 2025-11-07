@@ -5,13 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Passport\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
@@ -62,10 +64,17 @@ class User extends Authenticatable
         ];
     }
 
+    // Role relationship is defined on the model directly for clarity. The
+    // HasRoles trait provides helper methods (hasRole/hasAnyRole) and will
+    // rely on this relationship when evaluating permissions.
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'role_users');
     }
+
+    // Add role helper trait so middleware can call hasRole/hasAnyRole
+    // without errors.
+    use HasRoles;
 
     public function organizations(): BelongsToMany
     {
@@ -90,6 +99,18 @@ class User extends Authenticatable
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);
+    }
+
+    // Optional geographic relations (used by some eager loads). These will
+    // safely resolve to null when the corresponding foreign keys are absent.
+    public function state(): BelongsTo
+    {
+        return $this->belongsTo(State::class);
+    }
+
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
     }
 
     public function organizationAssessments(): HasMany

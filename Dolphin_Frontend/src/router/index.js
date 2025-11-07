@@ -342,27 +342,13 @@ const handlePublicRoutes = (to, authToken, next) => {
 };
 
 /**
-  Validates guest token via backend, sets temporary session.
+  Previously this validated guest tokens by calling /api/leads/guest-validate.
+  That endpoint / flow is no longer used in the current deployment, so this
+  helper is intentionally a no-op to avoid unnecessary network calls and 403s.
  */
-const validateGuestToken = async (opts) => {
-  try {
-    const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-    const res = await axios.get(`${API_BASE_URL}/api/leads/guest-validate`, {
-      params: opts,
-    });
-    if (res?.data?.valid) {
-      if (res.data.token) {
-        storage.set("authToken", res.data.token);
-        axios.defaults.headers.common[
-          "Authorization"
-        ] = `Bearer ${res.data.token}`;
-      }
-      storage.set("guest_user", res.data.user || null);
-      return true;
-    }
-  } catch (e) {
-    console.error("Guest validation failed", e);
-  }
+const validateGuestToken = async (_opts) => {
+  // No-op: legacy lead/guest validation removed. Return false to signal
+  // validation did not occur.
   return false;
 };
 
@@ -370,22 +356,8 @@ const validateGuestToken = async (opts) => {
  * Try to validate guest_token or guest_code for the SubscriptionPlans route.
  * Returns true when validation succeeded (caller should `next()`), false otherwise.
  */
-const tryValidateGuestForPlans = async (to) => {
-  if (to.name !== "SubscriptionPlans") return false;
-  try {
-    const guestToken = to.query?.guest_token || null;
-    if (guestToken) {
-      const ok = await validateGuestToken({ token: guestToken });
-      if (ok) return true;
-    }
-    const guestCode = to.query?.guest_code || null;
-    if (guestCode) {
-      const ok = await validateGuestToken({ guest_code: guestCode });
-      if (ok) return true;
-    }
-  } catch (e) {
-    console.error("Guest validation helper failed", e);
-  }
+const tryValidateGuestForPlans = async (_to) => {
+  // Legacy guest/lead flow removed. Do not call backend for guest validation.
   return false;
 };
 

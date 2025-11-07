@@ -21,7 +21,9 @@ class RegisterRequest extends FormRequest
             'confirm_password' => 'required|string|min:6|same:password',
             'phone_number' => 'required|regex:/^[6-9]\d{9}$/',
             'phone' => 'nullable|regex:/^[6-9]\d{9}$/', // backward compatibility
+            // Referral source must exist; if "Other" (id=10) then referral_other_text becomes required
             'referral_source_id' => 'required|integer|exists:referral_sources,id',
+            'referral_other_text' => 'nullable|string|required_if:referral_source_id,10',
             'find_us' => 'nullable|integer|exists:referral_sources,id', // backward compatibility
             'name' => 'required|string|max:500', // organization name
             'organization_name' => 'nullable|string|max:500', // backward compatibility

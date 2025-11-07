@@ -53,31 +53,15 @@
             </FormRow>
             <FormRow>
               <div>
-                <FormLabel>Phone</FormLabel>
+                <FormLabel>Phone Number</FormLabel>
                 <FormInput
-                  v-model="form.phone"
+                  v-model="form.phone_number"
                   icon="fas fa-phone"
                   placeholder="Type here"
                   required
                 />
-                <FormLabel v-if="errors.phone" class="error-message1">{{
-                  errors.phone[0]
-                }}</FormLabel>
-              </div>
-              <div>
-                <FormLabel>Country</FormLabel>
-                <FormDropdown
-                  v-model="form.country_id"
-                  icon="fas fa-globe"
-                  @change="onCountryChange"
-                  :options="[
-                    { value: null, text: 'Select', disabled: true },
-                    ...countries.map((c) => ({ value: c.id, text: c.name })),
-                  ]"
-                  required
-                />
-                <FormLabel v-if="errors.country_id" class="error-message1">{{
-                  errors.country_id[0]
+                <FormLabel v-if="errors.phone_number" class="error-message1">{{
+                  errors.phone_number[0]
                 }}</FormLabel>
               </div>
               <div>
@@ -115,7 +99,7 @@
                 <div>
                   <FormLabel>Organization Size</FormLabel>
                   <FormDropdown
-                    v-model="organization_size"
+                    v-model="form.organization_size"
                     icon="fas fa-users"
                     ref="orgSizeSelect"
                     :options="[
@@ -194,8 +178,7 @@ export default {
         firstName: "",
         lastName: "",
         email: "",
-        phone: "",
-        country_id: null,
+        phone_number: "",
         role: null,
         organization_name: "",
         organization_size: "",
@@ -206,8 +189,6 @@ export default {
         { value: "salesperson", text: "Sales Person" },
         { value: "user", text: "User" },
       ],
-      countries: [],
-      organization_size: "",
       orgSizeOptions: orgSizeOptions,
 
       successMessage: "",
@@ -216,21 +197,10 @@ export default {
     };
   },
   mounted() {
-    this.fetchCountries();
+    // no-op
   },
   methods: {
-    async fetchCountries() {
-      try {
-        const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-        const res = await axios.get(`${API_BASE_URL}/api/countries`);
-        this.countries = res.data || [];
-      } catch (e) {
-        console.warn("Failed to fetch countries", e);
-      }
-    },
-    onCountryChange(value) {
-      // placeholder for handling country change if needed
-    },
+    // removed country selection for Add User
     async handleAddUser() {
       if (this.loading) return;
       this.loading = true;
@@ -246,12 +216,11 @@ export default {
           first_name: this.form.firstName,
           last_name: this.form.lastName,
           email: this.form.email,
-          phone: this.form.phone,
-          country_id: this.form.country_id,
+          phone_number: this.form.phone_number,
           role: this.form.role,
-          // send organization fields (backend uses required_if for validation)
-          organization_name: this.form.organization_name,
-          organization_size: this.form.organization_size,
+          // Backend expects 'name' and 'size' for organization admin creation
+          name: this.form.organization_name,
+          size: this.form.organization_size,
         };
 
         const response = await axios.post(
@@ -278,7 +247,7 @@ export default {
           firstName: "",
           lastName: "",
           email: "",
-          phone: "",
+          phone_number: "",
           role: null,
           organization_name: "",
           organization_size: "",

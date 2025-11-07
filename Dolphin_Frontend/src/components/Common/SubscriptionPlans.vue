@@ -306,28 +306,11 @@ export default {
     },
 
     /**
-     * Validates guest token via backend, sets temporary session.
+     * Legacy guest validation removed.
+     * Keep the method for compatibility but avoid calling backend leads endpoints;
+     * just return false so no network call is made.
      */
-    async validateGuestToken(opts) {
-      try {
-        const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-        const res = await axios.get(
-          `${API_BASE_URL}/api/leads/guest-validate`,
-          { params: opts }
-        );
-        if (res?.data?.valid) {
-          if (res.data.token) {
-            storage.set("authToken", res.data.token);
-            axios.defaults.headers.common[
-              "Authorization"
-            ] = `Bearer ${res.data.token}`;
-          }
-          storage.set("guest_user", res.data.user || null);
-          return true;
-        }
-      } catch (e) {
-        console.error("Guest validation failed", e);
-      }
+    async validateGuestToken(/* opts */) {
       return false;
     },
 
@@ -364,7 +347,9 @@ export default {
     });
 
     if (hasGuestParams) {
-      console.log("Setting guest view mode");
+      // Enter guest view if URL contains guest params, but do not call
+      // the legacy leads/guest-validate backend endpoint (it's removed).
+      console.log("Setting guest view mode (no backend validation)");
       this.isGuestView = true;
       this.guestParams = {
         email: qs.get("email"),
@@ -373,34 +358,7 @@ export default {
         guest_code: qs.get("guest_code"),
         guest_token: qs.get("guest_token"),
       };
-      console.log("Guest params:", this.guestParams);
-
-      // Validate guest token/code to get authentication
-      if (this.guestParams.guest_code) {
-        console.log("Validating guest code:", this.guestParams.guest_code);
-        this.validateGuestToken({
-          guest_code: this.guestParams.guest_code,
-        }).then((success) => {
-          console.log("Guest code validation result:", success);
-          if (success) {
-            console.log("Guest authentication successful, auth token set");
-          } else {
-            console.log("Guest authentication failed");
-          }
-        });
-      } else if (this.guestParams.guest_token) {
-        console.log("Validating guest token:", this.guestParams.guest_token);
-        this.validateGuestToken({ token: this.guestParams.guest_token }).then(
-          (success) => {
-            console.log("Guest token validation result:", success);
-            if (success) {
-              console.log("Guest authentication successful, auth token set");
-            } else {
-              console.log("Guest authentication failed");
-            }
-          }
-        );
-      }
+      console.log("Guest params (no validation):", this.guestParams);
     } else {
       console.log("No guest params detected, fetching user plan");
       this.fetchUserPlan();

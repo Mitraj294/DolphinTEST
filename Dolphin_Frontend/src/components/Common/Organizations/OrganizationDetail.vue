@@ -64,7 +64,15 @@
                   </div>
                   <div class="org-detail-list-row">
                     <span>Source</span>
-                    <b>{{ organization.source || "N/A" }}</b>
+                    <b>
+                      {{
+                        organization.source ||
+                          organization.referral_other_text ||
+                          organization.find_us ||
+                          organization.referral_source_name ||
+                          "N/A"
+                      }}
+                    </b>
                   </div>
                   <div class="org-detail-list-row">
                     <span>Address</span>
@@ -81,11 +89,11 @@
                   </div>
                   <div class="org-detail-list-row">
                     <span>Admin Email</span
-                    ><b>{{ organization.admin_email || "N/A" }}</b>
+                    ><b>{{ organization.admin_email || organization.user?.email || "N/A" }}</b>
                   </div>
                   <div class="org-detail-list-row">
                     <span>Admin Phone</span>
-                    <b>{{ organization.phone_number || "N/A" }}</b>
+                    <b>{{ organization.admin_phone || organization.user?.phone || organization.phone_number || "N/A" }}</b>
                   </div>
                   <div class="org-detail-list-row">
                     <span>Sales Person</span
@@ -93,7 +101,7 @@
                   </div>
                   <div class="org-detail-list-row">
                     <span>Last Contacted</span
-                    ><b>{{ formatDate(organization.last_contacted) }}</b>
+                    ><b>{{ formatDate(organization.last_contacted || organization.user?.last_login || organization.user?.last_logged_in) }}</b>
                   </div>
                   <div class="org-detail-list-row">
                     <span>Certified Staff</span
@@ -247,10 +255,18 @@ const error = ref(null);
 // COMPUTED PROPERTIES
 const formattedAddress = computed(() => {
   if (!organization.value) return "N/A";
-  const { address, city, state, zip, country } = organization.value;
-  // Filter out any null, undefined, or empty parts before joining
+  // Support multiple shapes returned by API: addresses array, individual fields, or generic address
+  const o = organization.value || {};
+  const addrObj = (o.addresses && o.addresses[0]) || {};
+  const addressLine1 = o.address_line_1 || addrObj.address_line_1 || o.address || "";
+  const addressLine2 = o.address_line_2 || addrObj.address_line_2 || "";
+  const city = o.city || addrObj.city_name || o.city_name || o.city_id || "";
+  const state = o.state || addrObj.state_name || o.state_name || o.state_id || "";
+  const zip = o.zip || o.zip_code || addrObj.zip_code || "";
+  const country = o.country || addrObj.country_name || o.country_name || "";
+
   return (
-    [address, city, state, zip, country].filter(Boolean).join(", ") || "N/A"
+    [addressLine1, addressLine2, city, state, zip, country].filter(Boolean).join(", ") || "N/A"
   );
 });
 

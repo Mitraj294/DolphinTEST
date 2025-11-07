@@ -34,9 +34,8 @@
               <div>
                 <FormLabel>Organization Size</FormLabel>
                 <FormDropdown
-                  v-model="organization_size"
+                  v-model="form.organization_size"
                   icon="fas fa-users"
-                  ref="orgSizeSelect"
                   :options="[
                     {
                       value: '',
@@ -57,7 +56,7 @@
               <div>
                 <FormLabel>Source</FormLabel>
                 <FormDropdown
-                  v-model="referral_source_id"
+                  v-model="form.referral_source_id"
                   icon="fas fa-search"
                   ref="findUsSelect"
                   :options="[
@@ -72,8 +71,19 @@
                 <FormLabel v-if="errors.source" class="error-message">
                   {{ errors.source[0] }}
                 </FormLabel>
+
+                <!-- If source is 'Other' or a free-text was provided, allow editing reference text -->
+                <div v-if="showReferralReference" style="margin-top:8px;">
+                  <FormLabel>Reference (details)</FormLabel>
+                  <FormInput
+                    v-model="form.source"
+                    icon="fas fa-pen"
+                    placeholder="Enter source details"
+                  />
+                </div>
               </div>
             </FormRow>
+
             <FormRow>
               <div>
                 <FormLabel>Country</FormLabel>
@@ -123,19 +133,31 @@
                 </FormLabel>
               </div>
             </FormRow>
+
             <FormRow>
               <div>
-                <FormLabel>Address</FormLabel>
+                <FormLabel>Address Line 1</FormLabel>
                 <FormInput
-                  v-model="form.address"
+                  v-model="form.address_line_1"
                   icon="fas fa-map-marker-alt"
-                  placeholder="Enter address"
+                  placeholder="Address Line 1"
                 />
                 <FormLabel v-if="errors.address" class="error-message">
                   {{ errors.address[0] }}
                 </FormLabel>
               </div>
 
+              <div>
+                <FormLabel>Address Line 2</FormLabel>
+                <FormInput
+                  v-model="form.address_line_2"
+                  icon="fas fa-map-marker-alt"
+                  placeholder="Address Line 2"
+                />
+                <FormLabel v-if="errors.address_line_2" class="error-message">
+                  {{ errors.address_line_2[0] }}
+                </FormLabel>
+              </div>
               <div>
                 <FormLabel>PIN</FormLabel>
                 <FormInput
@@ -147,7 +169,6 @@
                   {{ errors.zip[0] }}
                 </FormLabel>
               </div>
-              <div><FormLabel>&nbsp;</FormLabel></div>
             </FormRow>
 
             <!-- Contract dates row: use 3 columns, last is empty -->
@@ -297,7 +318,8 @@ import storage from "@/services/storage.js";
 import { orgSizeOptions } from "@/utils/formUtils";
 import axios from "axios";
 
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
+// Fallback to local dev URL when env var is not set
+const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || "http://127.0.0.1:8000";
 
 //  Utility: API Helpers
 
@@ -383,22 +405,52 @@ function mapOrganizationToForm(found) {
   const userDetails = user.user_details || {};
 
   return {
-    organization_name: found.organization_name || "",
-    organization_size: found.organization_size || "",
-    source: found.source || found.find_us || userDetails.find_us || "",
+    // backend sometimes uses `name`/`size` instead of `organization_name`/`organization_size`
+    organization_name: found.organization_name || found.name || "",
+    organization_size: found.organization_size || found.size || "",
+    // include referral_other_text and other possible fields the backend may use
+    source:
+      found.source || found.referral_other_text || found.find_us || userDetails.find_us || "",
     referral_source_id:
       found.referral_source_id || userDetails.referral_source_id || null,
-    address: found.address || userDetails.address || "",
-    zip: found.zip || userDetails.zip || "",
-    country_id: found.country_id || userDetails.country_id || null,
-    state_id: found.state_id || userDetails.state_id || null,
-    city_id: found.city_id || userDetails.city_id || null,
-    contractStart: found.contract_start
-      ? formatContractDate(found.contract_start)
-      : "",
-    contractEnd: found.contract_end
-      ? formatContractDate(found.contract_end)
-      : "",
+    // prefer explicit address_line_1/2 if available, fall back to generic address
+    // The API might return addresses in multiple shapes. Support common variants.
+    address_line_1:
+      found.address_line_1 ||
+      (found.addresses && found.addresses[0] && found.addresses[0].address_line_1) ||
+      userDetails.address_line_1 ||
+      found.address ||
+      userDetails.address ||
+      "",
+    address_line_2:
+      found.address_line_2 ||
+      (found.addresses && found.addresses[0] && found.addresses[0].address_line_2) ||
+      userDetails.address_line_2 ||
+      "",
+    zip:
+      found.zip ||
+      found.zip_code ||
+      (found.addresses && found.addresses[0] && found.addresses[0].zip_code) ||
+      userDetails.zip ||
+      userDetails.zip_code ||
+      "",
+    country_id:
+      found.country_id ||
+      (found.addresses && found.addresses[0] && found.addresses[0].country_id) ||
+      userDetails.country_id ||
+      null,
+    state_id:
+      found.state_id ||
+      (found.addresses && found.addresses[0] && found.addresses[0].state_id) ||
+      userDetails.state_id ||
+      null,
+    city_id:
+      found.city_id ||
+      (found.addresses && found.addresses[0] && found.addresses[0].city_id) ||
+      userDetails.city_id ||
+      null,
+    contractStart: found.contract_start ? formatContractDate(found.contract_start) : "",
+    contractEnd: found.contract_end ? formatContractDate(found.contract_end) : "",
     firstName:
       user.first_name ||
       found.first_name ||
@@ -409,12 +461,21 @@ function mapOrganizationToForm(found) {
       found.last_name ||
       (found.main_contact || "").split(" ").slice(1).join(" ") ||
       "",
+    // prefer email from linked user if present
     adminEmail: user.email || found.admin_email || "",
-    
-    adminPhone: userDetails.phone || found.admin_phone || "",
+    // prefer phone from linked user details first, then organization-level phone fields, then user.phone
+    adminPhone:
+      userDetails.phone ||
+      found.admin_phone ||
+      found.phone_number ||
+      found.phone ||
+      user.phone ||
+      (user.user_details && user.user_details.phone) ||
+      "",
     sales_person_id: found.sales_person_id || null,
-    lastContacted: found.last_contacted
-      ? formatLastContacted(found.last_contacted)
+    // Use org.last_contacted or user's last login fields if available
+    lastContacted: (found.last_contacted || user.last_login || user.last_logged_in || user.last_login_at)
+      ? formatLastContacted(found.last_contacted || user.last_login || user.last_logged_in || user.last_login_at)
       : "",
     certifiedStaff: found.certified_staff || userDetails.certified_staff || "0",
   };
@@ -425,8 +486,8 @@ function mapFormToPayload(form) {
     organization_name: form.organization_name,
     organization_size: form.organization_size || null,
     referral_source_id: form.referral_source_id || null,
-    address: form.address || null,
-    address_line_1: form.address || null,
+    address: form.address_line_1 || null,
+    address_line_1: form.address_line_1 || null,
     address_line_2: form.address_line_2 || null,
     city_id: form.city_id || null,
     state_id: form.state_id || null,
@@ -443,6 +504,8 @@ function mapFormToPayload(form) {
     contract_start: parseContractInput(form.contractStart),
     contract_end: parseContractInput(form.contractEnd),
     last_contacted: parseLastContactedInput(form.lastContacted),
+    // keep free-text source if provided (for 'Other' cases)
+    source: form.source || null,
   };
 }
 
@@ -456,7 +519,7 @@ export default {
         organization_name: "",
         organization_size: "",
         source: "",
-        address: "",
+        address_line_1: "",
         address_line_2: "",
         zip: "",
         country_id: null,
@@ -471,18 +534,38 @@ export default {
         sales_person_id: null,
         lastContacted: "",
         certifiedStaff: "",
+        referral_source_id: null,
       },
       errors: {},
       orgId: null,
       countries: [],
-      organization_size: "",
       orgSizeOptions: orgSizeOptions,
-      referral_source_id: null,
       referralSources: [],
       states: [],
       cities: [],
       salesPersons: [],
     };
+  },
+
+  computed: {
+    // show reference text when selected referral source is 'other' OR when a free-text was present
+    showReferralReference() {
+      try {
+        const sel =
+          this.referralSources &&
+          this.referralSources.find(
+            (o) => (o.id ?? o.value ?? o).toString() === (this.form.referral_source_id ?? "").toString()
+          );
+        if (sel) {
+          const txt = (sel.name ?? sel.text ?? sel).toString().toLowerCase();
+          if (txt === "other") return true;
+        }
+        // if no exact selection but there is already free-text source, show it so user can edit
+        return !!(this.form.source && this.form.source.toString().trim());
+      } catch {
+        return !!(this.form.source && this.form.source.toString().trim());
+      }
+    },
   },
 
   async mounted() {
@@ -519,14 +602,9 @@ export default {
         if (!res.data) return;
 
         this.orgId = res.data.id;
-        this.form = mapOrganizationToForm(res.data);
+        this.form = { ...this.form, ...mapOrganizationToForm(res.data) };
 
-        // Ensure top-level v-models (organization_size, referral_source_id) used by the template
-        // are populated from the mapped form so the dropdowns show the current values.
-        this.organization_size = this.form.organization_size || "";
-        this.referral_source_id = this.form.referral_source_id || null;
-
-        // Resolve location names to IDs
+        // Resolve location names to IDs if not provided
         if (!this.form.country_id) {
           this.form.country_id = this._findIdByName(
             this.countries,
@@ -591,14 +669,6 @@ export default {
           });
           return;
         }
-
-        // Ensure values controlled by separate v-models are copied into the form
-        // so the payload contains the user's selections.
-        this.form.organization_size =
-          this.organization_size || this.form.organization_size;
-        // copy selected referral source id into form for payload
-        this.form.referral_source_id =
-          this.referral_source_id || this.form.referral_source_id || null;
 
         const payload = mapFormToPayload(this.form);
 

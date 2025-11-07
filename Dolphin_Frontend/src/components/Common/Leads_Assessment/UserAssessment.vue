@@ -10,11 +10,11 @@
         <div class="user-assessment-table-container">
           <div class="user-assessment-words-grid">
             <label
-              v-for="option in currentQuestion.options"
-              :key="option"
-              class="user-assessment-checkbox-label"
-              :class="{ checked: currentSelectedWords.includes(option) }"
-            >
+                v-for="(option, idx) in currentQuestion.options"
+                :key="`${option}-${idx}`"
+                class="user-assessment-checkbox-label"
+                :class="{ checked: currentSelectedWords.includes(option) }"
+              >
               <span class="user-assessment-checkbox-custom"></span>
               <input
                 type="checkbox"
@@ -162,21 +162,54 @@ export default {
           headers,
           params,
         });
-        if (Array.isArray(resQ.data)) {
+          if (Array.isArray(resQ.data)) {
           // Transform assessment data to match old question format for compatibility
-          questions.value = resQ.data.map((assessment) => {
-            let options = [];
-            // Parse form_definition if it's a JSON string
-            if (typeof assessment.form_definition === "string") {
-              try {
-                options = JSON.parse(assessment.form_definition);
-              } catch (e) {
-                console.error("Failed to parse form_definition:", e);
-                options = [];
+          const normalizeFormDefinition = (def) => {
+            // Try to robustly parse strings which might be double-encoded JSON
+            let parsed = def;
+            try {
+              // If it's a string that looks like JSON, repeatedly parse up to a few times
+              let attempts = 0;
+              while (typeof parsed === "string" && attempts < 5) {
+                const trimmed = parsed.trim();
+                // If it starts with [ or { or " then attempt parse
+                if (trimmed.startsWith("[") || trimmed.startsWith("{") || trimmed.startsWith('"')) {
+                  parsed = JSON.parse(parsed);
+                  attempts++;
+                } else {
+                  break;
+                }
               }
-            } else if (Array.isArray(assessment.form_definition)) {
-              options = assessment.form_definition;
+            } catch (e) {
+              // If parsing fails, fallback to using the original value
+              // eslint-disable-next-line no-console
+              console.warn("normalizeFormDefinition: failed to parse", e);
+              parsed = def;
             }
+
+            // Now normalize into an array of strings
+            if (Array.isArray(parsed)) {
+              // If items are objects, try to extract a label/text property
+              if (parsed.every((it) => typeof it === "string")) return parsed;
+              if (parsed.every((it) => it && typeof it === "object")) {
+                return parsed.map((it) => it.label || it.text || String(it));
+              }
+              // Mixed types - coerce to strings
+              return parsed.map((it) => String(it));
+            }
+
+            // If parsed is an object containing an options/choices field
+            if (parsed && typeof parsed === "object") {
+              if (Array.isArray(parsed.options)) return parsed.options.map((it) => (typeof it === 'string' ? it : it.label || it.text || String(it)));
+              if (Array.isArray(parsed.choices)) return parsed.choices.map((it) => (typeof it === 'string' ? it : it.label || it.text || String(it)));
+            }
+
+            // Not parseable into an array - return empty array
+            return [];
+          };
+
+          questions.value = resQ.data.map((assessment) => {
+            const options = normalizeFormDefinition(assessment.form_definition);
 
             return {
               id: assessment.id,

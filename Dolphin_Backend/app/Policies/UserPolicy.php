@@ -16,6 +16,14 @@ class UserPolicy
     public function impersonate(User $user, User $targetUser): bool
     {
         // A superadmin can impersonate any user, except another superadmin or themselves.
-        return $user->isSuperAdmin() && !$targetUser->isSuperAdmin() && $user->id !== $targetUser->id;
+        // Use role helper from HasRoles trait to avoid undefined method errors.
+        $isRequesterSuperAdmin = method_exists($user, 'hasRole')
+            ? $user->hasRole('superadmin')
+            : false;
+        $isTargetSuperAdmin = method_exists($targetUser, 'hasRole')
+            ? $targetUser->hasRole('superadmin')
+            : false;
+
+        return $isRequesterSuperAdmin && !$isTargetSuperAdmin && $user->id !== $targetUser->id;
     }
 }

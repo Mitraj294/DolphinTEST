@@ -38,6 +38,14 @@
                 ]"
                 required
               />
+              <!-- Inline filter for custom referral text when Other selected -->
+              <input
+                v-if="form.referral_source_id === 10"
+                v-model="form.referral_other_text"
+                placeholder="Specify Other Source"
+                class="org-search"
+                style="max-width:220px;"
+              />
             </div>
 
             <!-- Add New Lead Button -->
@@ -241,7 +249,7 @@ export default {
     // States
     const leads = ref([]);
     const search = ref("");
-    const form = ref({ organization_size: null, referral_source_id: null });
+  const form = ref({ organization_size: null, referral_source_id: null, referral_other_text: '' });
     const isLoading = ref(false);
     const referralSources = ref([]);
 
@@ -479,11 +487,15 @@ export default {
         );
       }
       if (form.value.referral_source_id) {
-        filtered = filtered.filter(
-          (lead) =>
-            String(lead.referral_source_id) ===
-            String(form.value.referral_source_id)
-        );
+        filtered = filtered.filter((lead) => String(lead.referral_source_id) === String(form.value.referral_source_id));
+        // If "Other" is selected and user types custom text, further filter
+        if (Number(form.value.referral_source_id) === 10 && form.value.referral_other_text) {
+          const txt = form.value.referral_other_text.toLowerCase();
+          filtered = filtered.filter((lead) => {
+            if (Number(lead.referral_source_id) !== 10) return false;
+            return (lead.referral_other_text || '').toLowerCase().includes(txt);
+          });
+        }
       }
       return filtered;
     });

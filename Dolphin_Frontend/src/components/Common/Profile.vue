@@ -41,12 +41,8 @@
               <div class="profile-value">{{ formattedRole }}</div>
             </div>
             <div class="profile-info-row">
-              <div class="profile-label">Country</div>
-              <div class="profile-value">{{ profile.country }}</div>
-            </div>
-            <div class="profile-info-row">
               <div class="profile-label">Phone</div>
-              <div class="profile-value">{{ profile.phone }}</div>
+              <div class="profile-value">{{ profile.phone_number }}</div>
             </div>
           </div>
 
@@ -117,22 +113,10 @@
                   >Phone</FormLabel
                 >
                 <FormInput
-                  v-model="editForm.phone"
+                  v-model="editForm.phone_number"
                   icon="fas fa-phone"
                   type="text"
                   placeholder="Enter phone number"
-                />
-              </FormRow>
-              <FormRow style="margin-bottom: 0 !important">
-                <FormLabel
-                  style="font-size: 1rem !important; margin: 0 !important"
-                  >Country</FormLabel
-                >
-                <FormDropdown
-                  v-model="editForm.country_id"
-                  icon="fas fa-globe"
-                  :options="countries"
-                  placeholder="Select country"
                 />
               </FormRow>
 
@@ -281,7 +265,6 @@ import MainLayout from "@/components/layout/MainLayout.vue";
 import ConfirmDialog from "primevue/confirmdialog";
 import Toast from "primevue/toast";
 
-import FormDropdown from "@/components/Common/Common_UI/Form/FormDropdown.vue";
 
 // Services & Utils
 import storage from "@/services/storage";
@@ -294,7 +277,6 @@ const confirm = useConfirm();
 // --- STATE MANAGEMENT ---
 
 const profile = ref(null);
-const countries = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
 const isUpdating = ref(false);
@@ -307,8 +289,7 @@ const editForm = reactive({
   first_name: "",
   last_name: "",
   email: "",
-  phone: "",
-  country_id: "",
+  phone_number: "",
 });
 
 const passwordForm = reactive({
@@ -354,16 +335,7 @@ const fetchProfile = async () => {
   }
 };
 
-const fetchCountries = async () => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/api/countries`, {
-      headers: { Authorization: `Bearer ${authToken}` },
-    });
-    countries.value = response.data.map((c) => ({ value: c.id, text: c.name }));
-  } catch (err) {
-    console.error("Failed to fetch countries:", err);
-  }
-};
+// No country dropdown needed anymore
 
 const openEditModal = () => {
   if (!profile.value) return;
@@ -371,8 +343,7 @@ const openEditModal = () => {
   editForm.first_name = profile.value.first_name;
   editForm.last_name = profile.value.last_name;
   editForm.email = profile.value.email;
-  editForm.phone = profile.value.phone;
-  editForm.country_id = profile.value.country_id;
+  editForm.phone_number = profile.value.phone_number;
   isEditModalVisible.value = true;
 };
 
@@ -384,8 +355,7 @@ const handleUpdateProfile = async () => {
       user_details: {
         first_name: editForm.first_name,
         last_name: editForm.last_name,
-        phone: editForm.phone,
-        country: editForm.country_id,
+        phone_number: editForm.phone_number,
       },
     };
     const response = await axios.patch(`${API_BASE_URL}/api/profile`, payload, {
@@ -487,7 +457,6 @@ const confirmDeleteAccount = () => {
 // --- LIFECYCLE HOOK ---
 onMounted(() => {
   fetchProfile();
-  fetchCountries();
 });
 </script>
 

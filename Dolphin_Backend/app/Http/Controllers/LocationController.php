@@ -74,7 +74,8 @@ class LocationController extends Controller
     public function referralSources()
     {
         Log::info('[LocationController] Fetching referral sources');
-        $sources = ReferralSource::orderBy('name')->get(['id', 'name']);
+        // Order strictly by id to preserve canonical ordering user expects (no alphabetical reordering)
+        $sources = ReferralSource::orderBy('id')->get(['id', 'name']);
         Log::info('[LocationController] Referral sources fetched', ['count' => count($sources)]);
         return response()->json($sources);
     }

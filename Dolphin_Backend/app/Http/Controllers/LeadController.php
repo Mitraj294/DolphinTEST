@@ -86,7 +86,78 @@ class LeadController extends Controller
             'city_id'            => LeadValidationRules::OPTIONAL_INTEGER,
         ]);
 
-        $lead->update($data);
+        // Update the lead itself for its own columns only
+        $leadUpdate = [
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'email' => $data['email'],
+            'phone_number' => $data['phone_number'],
+            'status' => $data['status'] ?? $lead->status,
+        ];
+        $lead->update($leadUpdate);
+
+        // Handle related Organization + Address updates when provided
+        $orgFieldKeys = [
+            'organization_name', 'organization_size', 'referral_source_id', 'referral_other_text',
+            'address_line_1', 'address_line_2', 'country_id', 'state_id', 'city_id', 'zip_code'
+        ];
+        $hasOrgRelatedInput = collect($orgFieldKeys)->some(fn($k) => array_key_exists($k, $data) && $data[$k] !== null && $data[$k] !== '');
+
+        if ($hasOrgRelatedInput || !empty($data['organization_id'])) {
+            // Resolve existing or create a new organization if fields provided
+            $org = null;
+            if (!empty($lead->organization_id)) {
+                $org = \App\Models\Organization::find($lead->organization_id);
+            } elseif (!empty($data['organization_id'])) {
+                $org = \App\Models\Organization::find($data['organization_id']);
+            }
+
+            if (!$org) {
+                // Create minimal organization if any org fields present
+                $org = \App\Models\Organization::create([
+                    'name' => $data['organization_name'] ?? null,
+                    'size' => $data['organization_size'] ?? null,
+                    'referral_source_id' => $data['referral_source_id'] ?? null,
+                    'referral_other_text' => (isset($data['referral_source_id']) && (int)$data['referral_source_id'] === 10)
+                        ? ($data['referral_other_text'] ?? null)
+                        : null,
+                ]);
+                $lead->organization_id = $org->id;
+                $lead->save();
+            } else {
+                // Update organization core fields if provided
+                $newReferralSourceId = $data['referral_source_id'] ?? $org->referral_source_id;
+                $newReferralOtherText = null;
+                if ((int)$newReferralSourceId === 10) {
+                    $newReferralOtherText = $data['referral_other_text'] ?? $org->referral_other_text;
+                }
+
+                $org->fill([
+                    'name' => $data['organization_name'] ?? $org->name,
+                    'size' => $data['organization_size'] ?? $org->size,
+                    'referral_source_id' => $newReferralSourceId,
+                    'referral_other_text' => $newReferralOtherText,
+                ]);
+                if ($org->isDirty()) {
+                    $org->save();
+                }
+            }
+
+            // Update or create address for organization when address fields provided
+            $addressPayload = array_intersect_key($data, array_flip([
+                'address_line_1', 'address_line_2', 'country_id', 'state_id', 'city_id', 'zip_code'
+            ]));
+            if (!empty($addressPayload)) {
+                $addressPayload['organization_id'] = $org->id;
+                \App\Models\OrganizationAddress::updateOrCreate(
+                    ['organization_id' => $org->id],
+                    $addressPayload
+                );
+            }
+        }
+
+        // Return the updated lead with minimal org info for UI coherence
+        $lead->load('organization.address', 'organization.referralSource');
         return response()->json(['message' => 'Lead updated successfully', 'lead' => $lead]);
     }
 
@@ -211,18 +282,22 @@ class LeadController extends Controller
             'organization.address'
         ];
 
-        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+        // Role-based visibility
+        if (method_exists($user, 'hasRole') && ($user->hasRole('superadmin') || $user->hasRole('dolphinadmin') || $user->hasRole('salesperson'))) {
+            // Admin-style roles can view all leads
             $leads = Lead::with($with)->get();
+        } elseif (method_exists($user, 'hasRole') && $user->hasRole('organizationadmin')) {
+            // Organization admin can see leads for their organization only
+            $orgId = \App\Models\Organization::where('user_id', $user->id)->value('id');
+            $leads = Lead::with($with)
+                ->when($orgId, fn($q) => $q->where('organization_id', $orgId), fn($q) => $q->whereRaw('1=0'))
+                ->get();
         } elseif (Schema::hasColumn('leads', 'created_by')) {
+            // Fallback: creator-scoped
             $leads = Lead::with($with)->where('created_by', $user->id)->get();
         } else {
-            $orgId = null;
-            try {
-                $orgId = $user->belongsToOrganization()->getQuery()->value('id');
-            } catch (\Exception $e) {
-                Log::warning('LeadController@index failed to determine user organization: ' . $e->getMessage());
-            }
-            $leads = Lead::with($with)->where('organization_id', $orgId)->get();
+            // No matching scope — return empty set
+            $leads = collect();
         }
 
         $payload = $leads->map(function ($lead) {
@@ -636,7 +711,8 @@ class LeadController extends Controller
 
     public function findUsOptions()
     {
-        $sources = \App\Models\ReferralSource::orderBy('name')->get(['id', 'name']);
+        // Preserve ordering by numeric id as requested (instead of alphabetical name)
+        $sources = \App\Models\ReferralSource::orderBy('id')->get(['id', 'name']);
 
         if ($sources->isEmpty()) {
             Log::info('Referral sources: none found');

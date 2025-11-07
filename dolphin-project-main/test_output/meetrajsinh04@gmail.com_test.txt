@@ -1,0 +1,149 @@
+-----------------Test Results for meetrajsinh04@gmail.com------------------
+
+Test Subject: meetrajsinh04@gmail.com
+
+Self Total Words: 31
+Concept Total Words: 23
+Adjusted Total Words: 14
+
+################################
+####### Weight Results #########
+################################
+
+******* Self Projection *******
+
+A percent: 49.81%
+
+B percent: 51.24%
+
+C percent: 32.66%
+
+D percent: 27.79%
+
+Average: 40.37%
+
+Decision Approach: 40.33%
+
+A | -------------------------------------------------0--------------------------------------------------
+B | --------------------------------------------------0-------------------------------------------------
+C | --------------------------------0-------------------------------------------------------------------
+D | ---------------------------0------------------------------------------------------------------------
+DA| ---------------------------------------0------------------------------------------------------------
+L | ---------------------------------------|------------------------------------------------------------
+
+******* Concept Projection *******
+
+A percent: 22.00%
+
+B percent: 21.92%
+
+C percent: 26.60%
+
+D percent: 45.79%
+
+Average: 29.08%
+
+A | ---------------------0------------------------------------------------------------------------------
+B | ---------------------0------------------------------------------------------------------------------
+C | --------------------------0-------------------------------------------------------------------------
+D | ---------------------------------------------0------------------------------------------------------
+L | ----------------------------|-----------------------------------------------------------------------
+
+######################################
+### Count for Self word categories ###
+######################################
+A Count: 8
+B Count: 9
+C Count: 6
+D Count: 8
+
+---------- Self A words ----------
+agreeable
+assertive
+competitive
+confident
+daring
+demanding
+resourceful
+submissive
+---------------------------------
+
+---------- Self B words ----------
+charismatic
+friendly
+gregarious
+logical
+outgoing
+sociable
+sophisticated
+stimulating
+thoughtful
+---------------------------------
+
+---------- Self C words ----------
+calm
+forceful
+intense
+passive
+patient
+relaxed
+---------------------------------
+
+---------- Self D words ----------
+arbitrary
+conventional
+dutiful
+formal
+inflexible
+neat
+precise
+responsive
+---------------------------------
+
+#########################################
+### Count for Concept word categories ###
+#########################################
+A Count: 4
+B Count: 5
+C Count: 3
+D Count: 11
+
+---------- Concept A words ----------
+demanding
+selfstarter
+timid
+unassuming
+---------------------------------
+
+---------- Concept B words ----------
+logical
+reserved
+shy
+sophisticated
+stimulating
+---------------------------------
+
+---------- Concept C words ----------
+consistent
+forceful
+tranquil
+---------------------------------
+
+---------- Concept D words ----------
+conscientious
+disciplined
+formal
+fussy
+inflexible
+meticulous
+organized
+precise
+respectful
+responsive
+uninhibited
+---------------------------------
+
+----------------- End of meetrajsinh04@gmail.com's test! ------------------
+
+
+

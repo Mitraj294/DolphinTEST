@@ -85,4 +85,19 @@ class Organization extends Model
         return $this->belongsToMany(Announcement::class, 'announcement_organizations')
             ->withTimestamps();
     }
+
+    /**
+     * Latest active subscription for the organization owner (user_id).
+     *
+     * Some parts of the application eager-load `activeSubscription` from
+     * Organization, but subscriptions are stored per user. Expose a has-one
+     * relation that points to the owning user's latest active subscription so
+     * `with('activeSubscription')` works and middleware can query it.
+     */
+    public function activeSubscription(): HasOne
+    {
+        return $this->hasOne(Subscription::class, 'user_id', 'user_id')
+            ->where('status', 'active')
+            ->latestOfMany('created_at');
+    }
 }
