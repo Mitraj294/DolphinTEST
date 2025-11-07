@@ -63,23 +63,16 @@ class Subscription extends Model
     /** Determine if subscription is currently active. */
     public function isActive(): bool
     {
-        $active = $this->status === 'active';
-        if (! $active) {
-            return false;
-        }
+        $statusActive = $this->status === 'active';
 
         // If paused or canceled at period end and we're past the end date, treat as inactive.
         $periodEnded = $this->cancel_at_period_end && $this->current_period_end && $this->current_period_end->isPast();
-        if ($periodEnded) {
-            return false;
-        }
 
         $hasEnded = $this->ends_at && $this->ends_at->isPast();
-        if ($hasEnded) {
-            return false;
-        }
 
-        return true;
+        $isActive = $statusActive && ! $periodEnded && ! $hasEnded;
+
+        return (bool) $isActive;
     }
 
     /** Determine if subscription is in trial period. */

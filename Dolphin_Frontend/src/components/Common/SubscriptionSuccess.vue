@@ -48,7 +48,7 @@
               <div class="plan-name">{{ plan_name }}</div>
               <div class="plan-price">
                 <span class="price">${{ formattedAmount }}</span>
-                <span class="period">/{{ planPeriodDisplay }}</span>
+                <span class="period">/ {{ planPeriodDisplay }}</span>
               </div>
               <div class="plan-meta">
                 <span class="status" :class="subscriptionStatusClass">
@@ -61,6 +61,10 @@
                 View Billing Details
               </button>
             </div>
+          </div>
+
+          <div v-if="subscription?.pdfUrl" class="receipt-link">
+            <a :href="subscription.pdfUrl" target="_blank" rel="noopener">View Receipt</a>
           </div>
 
           <div
@@ -123,11 +127,23 @@ const planPeriod = ref(null);
 // the human-friendly `plan_name` field.
 const statusInfo = ref(null);
 const plan_name = computed(() => {
+  const fromStatusPlanObj = statusInfo.value?.plan?.name;
+  const fromStatus = statusInfo.value?.plan_name;
+  const fromSubName = subscription.value?.plan_name;
+  const fromLocal = planName.value;
+  const subPlan = subscription.value?.plan;
+  const fromSubPlanName =
+    typeof subPlan === "object" && subPlan
+      ? subPlan.name
+      : typeof subPlan === "string"
+      ? subPlan
+      : null;
   return (
-    statusInfo.value?.plan_name ||
-    subscription.value?.plan_name ||
-    planName.value ||
-    subscription.value?.plan ||
+    fromStatusPlanObj ||
+    fromStatus ||
+    fromSubName ||
+    fromLocal ||
+    fromSubPlanName ||
     ""
   );
 });
@@ -249,14 +265,19 @@ const fetchSubscriptionDetails = async () => {
       // `plan_name`. Some endpoints return an internal `plan` id only.
       subscription.value = {
         plan_amount: d.plan_amount || d.amount || d.planAmount || null,
-        plan_name: d.plan_name || null, // only set when backend provided it
+        plan_name: d.plan_name || d.plan?.name || null, // prefer friendly label
         plan: d.plan || null,
         plan_period: d.period || d.plan_period || null,
         ends_at: d.subscription_end || d.end || d.ends_at || null,
         next_billing: d.next_billing || d.nextBill || d.next_bill_date || null,
         created_at: d.created_at || d.paymentDate || d.payment_date || null,
         status: d.status || null,
-        pdfUrl: d.pdfUrl || d.receipt_url || null,
+        pdfUrl:
+          d.latest_invoice?.invoice_url ||
+          d.invoice_url ||
+          d.receipt_url ||
+          d.pdfUrl ||
+          null,
       };
       // If the backend explicitly provided a human-friendly `plan_name`, we can stop.
       if (d.plan_name) return;

@@ -59,6 +59,14 @@ class SubscriptionService
 
             // Map stored invoices
             $invoices = $subscription->invoices->map(function ($invoice) use ($plan) {
+                $description = null;
+                if ($plan) {
+                    if (!empty($plan->description)) {
+                        $description = $plan->description;
+                    } else {
+                        $description = 'Dolphin ' . $plan->name . ' Plan';
+                    }
+                }
                 return [
                     'id' => $invoice->id,
                     'amount_due' => $invoice->amount_due,
@@ -68,13 +76,21 @@ class SubscriptionService
                     'paid_at' => $invoice->paid_at,
                     'invoice_url' => $invoice->hosted_invoice_url,
                     'stripe_invoice_id' => $invoice->stripe_invoice_id,
-                    // Description is not stored; provide a friendly fallback using plan name when available
-                    'description' => $plan ? ('Dolphin ' . $plan->name . ' Plan') : null,
+                    // Prefer plan description from DB; fall back to a friendly label when missing
+                    'description' => $description,
                 ];
             });
 
             // If no invoices recorded yet, synthesize a first entry from subscription & plan so UI has something to show
             if ($invoices->isEmpty()) {
+                $description = null;
+                if ($plan) {
+                    if (!empty($plan->description)) {
+                        $description = $plan->description;
+                    } else {
+                        $description = 'Dolphin ' . $plan->name . ' Plan';
+                    }
+                }
                 $invoices = collect([
                     [
                         'id' => null,
@@ -85,7 +101,7 @@ class SubscriptionService
                         'paid_at' => $subscription->started_at,
                         'invoice_url' => null,
                         'stripe_invoice_id' => null,
-                        'description' => $plan ? ('Dolphin ' . $plan->name . ' Plan') : null,
+                        'description' => $description,
                     ],
                 ]);
             }
