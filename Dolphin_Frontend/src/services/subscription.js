@@ -30,6 +30,10 @@ export async function fetchSubscriptionStatus() {
       cancelAtPeriodEnd: !!data.cancel_at_period_end,
       amountPaid: data.latest_amount_paid || null,
       currency: data.currency || null,
+      paymentMethod: data.payment_method || null,
+      paymentMethodType: data.payment_method_type || null,
+      paymentMethodBrand: data.payment_method_brand || null,
+      paymentMethodLast4: data.payment_method_last4 || null,
     };
 
     if (normalized.status && normalized.status !== "none") {
@@ -61,6 +65,10 @@ export async function fetchSubscriptionStatus() {
       cancelAtPeriodEnd: false,
       amountPaid: null,
       currency: null,
+      paymentMethod: null,
+      paymentMethodType: null,
+      paymentMethodBrand: null,
+      paymentMethodLast4: null,
     };
   }
 }

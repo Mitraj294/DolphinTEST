@@ -93,7 +93,7 @@ class SubscriptionController extends Controller
         $history = $user->subscriptions()
             ->latest('created_at')
             ->get()
-            ->map(fn($subscription) => $this->formatHistoryPayload($subscription));
+            ->flatMap(fn($subscription) => $this->formatHistoryPayload($subscription));
 
         return response()->json($history);
     }
@@ -192,34 +192,43 @@ class SubscriptionController extends Controller
 
     /**
      * Format the payload for a billing history item.
+     * Returns an array of invoice records for the subscription.
      */
     private function formatHistoryPayload(Subscription $subscription): array
     {
         $invoices = $subscription->invoices;
+        
+        // If there are no invoices, return a single record for the subscription
+        if ($invoices->isEmpty()) {
+            return [[
+                'subscription_id' => $subscription->id,
+                'plan_id' => $subscription->plan_id,
+                'status' => $subscription->status,
+                'subscriptionEnd' => $subscription->ends_at?->toDateTimeString(),
+                'paymentDate' => $subscription->started_at?->toDateTimeString(),
+                'payment_method' => $subscription->payment_method_label,
+                'amount' => null,
+                'pdfUrl' => null,
+                'description' => null,
+            ]];
+        }
 
-        return [
-            'subscription_id' => $subscription->id,
-            'plan_id' => $subscription->plan_id,
-            'status' => $subscription->status,
-            'started_at' => $subscription->started_at,
-            'ends_at' => $subscription->ends_at,
-            'current_period_end' => $subscription->current_period_end,
-            'payment_method' => $subscription->payment_method_label,
-            'payment_method_type' => $subscription->payment_method_type,
-            'payment_method_brand' => $subscription->payment_method_brand,
-            'payment_method_last4' => $subscription->payment_method_last4,
-            'invoices' => $invoices->map(function ($invoice) {
-                return [
-                    'id' => $invoice->id,
-                    'amount_due' => $invoice->amount_due,
-                    'amount_paid' => $invoice->amount_paid,
-                    'currency' => $invoice->currency,
-                    'status' => $invoice->status,
-                    'paid_at' => $invoice->paid_at,
-                    'invoice_url' => $invoice->hosted_invoice_url,
-                    'stripe_invoice_id' => $invoice->stripe_invoice_id,
-                ];
-            }),
-        ];
+        // Map each invoice to a billing history record
+        return $invoices->map(function ($invoice) use ($subscription) {
+            return [
+                'subscription_id' => $subscription->id,
+                'plan_id' => $subscription->plan_id,
+                'status' => $subscription->status,
+                'subscriptionEnd' => $subscription->ends_at?->toDateTimeString(),
+                'paymentDate' => $invoice->paid_at?->toDateTimeString(),
+                'payment_method' => $subscription->payment_method_label,
+                'amount' => $invoice->amount_paid,
+                'currency' => $invoice->currency,
+                'pdfUrl' => $invoice->hosted_invoice_url,
+                'description' => 'Subscription payment',
+                'invoice_id' => $invoice->id,
+                'stripe_invoice_id' => $invoice->stripe_invoice_id,
+            ];
+        })->toArray();
     }
 }
