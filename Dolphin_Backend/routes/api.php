@@ -57,7 +57,6 @@ Route::prefix('password')->group(function () {
 });
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
-Route::post('/stripe/checkout-session', [SubscriptionController::class, 'createCheckoutSession']);
 
 Route::prefix('assessments')->group(function () {
     Route::get('/{id}/summary', [AssessmentController::class, 'summary']);
@@ -113,6 +112,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::get('/token/status', [AuthController::class, 'tokenStatus']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
+
+    Route::post('/stripe/checkout-session', [SubscriptionController::class, 'createCheckoutSession']);
 
     Route::prefix('profile')->group(function () {
         Route::get('/', [AuthController::class, 'profile']);

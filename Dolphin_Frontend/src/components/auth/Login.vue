@@ -98,24 +98,9 @@ import storage from "@/services/storage";
 import { fetchCurrentUser } from "@/services/user";
 import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
-// Prefer a runtime-injected value (globalThis.__env) so the built app can be
-// configured without a rebuild. Fall back to globalThis.VUE_APP_API_BASE_URL or
-// the compiled process.env value.
-const API_BASE_URL =
-  (globalThis.__env && globalThis.__env.VUE_APP_API_BASE_URL) ||
-  globalThis.VUE_APP_API_BASE_URL ||
-  process.env.VUE_APP_API_BASE_URL ||
-  "";
-
-// Runtime-aware client credentials
-const CLIENT_ID =
-  (globalThis.__env && globalThis.__env.VUE_APP_CLIENT_ID) ||
-  process.env.VUE_APP_CLIENT_ID ||
-  "";
-const CLIENT_SECRET =
-  (globalThis.__env && globalThis.__env.VUE_APP_CLIENT_SECRET) ||
-  process.env.VUE_APP_CLIENT_SECRET ||
-  "";
+// NOTE: resolve runtime env values at call-time (when the methods run)
+// because module import happens before `loadRuntimeEnv()` and would
+// capture empty values otherwise.
 
 export default {
   name: "Login",
@@ -187,6 +172,7 @@ export default {
     },
     async handleLogin() {
       try {
+        const API_BASE_URL = (globalThis.__env && globalThis.__env.VUE_APP_API_BASE_URL) || globalThis.VUE_APP_API_BASE_URL || process.env.VUE_APP_API_BASE_URL || "";
         const response = await axios.post(`${API_BASE_URL}/api/login`, {
           email: this.email,
           password: this.password,
@@ -292,6 +278,10 @@ export default {
         if (!refreshToken) {
           throw new Error("No refresh token available");
         }
+
+        const API_BASE_URL = (globalThis.__env && globalThis.__env.VUE_APP_API_BASE_URL) || globalThis.VUE_APP_API_BASE_URL || process.env.VUE_APP_API_BASE_URL || "";
+        const CLIENT_ID = (globalThis.__env && globalThis.__env.VUE_APP_CLIENT_ID) || process.env.VUE_APP_CLIENT_ID || "";
+        const CLIENT_SECRET = (globalThis.__env && globalThis.__env.VUE_APP_CLIENT_SECRET) || process.env.VUE_APP_CLIENT_SECRET || "";
 
         const response = await axios.post(`${API_BASE_URL}/oauth/token`, {
           grant_type: "refresh_token",

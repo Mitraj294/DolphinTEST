@@ -2,16 +2,10 @@ import axios from "axios";
 import router from "../router";
 import storage from "./storage";
 
-// Runtime-aware client credentials: prefer runtime `globalThis.__env` (from /env.json)
-// then fallback to build-time process.env values.
-const CLIENT_ID =
-  (globalThis.__env && globalThis.__env.VUE_APP_CLIENT_ID) ||
-  process.env.VUE_APP_CLIENT_ID ||
-  "";
-const CLIENT_SECRET =
-  (globalThis.__env && globalThis.__env.VUE_APP_CLIENT_SECRET) ||
-  process.env.VUE_APP_CLIENT_SECRET ||
-  "";
+// NOTE: do NOT capture runtime env at module import time because
+// `loadRuntimeEnv()` runs asynchronously before app bootstrap. Resolve
+// client credentials and API base lazily at request-time so the values
+// injected into `/env.json` are used.
 
 // Helpers
 const isTokenExpired = (expiry) => {
@@ -110,15 +104,26 @@ axios.interceptors.response.use(
 
       // Only attempt refresh if we have a refresh token and haven't retried yet
       if (refreshToken && !originalRequest._retry) {
-        originalRequest._retry = true;
-        const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-        return axios
-          .post(`${API_BASE_URL}/oauth/token`, {
-            grant_type: "refresh_token",
-            refresh_token: refreshToken,
-            client_id: CLIENT_ID,
-            client_secret: CLIENT_SECRET,
-          })
+          originalRequest._retry = true;
+          // Resolve runtime values here so that `/env.json` (loaded at app
+          // bootstrap) is used by the refresh request.
+          const API_BASE_URL = (globalThis.__env && globalThis.__env.VUE_APP_API_BASE_URL) || globalThis.VUE_APP_API_BASE_URL || process.env.VUE_APP_API_BASE_URL || "";
+          const CLIENT_ID = (globalThis.__env && globalThis.__env.VUE_APP_CLIENT_ID) || process.env.VUE_APP_CLIENT_ID || "";
+          const CLIENT_SECRET = (globalThis.__env && globalThis.__env.VUE_APP_CLIENT_SECRET) || process.env.VUE_APP_CLIENT_SECRET || "";
+
+          // Sanity-check runtime-provided client credentials so failed refreshes
+          // due to missing env values are easier to spot in the browser devtools.
+          if (!CLIENT_ID || !CLIENT_SECRET) {
+            console.warn('OAuth client_id or client_secret appears empty. Ensure /env.json contains runtime credentials.');
+          }
+
+          return axios
+            .post(`${API_BASE_URL}/oauth/token`, {
+              grant_type: "refresh_token",
+              refresh_token: refreshToken,
+              client_id: CLIENT_ID,
+              client_secret: CLIENT_SECRET,
+            })
           .then((res) => {
             const newAccessToken = res.data.access_token;
             const newRefreshToken = res.data.refresh_token;
@@ -135,7 +140,7 @@ axios.interceptors.response.use(
             return handleUnauthorized(error);
           })
           .catch((e) => {
-            console.error("Refresh token failed:", e);
+            console.error("Refresh token failed:", e?.response?.data || e?.message || e);
             return handleUnauthorized(error);
           });
       }

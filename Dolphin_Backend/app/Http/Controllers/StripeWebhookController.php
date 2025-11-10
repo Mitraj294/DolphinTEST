@@ -62,7 +62,9 @@ class StripeWebhookController extends Controller
 
             match ($event->type) {
                 'checkout.session.completed' => $this->handleCheckoutSessionCompleted($event->data->object),
-                'invoice.paid' => $this->handleInvoicePaid($event->data->object),
+                'invoice.paid', 'invoice.payment_succeeded' => $this->handleInvoicePaid($event->data->object),
+                'customer.subscription.updated' => $this->handleSubscriptionUpdated($event->data->object),
+                'customer.subscription.deleted' => $this->handleSubscriptionDeleted($event->data->object),
                 default => Log::info('Stripe webhook type not handled explicitly', ['type' => $event->type]),
             };
 
@@ -92,6 +94,52 @@ class StripeWebhookController extends Controller
         $metadata = $this->convertStripeObjectToArray($session->metadata ?? []);
         $planId = $metadata['plan_id'] ?? null;
         $plan = $planId ? Plan::find($planId) : null;
+        $stripeSubscriptionId = $session->subscription ?? null;
+        $stripeSubscription = null;
+
+        // If metadata did not include a local plan id, try to infer the plan
+        // from the Stripe objects (subscription items or checkout session line items)
+        // by matching the Stripe price id to our `plans.stripe_price_id`.
+        if (! $plan) {
+            $priceId = null;
+
+            // If the checkout created a subscription, retrieve it and inspect items
+            if ($stripeSubscriptionId) {
+                try {
+                    // expand items.price and default_payment_method to extract useful info
+                    $stripeSubscription = StripeSubscription::retrieve($stripeSubscriptionId, [
+                        'expand' => ['items.data.price', 'default_payment_method'],
+                    ]);
+
+                    $priceId = $stripeSubscription->items->data[0]->price->id ?? null;
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to retrieve Stripe subscription while inferring plan', [
+                        'subscription_id' => $stripeSubscriptionId,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            // If still not found, attempt to retrieve the Checkout Session's line items
+            if (empty($priceId) && ! empty($session->id)) {
+                try {
+                    $checkout = \Stripe\Checkout\Session::retrieve($session->id, [
+                        'expand' => ['line_items.data.price'],
+                    ]);
+                    $priceId = $checkout->line_items->data[0]->price->id ?? null;
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to retrieve Checkout Session while inferring plan', [
+                        'session_id' => $session->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            if (! empty($priceId)) {
+                $plan = Plan::where('stripe_price_id', $priceId)->first();
+            }
+        }
+
         if (! $plan) {
             throw new \RuntimeException('Checkout session missing valid plan reference.');
         }
@@ -100,14 +148,17 @@ class StripeWebhookController extends Controller
             $user->forceFill(['stripe_id' => $session->customer])->save();
         }
 
-        $stripeSubscriptionId = $session->subscription ?? null;
-        if (! $stripeSubscriptionId) {
-            throw new \RuntimeException('Checkout session lacks Stripe subscription id.');
-        }
+        // Retrieve subscription if not already fetched above
+        if (empty($stripeSubscription)) {
+            $stripeSubscriptionId = $session->subscription ?? null;
+            if (! $stripeSubscriptionId) {
+                throw new \RuntimeException('Checkout session lacks Stripe subscription id.');
+            }
 
-        $stripeSubscription = StripeSubscription::retrieve($stripeSubscriptionId, [
-            'expand' => ['default_payment_method'],
-        ]);
+            $stripeSubscription = StripeSubscription::retrieve($stripeSubscriptionId, [
+                'expand' => ['default_payment_method'],
+            ]);
+        }
 
         $paymentMethod = null;
         if ($stripeSubscription->default_payment_method) {
@@ -124,6 +175,16 @@ class StripeWebhookController extends Controller
         $startedAt = $this->timestampToCarbon($stripeSubscription->current_period_start ?? $session->created ?? null);
         $currentPeriodEnd = $this->timestampToCarbon($stripeSubscription->current_period_end ?? null);
 
+        // Compute a sensible ends_at if Stripe did not provide one (fallback to plan frequency)
+        $endsAt = $currentPeriodEnd;
+        if (! $endsAt && $plan) {
+            if ($plan->type === 'monthly') {
+                $endsAt = $startedAt ? $startedAt->copy()->addMonth() : null;
+            } elseif ($plan->type === 'yearly') {
+                $endsAt = $startedAt ? $startedAt->copy()->addYear() : null;
+            }
+        }
+
         Subscription::updateOrCreate(
             ['stripe_subscription_id' => $stripeSubscriptionId],
             [
@@ -133,7 +194,8 @@ class StripeWebhookController extends Controller
                 'status' => $stripeSubscription->status ?? ($session->payment_status === 'paid' ? 'active' : $session->payment_status),
                 'started_at' => $startedAt,
                 'current_period_end' => $currentPeriodEnd,
-                'ends_at' => $currentPeriodEnd,
+                'trial_ends_at' => $this->timestampToCarbon($stripeSubscription->trial_end ?? null),
+                'ends_at' => $endsAt,
                 'cancel_at_period_end' => (bool) ($stripeSubscription->cancel_at_period_end ?? false),
                 'is_paused' => ! empty($stripeSubscription->pause_collection),
                 'default_payment_method_id' => $stripeSubscription->default_payment_method ?? null,
@@ -147,11 +209,36 @@ class StripeWebhookController extends Controller
 
     private function handleInvoicePaid(object $invoice): void
     {
-        if (! isset($invoice->subscription)) {
-            throw new \RuntimeException('Invoice payload missing subscription id.');
+        // Some invoices are one-off or may arrive without a subscription id.
+        // Try to resolve the subscription by stripe_subscription_id first; if
+        // missing, attempt to match by customer to a recent subscription in DB.
+        $stripeSubscriptionId = $invoice->subscription ?? null;
+
+        if ($stripeSubscriptionId) {
+            $subscription = Subscription::where('stripe_subscription_id', $stripeSubscriptionId)->first();
+        } else {
+            $subscription = null;
         }
 
-        $subscription = Subscription::where('stripe_subscription_id', $invoice->subscription)->firstOrFail();
+        if (! $subscription) {
+            // Try to find a subscription for this customer (best-effort).
+            $customerId = $invoice->customer ?? null;
+            if ($customerId) {
+                $subscription = Subscription::where('stripe_customer_id', $customerId)
+                    ->orderByDesc('current_period_end')
+                    ->first();
+            }
+        }
+
+        if (! $subscription) {
+            // Log the payload for manual inspection and skip processing this invoice.
+            Log::warning('Invoice webhook arrived without resolvable subscription', [
+                'invoice_id' => $invoice->id ?? null,
+                'customer' => $invoice->customer ?? null,
+            ]);
+
+            return;
+        }
 
         if (SubscriptionInvoice::where('stripe_invoice_id', $invoice->id)->exists()) {
             Log::info('Invoice webhook already processed', ['stripe_invoice_id' => $invoice->id]);
@@ -159,10 +246,13 @@ class StripeWebhookController extends Controller
             return;
         }
 
-    $dueDate = $this->timestampToCarbon($invoice->due_date ?? null)?->toDateString();
-    $statusTransitions = $invoice->status_transitions ?? null;
-    $paidAtValue = $statusTransitions ? ($statusTransitions->paid_at ?? null) : null;
-    $paidAt = $this->timestampToCarbon($paidAtValue);
+        // Determine due date: prefer Stripe's due_date, otherwise fallback to created + 1 day
+        $dueTs = $invoice->due_date ?? $invoice->created ?? null;
+        $dueDate = $this->timestampToCarbon($dueTs) ?? $this->timestampToCarbon($invoice->created ?? null)?->addDay();
+
+        $statusTransitions = $invoice->status_transitions ?? null;
+        $paidAtValue = $statusTransitions ? ($statusTransitions->paid_at ?? null) : null;
+        $paidAt = $this->timestampToCarbon($paidAtValue);
 
         SubscriptionInvoice::create([
             'subscription_id' => $subscription->id,
@@ -248,6 +338,66 @@ class StripeWebhookController extends Controller
         };
 
         return $convert($object, $initialDepth) ?: [];
+    }
+
+    /**
+     * Handle subscription updates from Stripe and sync important fields.
+     */
+    private function handleSubscriptionUpdated(object $stripeSubscription): void
+    {
+        $stripeSubscription = $this->convertStripeObjectToArray($stripeSubscription);
+        $stripeId = $stripeSubscription['id'] ?? null;
+        if (! $stripeId) {
+            Log::warning('Received subscription.updated webhook without id');
+            return;
+        }
+
+        $sub = Subscription::where('stripe_subscription_id', $stripeId)->first();
+        if (! $sub) {
+            Log::info('Subscription update for unknown subscription; skipping', ['stripe_subscription_id' => $stripeId]);
+            return;
+        }
+
+        $currentPeriodEnd = isset($stripeSubscription['current_period_end']) ? $this->timestampToCarbon($stripeSubscription['current_period_end']) : null;
+        $trialEndsAt = isset($stripeSubscription['trial_end']) ? $this->timestampToCarbon($stripeSubscription['trial_end']) : null;
+        $cancelAtPeriodEnd = ! empty($stripeSubscription['cancel_at_period_end']);
+        $isPaused = ! empty($stripeSubscription['pause_collection']);
+
+        $sub->forceFill([
+            'status' => $stripeSubscription['status'] ?? $sub->status,
+            'current_period_end' => $currentPeriodEnd,
+            'trial_ends_at' => $trialEndsAt,
+            'cancel_at_period_end' => $cancelAtPeriodEnd,
+            'is_paused' => $isPaused,
+        ])->save();
+    }
+
+    /**
+     * Handle subscription deletion/cancellation events.
+     */
+    private function handleSubscriptionDeleted(object $stripeSubscription): void
+    {
+        $stripeSubscription = $this->convertStripeObjectToArray($stripeSubscription);
+        $stripeId = $stripeSubscription['id'] ?? null;
+        if (! $stripeId) {
+            Log::warning('Received subscription.deleted webhook without id');
+            return;
+        }
+
+        $sub = Subscription::where('stripe_subscription_id', $stripeId)->first();
+        if (! $sub) {
+            Log::info('Subscription deleted for unknown subscription; skipping', ['stripe_subscription_id' => $stripeId]);
+            return;
+        }
+
+        // Set ends_at to current_period_end if present, otherwise mark deleted_at now
+        $currentPeriodEnd = isset($stripeSubscription['current_period_end']) ? $this->timestampToCarbon($stripeSubscription['current_period_end']) : null;
+
+        if ($currentPeriodEnd) {
+            $sub->forceFill(['status' => $stripeSubscription['status'] ?? 'canceled', 'current_period_end' => $currentPeriodEnd, 'ends_at' => $currentPeriodEnd])->save();
+        } else {
+            $sub->delete(); // uses SoftDeletes -> sets deleted_at
+        }
     }
 
     private function timestampToCarbon($value): ?Carbon

@@ -58,7 +58,16 @@ class SubscriptionController extends Controller
                 'cancel_url' => $cancelUrl,
                 'client_reference_id' => (string) $user->id,
                 'metadata' => [
+                    'user_id' => (string) $user->id,
                     'plan_id' => (string) $plan->id,
+                    'price_id' => (string) $validated['price_id'],
+                ],
+                'subscription_data' => [
+                    'metadata' => [
+                        'user_id' => (string) $user->id,
+                        'plan_id' => (string) $plan->id,
+                        'price_id' => (string) $validated['price_id'],
+                    ],
                 ],
             ]);
         } catch (ApiErrorException $exception) {
@@ -70,6 +79,7 @@ class SubscriptionController extends Controller
 
             return response()->json(['error' => 'Unable to create checkout session'], 422);
         }
+
 
         return response()->json([
             'id' => $session->id,
@@ -115,5 +125,50 @@ class SubscriptionController extends Controller
             ?? 'http://localhost:8080';
 
         return rtrim($base, '/');
+    }
+
+    /**
+     * Determine whether the given subscription has expired.
+     *
+     * Middleware currently expects this helper on the controller. Keep it
+     * lightweight and delegate to the model's helpers where possible.
+     *
+     * @param  \App\Models\Subscription|int|null  $subscription
+     * @return bool
+     */
+    public function hasExpired($subscription): bool
+    {
+        if (! $subscription) {
+            return true;
+        }
+
+        // Accept either an ID or a model instance
+        if (is_numeric($subscription)) {
+            $subscription = \App\Models\Subscription::find($subscription);
+            if (! $subscription) {
+                return true;
+            }
+        }
+
+        // Prefer a model-level helper if available
+        if (method_exists($subscription, 'isActive')) {
+            return ! $subscription->isActive();
+        }
+
+        // Fallback checks: expired status or ends_at in the past
+        if (isset($subscription->status) && $subscription->status === 'expired') {
+            return true;
+        }
+
+        if (isset($subscription->ends_at) && $subscription->ends_at) {
+            try {
+                return \Carbon\Carbon::parse($subscription->ends_at)->isPast();
+            } catch (\Throwable $e) {
+                // If parsing fails, consider it expired to be safe
+                return true;
+            }
+        }
+
+        return false;
     }
 }
