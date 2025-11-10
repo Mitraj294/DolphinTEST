@@ -10,6 +10,7 @@ use App\Http\Requests\IndexAssessmentRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class AssessmentController extends Controller
 {
@@ -101,10 +102,46 @@ class AssessmentController extends Controller
         try {
             $assessment = OrganizationAssessment::findOrFail($id);
 
-            // Get responses from assessment_responses table (not the old assessment_question_answers)
-            $responses = DB::table('assessment_responses')
-                ->where('assessment_id', $id)
-                ->get();
+            // Members assigned to this organization assessment
+            $memberIds = DB::table('organization_assessment_member')
+                ->where('organization_assessment_id', $assessment->id)
+                ->pluck('user_id')
+                ->unique()
+                ->values();
+
+            // Build a base query of responses submitted by those members.
+            // NOTE: assessment_responses.assessment_id points to the template table "assessment".
+            // Without a direct link to OrganizationAssessment, we scope by:
+            //  - user is a member of this org assessment
+            //  - and response was created at or after the member was attached to this org assessment
+            //  - and optionally after the scheduled date/time of the org assessment if provided
+            if ($memberIds->isEmpty()) {
+                $responses = collect();
+            } else {
+                $responsesQuery = DB::table('assessment_responses as ar')
+                    ->join('organization_assessment_member as oam', 'oam.user_id', '=', 'ar.user_id')
+                    ->where('oam.organization_assessment_id', $assessment->id)
+                    ->whereIn('ar.user_id', $memberIds)
+                    ->select('ar.*', 'oam.created_at as assigned_at');
+
+                // Filter responses that occurred after the assignment to reduce cross-assignment noise
+                $responsesQuery->whereColumn('ar.created_at', '>=', 'oam.created_at');
+
+                // If the OrganizationAssessment has a scheduled date/time, prefer responses after that
+                if (!empty($assessment->date)) {
+                    try {
+                        // Combine date and time (time may already be a Carbon instance)
+                        $scheduledAt = $assessment->time instanceof Carbon
+                            ? Carbon::parse($assessment->date->toDateString() . ' ' . $assessment->time->format('H:i:s'))
+                            : Carbon::parse($assessment->date->toDateString() . ' 00:00:00');
+                        $responsesQuery->where('ar.created_at', '>=', $scheduledAt);
+                    } catch (\Exception $e) {
+                        // if parsing fails, ignore scheduling filter
+                    }
+                }
+
+                $responses = $responsesQuery->orderBy('ar.created_at', 'desc')->get();
+            }
 
             // Get unique users who responded
             $userIds = $responses->pluck('user_id')->unique();

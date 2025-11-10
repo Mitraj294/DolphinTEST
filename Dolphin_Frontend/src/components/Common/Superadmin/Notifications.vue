@@ -805,13 +805,14 @@ export default {
         };
         if (scheduled_at) payload.scheduled_at = scheduled_at;
 
-        const res = await axios.post(apiUrl + "/notifications/send", payload, {
+        // Endpoint consolidated: POST /api/announcements now both creates and dispatches
+        const res = await axios.post(apiUrl + "/announcements", payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         // Respect server's success flag when present. Older endpoints may still
         // return success:false with a helpful error message in `res.data.error`.
-        const serverSuccess = res && res.data && (res.data.success === true || res.status === 200 && !res.data.error);
+  const serverSuccess = res && res.data && (res.status === 201 || res.data.success === true) && !res.data.error;
 
         if (!serverSuccess) {
           const errMsg = (res && res.data && res.data.error) || "Failed to send announcement";
@@ -830,7 +831,7 @@ export default {
             this.$toast.add({
               severity: "success",
               summary: "Success",
-              detail: "Announcement sent!",
+              detail: "Announcement created & dispatched!",
               life: 3000,
             });
         }

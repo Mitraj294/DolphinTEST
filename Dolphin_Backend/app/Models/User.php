@@ -76,6 +76,8 @@ class User extends Authenticatable
     // without errors.
     use HasRoles;
 
+    // Legacy relationship (organization_users pivot) retained for backward compatibility.
+    // Prefer organizationMemberships() which uses organization_member.
     public function organizations(): BelongsToMany
     {
         return $this->belongsToMany(Organization::class, 'organization_users')
@@ -83,6 +85,7 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    // Primary organization membership relation (replacement for organizations()).
     public function organizationMemberships(): BelongsToMany
     {
         return $this->belongsToMany(Organization::class, 'organization_member')

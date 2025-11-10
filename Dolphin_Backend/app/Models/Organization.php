@@ -52,6 +52,7 @@ class Organization extends Model
         return $this->hasOne(OrganizationAddress::class);
     }
 
+    // Legacy relationship (organization_users pivot). Prefer members().
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'organization_users')
@@ -59,6 +60,7 @@ class Organization extends Model
             ->withTimestamps();
     }
 
+    // Primary membership pivot used across Groups and Assessments
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'organization_member')

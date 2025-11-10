@@ -90,18 +90,11 @@ class SendAgreementController extends Controller
 
     public function validateGuest(Request $request)
     {
-        $guestCode = $request->query('guest_code');
-        if ($guestCode) {
-            // NOTE: Guest code functionality removed (guest_links table deleted)
-            return response()->json([
-                'valid' => false,
-                'message' => 'Guest code functionality has been removed. Please login normally.'
-            ], 200);
-        } else {
-            $token = $request->query('token');
-            [$responseData, $status] = $this->validateTokenFlow($token);
-            return response()->json($responseData, $status);
-        }
+        // Deprecated endpoint: guest access has been removed.
+        return response()->json([
+            'valid' => false,
+            'message' => 'Guest validation has been removed. Please login normally.'
+        ], 410);
     }
 
     private function resolveLead(array $validated): ?Lead
@@ -217,85 +210,7 @@ class SendAgreementController extends Controller
         }
     }
 
-    private function validateTokenFlow($token): array
-    {
-        $responseData = ['valid' => false];
-        $status = 200;
-
-        if (! $token) {
-            return [['error' => 'Missing token or guest_code'], 400];
-        }
-
-        $foundUser = null;
-
-        try {
-            $accessTokenModel = $this->resolveAccessTokenModelFromToken($token);
-            if ($accessTokenModel) {
-                $now = Carbon::now();
-                $expiresAt = isset($accessTokenModel->expires_at) ? Carbon::parse($accessTokenModel->expires_at) : null;
-                if (empty($accessTokenModel->revoked) && (! $expiresAt || $expiresAt->gt($now))) {
-                    $foundUser = \App\Models\User::find($accessTokenModel->user_id);
-                }
-            }
-        } catch (\Exception $e) {
-            Log::warning('validateGuest token check failed: ' . $e->getMessage());
-        }
-
-        if (! $foundUser) {
-            try {
-                $user = User::where('remember_token', $token)->first();
-                if ($user) {
-                    $foundUser = $user;
-                }
-            } catch (\Exception $e) {
-                Log::warning('validateGuest remember_token fallback failed: ' . $e->getMessage());
-            }
-        }
-
-        if ($foundUser) {
-            $responseData = [
-                'valid' => true,
-                'user' => [
-                    'id'        => $foundUser->id,
-                    'email'     => $foundUser->email,
-                    'first_name' => $foundUser->first_name,
-                    'last_name' => $foundUser->last_name,
-                ],
-            ];
-        }
-
-        return [$responseData, $status];
-    }
-
-    private function resolveAccessTokenModelFromToken(string $token)
-    {
-        $accessTokenModel = null;
-
-        if (strpos($token, '|') !== false) {
-            [$idPart] = explode('|', $token, 2);
-            $accessTokenModel = DB::table('oauth_access_tokens')->where('id', $idPart)->first();
-        }
-
-        if (! $accessTokenModel && substr_count($token, '.') === 2) {
-            try {
-                $parts = explode('.', $token);
-                $payloadB64 = $parts[1] ?? null;
-                $payloadJson = $payloadB64 ? base64_decode(strtr($payloadB64, '-_', '+/')) : null;
-                $payload = json_decode($payloadJson, true);
-                if (is_array($payload) && ! empty($payload['jti'])) {
-                    $accessTokenModel = DB::table('oauth_access_tokens')->where('id', $payload['jti'])->first();
-                }
-            } catch (\Exception $e) {
-                // ignore malformed JWTs here
-            }
-        }
-
-        if (! $accessTokenModel) {
-            $accessTokenModel = DB::table('oauth_access_tokens')->where('id', $token)->first();
-        }
-
-        return $accessTokenModel;
-    }
+    // validateTokenFlow() and resolveAccessTokenModelFromToken() removed (guest validation deprecated)
 
 
     // Prepare the final HTML content for the send-agreement email.

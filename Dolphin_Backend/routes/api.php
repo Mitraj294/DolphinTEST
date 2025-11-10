@@ -17,7 +17,7 @@ use App\Http\Controllers\PlanController;
 use App\Http\Controllers\SendAgreementController;
 use App\Http\Controllers\SendAssessmentController;
 use App\Http\Controllers\StripeSubscriptionController;
-use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\Billing\BillingController as BillingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WebhookLogController;
 
@@ -139,13 +139,13 @@ Route::middleware('auth:api')->group(function () {
 
     Route::prefix('subscription')->group(function () {
         Route::post('/refresh-role', [StripeSubscriptionController::class, 'refreshRole']);
-        Route::get('/', [SubscriptionController::class, 'getCurrentPlan']);
-        Route::get('/status', [SubscriptionController::class, 'subscriptionStatus']);
+        Route::get('/', [BillingController::class, 'current']);
+        Route::get('/status', [BillingController::class, 'status']);
     });
 
     Route::prefix('billing')->group(function () {
-        Route::get('/current', [SubscriptionController::class, 'getCurrentPlan']);
-        Route::get('/history', [SubscriptionController::class, 'getBillingHistory']);
+        Route::get('/current', [BillingController::class, 'current']);
+        Route::get('/history', [BillingController::class, 'history']);
     });
 
     // Basic announcement routes for all authenticated users
@@ -235,7 +235,7 @@ Route::middleware('auth:api')->group(function () {
         /* DOLPHIN ADMIN & SUPERADMIN */
         Route::middleware('auth.role:dolphinadmin,superadmin')->group(function () {
             Route::apiResource('leads', LeadController::class)->except(['index']);
-            Route::post('/notifications/send', [NotificationController::class, 'send']);
+            // Sending announcements is consolidated under POST /api/announcements
         });
 
         /* DOLPHIN ADMIN, SUPERADMIN & SALESPERSON */
