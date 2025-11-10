@@ -75,6 +75,10 @@
                   {{
                     currentPlan?.nextBill
                       ? formatDate(currentPlan.nextBill)
+                      : currentPlan?.current_period_end
+                      ? formatDate(currentPlan.current_period_end)
+                      : currentPlan?.end
+                      ? formatDate(currentPlan.end)
                       : "N/A"
                   }})
                 </div>
@@ -184,14 +188,22 @@
                           : ""
                       }}
                     </td>
-                    <td>{{ item.amount ? `${item.amount}` : "" }}$</td>
                     <td>
+                      <template v-if="item.amount">
+                        {{ item.currency && item.currency.toLowerCase() === 'usd' ? '$' : '' }}{{ item.amount }}
+                        <template v-if="item.currency && item.currency.toLowerCase() !== 'usd'"> {{ item.currency }}</template>
+                      </template>
+                    </td>
+                    <td>
+                      <!-- If server provides direct pdfUrl, use it (adds download attribute).
+                           Otherwise try to download via protected API (downloadInvoice) which includes auth header. -->
                       <a
                         v-if="item.pdfUrl"
                         :href="item.pdfUrl"
                         class="receipt-link"
                         target="_blank"
                         rel="noopener"
+                        :download="getFileNameFromUrl(item.pdfUrl)"
                         style="margin-left: 8px"
                       >
                         <svg
@@ -216,10 +228,43 @@
                             stroke-width="2"
                           />
                         </svg>
-                        View Receipt
+                        View / Download
                       </a>
+
+                      <button
+                        v-else-if="hasInvoiceId(item)"
+                        @click="downloadInvoice(item)"
+                        class="receipt-link"
+                        style="background:none;border:0;padding:0;cursor:pointer;margin-left:8px"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          style="vertical-align: middle; margin-right: 4px"
+                        >
+                          <rect
+                            x="3"
+                            y="3"
+                            width="18"
+                            height="18"
+                            rx="2"
+                            stroke="#0074c2"
+                            stroke-width="2"
+                          />
+                          <path
+                            d="M7 7h10M7 11h10M7 15h6"
+                            stroke="#0074c2"
+                            stroke-width="2"
+                          />
+                        </svg>
+                        Download Receipt
+                      </button>
+
+                      <span v-else>—</span>
                     </td>
-                    <td>{{ item.description }}</td>
+                    <td>{{ item.description || '' }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -253,7 +298,6 @@ export default {
   computed: {
     lastBillingItem() {
       if (!this.billingHistory || !this.billingHistory.length) return null;
-      // Prefer items with subscriptionEnd or paymentDate; pick the most recent by subscriptionEnd then paymentDate
       const sorted = [...this.billingHistory].sort((a, b) => {
         const ta = a.subscriptionEnd || a.paymentDate || "";
         const tb = b.subscriptionEnd || b.paymentDate || "";
@@ -289,6 +333,66 @@ export default {
       } else {
         this.activeSortKey = key;
         this.sortAsc = true;
+      }
+    },
+    hasInvoiceId(item) {
+      return Boolean(item.invoiceId || item.invoice_id || item.id);
+    },
+    getFileNameFromUrl(url) {
+      try {
+        if (!url) return "";
+        const parsed = url.split("?")[0];
+        const parts = parsed.split("/");
+        return decodeURIComponent(parts[parts.length - 1]);
+      } catch {
+        return "";
+      }
+    },
+    getFilenameFromDisposition(disposition) {
+      if (!disposition) return null;
+      const fileNameMatch = /filename\*?=(?:UTF-8'')?["']?([^;"']+)["']?/i.exec(
+        disposition
+      );
+      return fileNameMatch ? decodeURIComponent(fileNameMatch[1]) : null;
+    },
+    async downloadInvoice(item) {
+      try {
+        const invoiceId = item.invoiceId || item.invoice_id || item.id;
+        if (!invoiceId) {
+          console.warn("No invoice id available for item", item);
+          return;
+        }
+        const orgId = this.$route.query.orgId || null;
+        // Adjust endpoint if your backend uses a different path for downloading invoices.
+        const url = `${API_BASE_URL}/api/billing/invoice/${invoiceId}${
+          orgId ? `?org_id=${orgId}` : ""
+        }`;
+
+        const authToken = storage.get("authToken");
+        const headers = {};
+        if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+
+        const res = await axios.get(url, {
+          headers,
+          responseType: "blob",
+        });
+
+        const filename =
+          this.getFilenameFromDisposition(res.headers["content-disposition"]) ||
+          this.getFileNameFromUrl(url) ||
+          `invoice_${invoiceId}.pdf`;
+
+        const blob = new Blob([res.data], { type: res.data.type || "application/pdf" });
+        const link = document.createElement("a");
+        const blobUrl = globalThis.URL.createObjectURL(blob);
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        globalThis.URL.revokeObjectURL(blobUrl);
+      } catch (e) {
+        console.error("Failed to download invoice:", e);
       }
     },
     async fetchBillingDetails() {
@@ -386,7 +490,7 @@ export default {
   color: #0074c2;
   text-decoration: underline;
   font-size: 17px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
 }

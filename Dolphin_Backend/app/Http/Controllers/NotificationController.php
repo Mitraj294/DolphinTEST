@@ -200,13 +200,30 @@ class NotificationController extends Controller
 
         // Use request input accessor for optional scheduled_at to avoid undefined index
         $scheduledAt = $request->input('scheduled_at');
-        $announcement = Announcement::create([
-            'body' => $data['body'],
+        // The `announcements` table stores the message in the `message` column
+        // (older schema). Map the incoming `body` to `message` so inserts don't fail.
+        $createPayload = [
+            'message' => $data['body'],
             'sender_id' => $senderId,
-            'scheduled_at' => $scheduledAt ? Carbon::parse($scheduledAt) : null,
+            // keep created announcement in a dispatchable state; scheduled handling
+            // is handled via accessors on the model
             'sent_at' => null,
             'dispatched_at' => now(),
-        ]);
+        ];
+
+        // If a scheduled_at value was provided, normalize to a datetime and
+        // set schedule_date/schedule_time if the model/table uses those.
+        if ($scheduledAt) {
+            try {
+                $dt = Carbon::parse($scheduledAt);
+                $createPayload['schedule_date'] = $dt->toDateString();
+                $createPayload['schedule_time'] = $dt->toDateTimeString();
+            } catch (\Exception $e) {
+                // ignore parsing failures; scheduled_at will be null
+            }
+        }
+
+        $announcement = Announcement::create($createPayload);
 
         if (!empty($data['organization_ids'])) {
             $announcement->organizations()->attach($data['organization_ids']);
@@ -225,9 +242,27 @@ class NotificationController extends Controller
             $notification->delay($announcement->scheduled_at);
         }
 
-        Notification::send($recipients, $notification);
+        try {
+            Notification::send($recipients, $notification);
 
-        return response()->json(['success' => true, 'announcement' => $announcement]);
+            // mark sent_at only when dispatch succeeded (best-effort)
+            $announcement->sent_at = now();
+            $announcement->save();
+
+            return response()->json(['success' => true, 'announcement' => $announcement]);
+        } catch (\Exception $e) {
+            // Log the full exception for debugging, but return a concise API error
+            Log::error('[NotificationController::send] failed to send notification', [
+                'announcement_id' => $announcement->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Don't delete the created announcement; return a helpful error to the client
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to dispatch announcement. See server logs for details.'
+            ], 500);
+        }
     }
 
     private function getRecipientsForAnnouncement(Announcement $announcement)
@@ -247,24 +282,8 @@ class NotificationController extends Controller
         return $adminUsers->merge($orgUsers)->merge($groupUsers)->unique('id');
     }
 
-    // Fetch announcements for a user
-    public function userAnnouncements(Request $request)
-    {
-        $user = $request->user();
-        // Get announcements related to user's orgs, groups, or admin status
-        $announcements = Announcement::whereHas('admins', function ($q) use ($user) {
-            $q->where('users.id', $user->id);
-        })
-            ->orWhereHas('organizations', function ($q) use ($user) {
-                $q->where('organizations.id', $user->organization_id);
-            })
-            ->orWhereHas('groups', function ($q) use ($user) {
-                $q->where('groups.id', $user->group_id);
-            })
-            ->orderByDesc('created_at')
-            ->get();
-        return response()->json(['announcements' => $announcements]);
-    }
+    // userAnnouncements() removed: functionality overlaps with userNotifications() and
+    // frontend routes currently use `userNotifications`. Remove to simplify controller.
     // Mark a notification as read for the authenticated user
     public function markAsRead(Request $request, $id)
     {

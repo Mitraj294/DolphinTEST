@@ -7,9 +7,6 @@ use Illuminate\Http\Request;
 
 class WebhookLogController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $query = WebhookLog::query();
@@ -29,9 +26,6 @@ class WebhookLogController extends Controller
         return response()->json($webhookLogs);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $validatedData = $request->validate([
@@ -46,18 +40,12 @@ class WebhookLogController extends Controller
         return response()->json(['webhook_log' => $webhookLog], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
         $webhookLog = WebhookLog::findOrFail($id);
         return response()->json(['webhook_log' => $webhookLog]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
         $webhookLog = WebhookLog::findOrFail($id);
@@ -71,9 +59,6 @@ class WebhookLogController extends Controller
         return response()->json(['webhook_log' => $webhookLog]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         $webhookLog = WebhookLog::findOrFail($id);
@@ -82,9 +67,6 @@ class WebhookLogController extends Controller
         return response()->json(['message' => 'Webhook log deleted successfully']);
     }
 
-    /**
-     * Mark webhook log as processed
-     */
     public function markAsProcessed(string $id)
     {
         $webhookLog = WebhookLog::findOrFail($id);
@@ -93,9 +75,6 @@ class WebhookLogController extends Controller
         return response()->json(['webhook_log' => $webhookLog]);
     }
 
-    /**
-     * Get unprocessed webhook logs
-     */
     public function unprocessed()
     {
         $webhookLogs = WebhookLog::where('processed', false)

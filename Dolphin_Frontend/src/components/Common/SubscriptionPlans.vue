@@ -223,14 +223,23 @@ export default {
         const authToken = storage.get("authToken");
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
         const res = await axios.get(`${API_BASE_URL}/api/subscription`, {
-          headers: { Authorization: `Bearer ${authToken}` },
+          headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
         });
 
-        const rawAmount = res.data?.amount ?? res.data?.plan_amount ?? null;
+        // Support multiple payload shapes (new unified + legacy)
+        const payload = res.data || {};
+        const planObj = payload.plan || {};
+        const rawAmount =
+          payload.plan_amount ||
+          payload.amount ||
+          planObj.amount ||
+          null;
+
         if (rawAmount !== null && rawAmount !== undefined) {
           const parsed = Number.parseFloat(
-            String(rawAmount).replaceAll(",", "")
+            String(rawAmount).replaceAll(/[,\s]/g, "")
           );
+          // Basic plan = 250, Standard plan = 2500 (matching defined price IDs)
           this.userPlan = Number.isFinite(parsed) ? Math.round(parsed) : null;
         } else {
           this.userPlan = null;

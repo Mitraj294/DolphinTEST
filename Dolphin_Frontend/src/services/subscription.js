@@ -22,6 +22,8 @@ export async function fetchSubscriptionStatus() {
     const normalized = {
       status: data.status || "none",
       planId: data.plan_id || null,
+      planName: data.plan_name || data?.plan?.name || null,
+      plan: data.plan || null,
       subscriptionId: data.subscription_id || null,
       startedAt: data.started_at || null,
       endsAt: data.ends_at || data.current_period_end || null,
@@ -30,10 +32,10 @@ export async function fetchSubscriptionStatus() {
       cancelAtPeriodEnd: !!data.cancel_at_period_end,
       amountPaid: data.latest_amount_paid || null,
       currency: data.currency || null,
-      paymentMethod: data.payment_method || null,
-      paymentMethodType: data.payment_method_type || null,
-      paymentMethodBrand: data.payment_method_brand || null,
-      paymentMethodLast4: data.payment_method_last4 || null,
+      paymentMethod: data.payment_method || data?.payment_method?.label || null,
+      paymentMethodType: data.payment_method_type || data?.payment_method?.type || null,
+      paymentMethodBrand: data.payment_method_brand || data?.payment_method?.brand || null,
+      paymentMethodLast4: data.payment_method_last4 || data?.payment_method?.last4 || null,
     };
 
     if (normalized.status && normalized.status !== "none") {

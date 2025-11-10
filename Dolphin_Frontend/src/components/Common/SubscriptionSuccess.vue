@@ -255,9 +255,13 @@ const goToDashboard = () => router.push("/dashboard");
 const goToBilling = () => router.push("/organizations/billing-details");
 
 const fetchSubscriptionDetails = async () => {
+  const authToken = storage.get("authToken");
+  const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
   // 1. Try to get from the current user's active subscription
   try {
-    const resp = await axios.get(`${API_BASE_URL.value}/api/subscription`);
+    const resp = await axios.get(`${API_BASE_URL.value}/api/subscription`, {
+      headers,
+    });
     const d = resp.data || null;
     if (d) {
       // normalize backend response into subscription shape used by template
@@ -293,7 +297,8 @@ const fetchSubscriptionDetails = async () => {
   // try the simpler status endpoint which some flows use
   try {
     const resp2 = await axios.get(
-      `${API_BASE_URL.value}/api/subscription/status`
+      `${API_BASE_URL.value}/api/subscription/status`,
+      { headers }
     );
     const s = resp2.data || null;
     if (s) {
@@ -347,8 +352,11 @@ onMounted(async () => {
   // Try to fetch the lightweight status endpoint first since it usually
   // contains the human-friendly `plan_name` used on the success page.
   try {
+    const authToken = storage.get("authToken");
+    const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
     const resp = await axios.get(
-      `${API_BASE_URL.value}/api/subscription/status`
+      `${API_BASE_URL.value}/api/subscription/status`,
+      { headers }
     );
     statusInfo.value = resp.data || null;
   } catch (e) {

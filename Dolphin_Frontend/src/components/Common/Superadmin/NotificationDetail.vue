@@ -46,33 +46,7 @@
             </div>
           </div>
 
-          <!-- Status badges -->
-          <div class="schedule-header-right">
-            <span
-              v-if="announcementStatus === 'sent'"
-              :class="[
-                'status-green',
-                { active: announcementStatus === 'sent' },
-              ]"
-              >Sent</span
-            >
-            <span
-              v-if="announcementStatus === 'scheduled'"
-              :class="[
-                'status-yellow',
-                { active: announcementStatus === 'scheduled' },
-              ]"
-              >Scheduled</span
-            >
-            <span
-              v-if="announcementStatus === 'failed'"
-              :class="[
-                'status-red',
-                { active: announcementStatus === 'failed' },
-              ]"
-              >Failed</span
-            >
-          </div>
+        
         </div>
 
         <!-- Organization recipients -->

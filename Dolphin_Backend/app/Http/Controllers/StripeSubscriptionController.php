@@ -511,6 +511,38 @@ class StripeSubscriptionController extends Controller
 
         $paymentMethodDetails = $this->getPaymentMethodDetailsFromInvoice($invoice, $customer, $stripeSub);
         $this->updateOrCreateSubscription(array_merge($subscriptionData, $paymentMethodDetails));
+
+        // Ensure a SubscriptionInvoice row exists for this Stripe invoice id
+        try {
+            $subModel = Subscription::where('stripe_subscription_id', $stripeSubscriptionId)->first();
+            if ($subModel) {
+                \App\Models\SubscriptionInvoice::updateOrCreate(
+                    ['stripe_invoice_id' => $invoice->id],
+                    [
+                        'subscription_id' => $subModel->id,
+                        'amount_due' => isset($invoice->amount_due) ? ($invoice->amount_due / 100) : null,
+                        'amount_paid' => isset($invoice->amount_paid) ? ($invoice->amount_paid / 100) : null,
+                        'currency' => $invoice->currency ?? config('services.stripe.currency', 'usd'),
+                        'status' => $invoice->status ?? 'paid',
+                        'due_date' => null,
+                        'paid_at' => isset($invoice->status_transitions->paid_at)
+                            ? date('Y-m-d H:i:s', $invoice->status_transitions->paid_at)
+                            : now(),
+                        'hosted_invoice_url' => $invoice->hosted_invoice_url ?? null,
+                    ]
+                );
+            } else {
+                Log::warning('Could not locate subscription model to attach invoice', [
+                    'stripe_subscription_id' => $stripeSubscriptionId,
+                    'invoice_id' => $invoice->id,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to persist SubscriptionInvoice from invoice.paid', [
+                'invoice_id' => $invoice->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

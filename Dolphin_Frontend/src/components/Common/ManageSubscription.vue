@@ -71,9 +71,6 @@
                   :disabled="loading"
                 >
                   <template v-if="loading">Checking...</template>
-                  <template v-else-if="isSubscribed"
-                    >Manage Subscription</template
-                  >
                   <template v-else>Explore Subscriptions</template>
                 </button>
 
@@ -119,11 +116,13 @@ export default {
       this.status = res.status || 'none';
       this.plan_name = res.plan_name || null;
       this.subscriptionEnd = res.subscription_end;
+      this.isSubscribed = this.status === 'active';
     } catch (e) {
       console.error(e);
       this.status = 'none';
       this.plan_name = null;
       this.subscriptionEnd = null;
+      this.isSubscribed = false;
     } finally {
       this.loading = false;
     }
@@ -156,8 +155,31 @@ export default {
     }
   },
   methods: {
-    handleButton() {
-      this.$router.push({ name: 'SubscriptionPlans' });
+    async handleButton() {
+      if (this.isSubscribed) {
+        // Open Stripe customer portal
+        try {
+          this.loading = true;
+          const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || '';
+          const axios = require('axios');
+          const storage = require('@/services/storage').default;
+          const token = storage.get('authToken');
+          const headers = token ? { Authorization: `Bearer ${token}` } : {};
+          const resp = await axios.post(
+            `${API_BASE_URL}/api/stripe/customer-portal`,
+            {},
+            { headers }
+          );
+          const url = resp?.data?.url;
+          if (url) globalThis.location.href = url;
+        } catch (e) {
+          console.error('Failed to open customer portal:', e);
+        } finally {
+          this.loading = false;
+        }
+      } else {
+        this.$router.push({ name: 'SubscriptionPlans' });
+      }
     },
     goToBillingDetails() {
       const orgId = this.$route.query.orgId || null;

@@ -36,16 +36,8 @@ class SubscriptionController extends Controller
      *
      * @return bool True if active, false if expired
      */
-    public function checkAndUpdateStatus(Subscription $subscription): bool
-    {
-        if ($this->hasExpired($subscription) && $subscription->status === 'active') {
-            $subscription->update(['status' => 'canceled']);
-
-            return false;
-        }
-
-        return $subscription->status === 'active';
-    }
+    // checkAndUpdateStatus() removed: not referenced. Subscription lifecycle is handled by
+    // webhook processing and scheduled jobs; keep helper methods minimal.
 
     // Get the current active subscription plan for the relevant user.
     // Accessible by the user or by a superadmin viewing a specific organization.
@@ -158,9 +150,13 @@ class SubscriptionController extends Controller
     private function formatPlanPayload(Subscription $subscription): array
     {
         $latestInvoice = $subscription->invoices()->first();
+        $plan = $subscription->plan; // eager access for convenience
 
         return [
+            // Core identifiers
+            'subscription_id' => $subscription->id,
             'plan_id' => $subscription->plan_id,
+            // Status / lifecycle
             'status' => $subscription->status,
             'start' => $subscription->started_at,
             'end' => $subscription->ends_at,
@@ -168,12 +164,41 @@ class SubscriptionController extends Controller
             'trial_ends_at' => $subscription->trial_ends_at,
             'cancel_at_period_end' => $subscription->cancel_at_period_end,
             'is_paused' => $subscription->is_paused,
+            // Payment method flattened (for existing consumers)
             'payment_method' => $subscription->payment_method_label,
             'payment_method_type' => $subscription->payment_method_type,
             'payment_method_brand' => $subscription->payment_method_brand,
             'payment_method_last4' => $subscription->payment_method_last4,
+            // Nested payment method object (new preferred shape)
+            'payment_method_object' => [
+                'id' => $subscription->default_payment_method_id,
+                'type' => $subscription->payment_method_type,
+                'brand' => $subscription->payment_method_brand,
+                'last4' => $subscription->payment_method_last4,
+                'label' => $subscription->payment_method_label,
+            ],
+            // Plan details (nested + convenience top-level amount for legacy front-end code)
+            'plan' => $plan ? [
+                'id' => $plan->id,
+                'name' => $plan->name,
+                'interval' => $plan->interval,
+                'amount' => $plan->amount,
+                'currency' => $plan->currency,
+                'description' => $plan->description,
+                'status' => $plan->status,
+            ] : null,
+            'plan_name' => $plan?->name,
+            'plan_amount' => $plan?->amount, // explicit for front-end parsing
+            'amount' => $plan?->amount, // legacy alias consumed by existing code
+            'plan_interval' => $plan?->interval,
+            'plan_currency' => $plan?->currency,
+            // Latest invoice information (if exists)
             'latest_invoice' => $latestInvoice ? [
-                'amount' => $latestInvoice->amount_paid,
+                'id' => $latestInvoice->id,
+                'stripe_invoice_id' => $latestInvoice->stripe_invoice_id,
+                'amount_due' => $latestInvoice->amount_due,
+                'amount' => $latestInvoice->amount_paid, // convenience alias
+                'amount_paid' => $latestInvoice->amount_paid,
                 'currency' => $latestInvoice->currency,
                 'status' => $latestInvoice->status,
                 'paid_at' => $latestInvoice->paid_at,
@@ -191,6 +216,11 @@ class SubscriptionController extends Controller
     private function formatHistoryPayload(Subscription $subscription): array
     {
         $invoices = $subscription->invoices;
+        $plan = $subscription->plan;
+        $currency = strtolower($plan->currency ?? 'usd');
+        $symbol = match ($currency) {
+            'usd' => '$', 'eur' => '€', 'gbp' => '£', default => strtoupper($currency) . ' ',
+        };
 
         // If there are no invoices, return a single record for the subscription
         if ($invoices->isEmpty()) {
@@ -202,15 +232,16 @@ class SubscriptionController extends Controller
                     'subscriptionEnd' => $subscription->ends_at?->toDateTimeString(),
                     'paymentDate' => $subscription->started_at?->toDateTimeString(),
                     'payment_method' => $subscription->payment_method_label,
-                    'amount' => null,
+                    'amount' => $plan?->amount,
+                    'currency' => $plan?->currency,
                     'pdfUrl' => null,
-                    'description' => null,
+                    'description' => $plan ? ($plan->name . ' subscription (' . $symbol . $plan->amount . '/' . ($plan->interval ?? '')) : 'Subscription payment',
                 ],
             ];
         }
 
         // Map each invoice to a billing history record
-        return $invoices->map(function ($invoice) use ($subscription) {
+        return $invoices->map(function ($invoice) use ($subscription, $plan, $symbol) {
             return [
                 'subscription_id' => $subscription->id,
                 'plan_id' => $subscription->plan_id,
@@ -221,7 +252,7 @@ class SubscriptionController extends Controller
                 'amount' => $invoice->amount_paid,
                 'currency' => $invoice->currency,
                 'pdfUrl' => $invoice->hosted_invoice_url,
-                'description' => 'Subscription payment',
+                'description' => $plan ? ($plan->name . ' subscription (' . $symbol . ($invoice->amount_paid ?? $plan->amount) . '/' . ($plan->interval ?? '') . ')') : 'Subscription payment',
                 'invoice_id' => $invoice->id,
                 'stripe_invoice_id' => $invoice->stripe_invoice_id,
             ];
