@@ -67,11 +67,14 @@
               <div class="manage-actions">
                 <button
                   class="btn btn-primary"
-                  @click="handleButton"
+                  @click="navigateToPlans"
                   :disabled="loading"
                 >
                   <template v-if="loading">Checking...</template>
-                  <template v-else>Explore Subscriptions</template>
+                  <template v-else>
+                  <span v-if="isSubscribed">Manage Subscription</span>
+                  <span v-else>Explore Subscriptions</span>
+                  </template>
                 </button>
 
                 <button
@@ -155,6 +158,23 @@ export default {
     }
   },
   methods: {
+    onPrimaryButtonClick() {
+      if (this.isSubscribed) return this.handleButton();
+      return this.navigateToPlans();
+    },
+    navigateToPlans() {
+      const plansUrl = 'http://127.0.0.1:8080/subscriptions/plans';
+      if (typeof globalThis !== 'undefined' && globalThis.location) {
+        globalThis.location.href = plansUrl;
+        return;
+      }
+      // fallback to vue-router if available
+      try {
+        this.$router.push({ name: 'SubscriptionPlans' });
+      } catch (e) {
+        console.warn('Unable to navigate to subscription plans', { error: e, url: plansUrl });
+      }
+    },
     async handleButton() {
       if (this.isSubscribed) {
         // Open Stripe customer portal
@@ -171,7 +191,15 @@ export default {
             { headers }
           );
           const url = resp?.data?.url;
-          if (url) globalThis.location.href = url;
+          if (url) {
+            if (typeof globalThis !== 'undefined' && globalThis.location) {
+              globalThis.location.href = url;
+            } else {
+              console.warn('Unable to redirect to Stripe portal without window.location', {
+                url,
+              });
+            }
+          }
         } catch (e) {
           console.error('Failed to open customer portal:', e);
         } finally {

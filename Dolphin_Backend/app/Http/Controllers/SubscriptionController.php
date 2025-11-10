@@ -2,265 +2,118 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Organization;
-use App\Models\Subscription;
+use App\Models\Plan;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Stripe\Checkout\Session as StripeSession;
+use Stripe\Customer;
+use Stripe\Exception\ApiErrorException;
+use Stripe\Stripe;
 
 class SubscriptionController extends Controller
 {
     /**
-     * Check if a subscription has expired.
+     * Create a Stripe Checkout session for the authenticated user.
      */
-    public function hasExpired(Subscription $subscription): bool
+    public function createCheckoutSession(Request $request): JsonResponse
     {
-        // If no end date is set, consider it as never expiring
-        if (! $subscription->ends_at) {
-            return false;
-        }
-
-        // Compare the end date with the current time
-        return $subscription->ends_at->isPast();
-    }
-
-    /**
-     * Check if a subscription is currently active (not expired).
-     */
-    public function isActive(Subscription $subscription): bool
-    {
-        return $subscription->isActive() && ! $this->hasExpired($subscription);
-    }
-
-    /**
-     * Update subscription status if it has expired and return the status.
-     *
-     * @return bool True if active, false if expired
-     */
-    // checkAndUpdateStatus() removed: not referenced. Subscription lifecycle is handled by
-    // webhook processing and scheduled jobs; keep helper methods minimal.
-
-    // Get the current active subscription plan for the relevant user.
-    // Accessible by the user or by a superadmin viewing a specific organization.
-
-    public function getCurrentPlan(Request $request)
-    {
-        $user = $this->resolveUser($request);
-
+        $user = $request->user();
         if (! $user) {
-            return response()->json(null);
+            return response()->json(['error' => 'Unauthenticated'], 401);
         }
 
-        $currentSubscription = $user->subscriptions()
-            ->where('status', 'active')
-            ->latest('created_at')
-            ->first();
+        $validated = $request->validate([
+            'price_id' => ['required', 'string'],
+            'success_url' => ['nullable', 'url'],
+            'cancel_url' => ['nullable', 'url'],
+        ]);
 
-        if (! $currentSubscription) {
-            return response()->json(null);
+        $plan = Plan::where('stripe_price_id', $validated['price_id'])->firstOrFail();
+
+        $secret = config('services.stripe.secret');
+        if (! $secret) {
+            Log::error('Stripe secret missing when attempting to create checkout session.');
+
+            return response()->json(['error' => 'Stripe is not configured'], 500);
         }
 
-        // The formatting logic is now handled by the Subscription model's accessors.
-        return response()->json($this->formatPlanPayload($currentSubscription));
-    }
+        Stripe::setApiKey($secret);
 
-    // Get the entire billing history for the relevant user.
+        $stripeCustomerId = $this->resolveStripeCustomerId($user);
+        $successUrl = $validated['success_url'] ?? $this->defaultSuccessUrl();
+        $cancelUrl = $validated['cancel_url'] ?? $this->defaultCancelUrl();
 
-    public function getBillingHistory(Request $request)
-    {
-        $user = $this->resolveUser($request);
+        try {
+            $session = StripeSession::create([
+                'customer' => $stripeCustomerId,
+                'payment_method_types' => ['card'],
+                'line_items' => [[
+                    'price' => $validated['price_id'],
+                    'quantity' => 1,
+                ]],
+                'mode' => 'subscription',
+                'success_url' => $successUrl,
+                'cancel_url' => $cancelUrl,
+                'client_reference_id' => (string) $user->id,
+                'metadata' => [
+                    'plan_id' => (string) $plan->id,
+                ],
+            ]);
+        } catch (ApiErrorException $exception) {
+            Log::error('Stripe checkout session creation failed', [
+                'message' => $exception->getMessage(),
+                'user_id' => $user->id,
+                'price_id' => $validated['price_id'],
+            ]);
 
-        if (! $user) {
-            return response()->json([]);
+            return response()->json(['error' => 'Unable to create checkout session'], 422);
         }
-
-        $history = $user->subscriptions()
-            ->latest('created_at')
-            ->get()
-            ->flatMap(fn ($subscription) => $this->formatHistoryPayload($subscription));
-
-        return response()->json($history);
-    }
-
-    // Get a simple subscription status for the relevant user.
-
-    public function subscriptionStatus(Request $request)
-    {
-        $user = $this->resolveUser($request);
-
-        $subscription = $user?->subscriptions()->latest('created_at')->first();
-        $latestInvoice = $subscription?->invoices()->first();
-        $org = $user ? Organization::where('user_id', $user->id)->first() : null;
-        $plan = $subscription?->plan;
 
         return response()->json([
-            'status' => $subscription?->status ?? 'none',
-            'plan_id' => $subscription?->plan_id,
-            'subscription_id' => $subscription?->id,
-            'started_at' => $subscription?->started_at?->toDateTimeString(),
-            'ends_at' => $subscription?->ends_at?->toDateTimeString(),
-            'current_period_end' => $subscription?->current_period_end?->toDateTimeString(),
-            'is_paused' => $subscription?->is_paused ?? false,
-            'cancel_at_period_end' => $subscription?->cancel_at_period_end ?? false,
-            'latest_amount_paid' => $latestInvoice?->amount_paid,
-            'currency' => $latestInvoice?->currency,
-            'organization_last_contacted' => $org?->last_contacted?->toDateTimeString(),
-            'payment_method' => $subscription?->payment_method_label,
-            'payment_method_type' => $subscription?->payment_method_type,
-            'payment_method_brand' => $subscription?->payment_method_brand,
-            'payment_method_last4' => $subscription?->payment_method_last4,
-            'plan' => $plan ? [
-                'id' => $plan->id,
-                'name' => $plan->name,
-                'interval' => $plan->interval,
-                'amount' => $plan->amount,
-                'currency' => $plan->currency,
-                'description' => $plan->description,
-            ] : null,
+            'id' => $session->id,
+            'url' => $session->url,
         ]);
     }
 
-    /*
-
-    | Helper & Formatting Methods
-
-    */
-
-    /**
-     * Resolve the user for the request.
-     * If the requester is a superadmin and an org_id is provided, it will
-     * return the organization's owner. Otherwise, it returns the authenticated user.
-     */
-    private function resolveUser(Request $request): ?User
+    private function resolveStripeCustomerId(User $user): string
     {
-        $authenticatedUser = $request->user();
-        $orgId = $request->query('org_id') ?: $request->input('org_id');
-
-        // If unauthenticated, we cannot resolve a user
-        if (! $authenticatedUser) {
-            return null;
+        if ($user->stripe_id) {
+            return $user->stripe_id;
         }
 
-        if ($orgId && $authenticatedUser->hasRole('superadmin')) {
-            $organization = Organization::find($orgId);
+        $customer = Customer::create([
+            'email' => $user->email,
+            'name' => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: null,
+        ]);
 
-            return $organization?->user;
-        }
+        $user->forceFill(['stripe_id' => $customer->id])->save();
 
-        return $authenticatedUser;
+        return $customer->id;
     }
 
-    /**
-     * Format the payload for the current plan response.
-     */
-    private function formatPlanPayload(Subscription $subscription): array
+    private function defaultSuccessUrl(): string
     {
-        $latestInvoice = $subscription->invoices()->first();
-        $plan = $subscription->plan; // eager access for convenience
+        $base = $this->frontendBaseUrl();
 
-        return [
-            // Core identifiers
-            'subscription_id' => $subscription->id,
-            'plan_id' => $subscription->plan_id,
-            // Status / lifecycle
-            'status' => $subscription->status,
-            'start' => $subscription->started_at,
-            'end' => $subscription->ends_at,
-            'current_period_end' => $subscription->current_period_end,
-            'trial_ends_at' => $subscription->trial_ends_at,
-            'cancel_at_period_end' => $subscription->cancel_at_period_end,
-            'is_paused' => $subscription->is_paused,
-            // Payment method flattened (for existing consumers)
-            'payment_method' => $subscription->payment_method_label,
-            'payment_method_type' => $subscription->payment_method_type,
-            'payment_method_brand' => $subscription->payment_method_brand,
-            'payment_method_last4' => $subscription->payment_method_last4,
-            // Nested payment method object (new preferred shape)
-            'payment_method_object' => [
-                'id' => $subscription->default_payment_method_id,
-                'type' => $subscription->payment_method_type,
-                'brand' => $subscription->payment_method_brand,
-                'last4' => $subscription->payment_method_last4,
-                'label' => $subscription->payment_method_label,
-            ],
-            // Plan details (nested + convenience top-level amount for legacy front-end code)
-            'plan' => $plan ? [
-                'id' => $plan->id,
-                'name' => $plan->name,
-                'interval' => $plan->interval,
-                'amount' => $plan->amount,
-                'currency' => $plan->currency,
-                'description' => $plan->description,
-                'status' => $plan->status,
-            ] : null,
-            'plan_name' => $plan?->name,
-            'plan_amount' => $plan?->amount, // explicit for front-end parsing
-            'amount' => $plan?->amount, // legacy alias consumed by existing code
-            'plan_interval' => $plan?->interval,
-            'plan_currency' => $plan?->currency,
-            // Latest invoice information (if exists)
-            'latest_invoice' => $latestInvoice ? [
-                'id' => $latestInvoice->id,
-                'stripe_invoice_id' => $latestInvoice->stripe_invoice_id,
-                'amount_due' => $latestInvoice->amount_due,
-                'amount' => $latestInvoice->amount_paid, // convenience alias
-                'amount_paid' => $latestInvoice->amount_paid,
-                'currency' => $latestInvoice->currency,
-                'status' => $latestInvoice->status,
-                'paid_at' => $latestInvoice->paid_at,
-                'invoice_url' => $latestInvoice->hosted_invoice_url,
-            ] : null,
-        ];
+        return $base . '/subscriptions/success?session_id={CHECKOUT_SESSION_ID}';
     }
 
-    /**
-     * Format the payload for a billing history item.
-     * Returns an array of invoice records for the subscription.
-     * - If subscription has no invoices: returns array with 1 record (subscription details)
-     * - If subscription has invoices: returns array with N records (one per invoice)
-     */
-    private function formatHistoryPayload(Subscription $subscription): array
+    private function defaultCancelUrl(): string
     {
-        $invoices = $subscription->invoices;
-        $plan = $subscription->plan;
-        $currency = strtolower($plan->currency ?? 'usd');
-        $symbol = match ($currency) {
-            'usd' => '$', 'eur' => '€', 'gbp' => '£', default => strtoupper($currency) . ' ',
-        };
+        $base = $this->frontendBaseUrl();
 
-        // If there are no invoices, return a single record for the subscription
-        if ($invoices->isEmpty()) {
-            return [
-                [
-                    'subscription_id' => $subscription->id,
-                    'plan_id' => $subscription->plan_id,
-                    'status' => $subscription->status,
-                    'subscriptionEnd' => $subscription->ends_at?->toDateTimeString(),
-                    'paymentDate' => $subscription->started_at?->toDateTimeString(),
-                    'payment_method' => $subscription->payment_method_label,
-                    'amount' => $plan?->amount,
-                    'currency' => $plan?->currency,
-                    'pdfUrl' => null,
-                    'description' => $plan ? ($plan->name . ' subscription (' . $symbol . $plan->amount . '/' . ($plan->interval ?? '')) : 'Subscription payment',
-                ],
-            ];
-        }
+        return $base . '/subscriptions/cancelled';
+    }
 
-        // Map each invoice to a billing history record
-        return $invoices->map(function ($invoice) use ($subscription, $plan, $symbol) {
-            return [
-                'subscription_id' => $subscription->id,
-                'plan_id' => $subscription->plan_id,
-                'status' => $subscription->status,
-                'subscriptionEnd' => $subscription->ends_at?->toDateTimeString(),
-                'paymentDate' => $invoice->paid_at?->toDateTimeString(),
-                'payment_method' => $subscription->payment_method_label,
-                'amount' => $invoice->amount_paid,
-                'currency' => $invoice->currency,
-                'pdfUrl' => $invoice->hosted_invoice_url,
-                'description' => $plan ? ($plan->name . ' subscription (' . $symbol . ($invoice->amount_paid ?? $plan->amount) . '/' . ($plan->interval ?? '') . ')') : 'Subscription payment',
-                'invoice_id' => $invoice->id,
-                'stripe_invoice_id' => $invoice->stripe_invoice_id,
-            ];
-        })->toArray();
+    private function frontendBaseUrl(): string
+    {
+        $base = config('app.frontend_url')
+            ?? env('FRONTEND_URL')
+            ?? config('app.url')
+            ?? 'http://localhost:8080';
+
+        return rtrim($base, '/');
     }
 }

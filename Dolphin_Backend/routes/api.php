@@ -16,7 +16,8 @@ use App\Http\Controllers\OrganizationUserController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\SendAgreementController;
 use App\Http\Controllers\SendAssessmentController;
-use App\Http\Controllers\StripeSubscriptionController;
+use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\Billing\BillingController as BillingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WebhookLogController;
@@ -55,9 +56,8 @@ Route::prefix('password')->group(function () {
     Route::post('/reset', [AuthController::class, 'resetPassword']);
 });
 
-Route::post('/stripe/webhook', [StripeSubscriptionController::class, 'handleWebhook']);
-Route::post('/stripe/checkout-session', [StripeSubscriptionController::class, 'createCheckoutSession']);
-Route::get('/stripe/session', [StripeSubscriptionController::class, 'getSessionDetails']);
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
+Route::post('/stripe/checkout-session', [SubscriptionController::class, 'createCheckoutSession']);
 
 Route::prefix('assessments')->group(function () {
     Route::get('/{id}/summary', [AssessmentController::class, 'summary']);
@@ -133,12 +133,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
     });
 
-    Route::prefix('stripe')->group(function () {
-        Route::post('/customer-portal', [StripeSubscriptionController::class, 'createCustomerPortal']);
-    });
-
     Route::prefix('subscription')->group(function () {
-        Route::post('/refresh-role', [StripeSubscriptionController::class, 'refreshRole']);
         Route::get('/', [BillingController::class, 'current']);
         Route::get('/status', [BillingController::class, 'status']);
     });
