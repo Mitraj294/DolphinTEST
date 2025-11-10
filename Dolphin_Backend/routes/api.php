@@ -115,6 +115,9 @@ Route::middleware('auth:api')->group(function () {
 
     Route::post('/stripe/checkout-session', [SubscriptionController::class, 'createCheckoutSession']);
 
+    // Make assessments list available to all authenticated users (no subscription required)
+    Route::get('/assessments-list', [AssessmentResponseController::class, 'getAssessments']);
+
     Route::prefix('profile')->group(function () {
         Route::get('/', [AuthController::class, 'profile']);
         Route::patch('/', [AuthController::class, 'updateProfile']);

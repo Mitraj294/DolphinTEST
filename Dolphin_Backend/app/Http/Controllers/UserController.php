@@ -14,6 +14,8 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Password;
 use App\Notifications\NewUserInvitation;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
 
 class UserController extends Controller
 {
@@ -180,16 +182,120 @@ class UserController extends Controller
     {
         // A policy should handle this authorization check
         if ($request->user()->cannot('impersonate', $user)) {
+            Log::warning('Unauthorized impersonation attempt', ['actor_id' => $request->user()?->id, 'target_id' => $user->id]);
             return response()->json(['message' => 'Unauthorized.'], 403);
         }
 
-        try {
-            $tokenResult = $user->createToken('ImpersonationToken', ['impersonate']);
-            $tokenResult->token->expires_at = now()->addHours(1);
-            $tokenResult->token->save();
+        // Log start of impersonation attempt for easier debugging
+        Log::info('Impersonation attempt started', ['actor_id' => $request->user()?->id, 'target_id' => $user->id]);
 
-            $accessTokenString = $tokenResult->accessToken ?? null;
+        try {
+            // Attempt to create a personal access token for impersonation.
+            Log::debug('Creating impersonation token', ['target_user_id' => $user->id]);
+            try {
+                $tokenResult = $user->createToken('ImpersonationToken', ['impersonate']);
+            } catch (\Exception $e) {
+                // Detect common Passport missing-client error and attempt an automatic fix
+                Log::warning('createToken threw exception during impersonation', ['target_user_id' => $user->id, 'error' => $e->getMessage()]);
+                if (str_contains($e->getMessage(), 'Personal access client not found')) {
+                    Log::warning('Personal access client missing — attempting to create DB client rows', ['error' => $e->getMessage()]);
+                    try {
+                        // Check if oauth_personal_access_clients exists and has rows
+                        $pacExists = false;
+                        try {
+                            $pacExists = \Illuminate\Support\Facades\DB::table('oauth_personal_access_clients')->exists();
+                        } catch (\Exception $dbEx) {
+                            Log::warning('Could not query oauth_personal_access_clients table', ['error' => $dbEx->getMessage()]);
+                            $pacExists = false;
+                        }
+
+                        if (!$pacExists) {
+                            // Create an oauth_clients row and corresponding personal access client entry.
+                            $secret = \Illuminate\Support\Str::random(40);
+                            $clientId = null;
+                            try {
+                                // Build insert payload based on actual oauth_clients columns to avoid schema mismatch
+                                $cols = Schema::getColumnListing('oauth_clients');
+                                $payload = [];
+                                if (in_array('id', $cols)) {
+                                    $uuid = (string) \Illuminate\Support\Str::uuid();
+                                    $payload['id'] = $uuid;
+                                }
+                                if (in_array('owner_type', $cols)) {
+                                    $payload['owner_type'] = null;
+                                }
+                                if (in_array('owner_id', $cols)) {
+                                    $payload['owner_id'] = null;
+                                }
+                                if (in_array('name', $cols)) {
+                                    $payload['name'] = 'Personal Access Client';
+                                }
+                                if (in_array('secret', $cols)) {
+                                    $payload['secret'] = $secret;
+                                }
+                                if (in_array('provider', $cols)) {
+                                    $payload['provider'] = null;
+                                }
+                                if (in_array('redirect_uris', $cols)) {
+                                    $payload['redirect_uris'] = json_encode([]);
+                                }
+                                if (in_array('grant_types', $cols)) {
+                                    $payload['grant_types'] = json_encode(['personal_access']);
+                                }
+                                if (in_array('revoked', $cols)) {
+                                    $payload['revoked'] = 0;
+                                }
+                                if (in_array('created_at', $cols)) {
+                                    $payload['created_at'] = now();
+                                }
+                                if (in_array('updated_at', $cols)) {
+                                    $payload['updated_at'] = now();
+                                }
+
+                                // Insert using DB::table->insert (works with uuid PKs)
+                                \Illuminate\Support\Facades\DB::table('oauth_clients')->insert($payload);
+                                $clientId = $payload['id'] ?? null;
+                                Log::info('Inserted oauth_clients personal access client', ['client_id' => $clientId, 'payload_keys' => array_keys($payload)]);
+                            } catch (\Exception $insertEx) {
+                                Log::warning('Failed to insert oauth_clients row', ['error' => $insertEx->getMessage()]);
+                                $clientId = null;
+                            }
+
+                            if ($clientId) {
+                                try {
+                                    if (Schema::hasTable('oauth_personal_access_clients')) {
+                                        \Illuminate\Support\Facades\DB::table('oauth_personal_access_clients')->insert(['client_id' => $clientId]);
+                                        Log::info('Inserted oauth_personal_access_clients entry', ['client_id' => $clientId]);
+                                    } else {
+                                        Log::warning('oauth_personal_access_clients table missing; cannot insert personal access mapping', []);
+                                    }
+                                } catch (\Exception $insertPacEx) {
+                                    Log::warning('Failed to insert oauth_personal_access_clients row', ['error' => $insertPacEx->getMessage()]);
+                                }
+                            }
+                        }
+                    } catch (\Exception $ae) {
+                        Log::error('Failed to create personal access client rows during impersonation fallback', ['error' => $ae->getMessage()]);
+                        throw $e; // rethrow original
+                    }
+
+                    // Retry token creation once
+                    $tokenResult = $user->createToken('ImpersonationToken', ['impersonate']);
+                } else {
+                    throw $e;
+                }
+            }
+
+            // Set expiry and persist token model when available
+            if (isset($tokenResult->token)) {
+                $tokenResult->token->expires_at = now()->addHours(1);
+                $tokenResult->token->save();
+            }
+
+            $accessTokenString = $tokenResult->accessToken ?? ($tokenResult->access_token ?? null);
             $expiresAtStr = $tokenResult->token?->expires_at?->toIso8601String() ?? null;
+
+            Log::info('Impersonation token created', ['target_user_id' => $user->id, 'has_token' => (bool)$accessTokenString]);
 
             return response()->json([
                 'message' => "Successfully impersonating {$user->first_name}.",
@@ -198,8 +304,52 @@ class UserController extends Controller
                 'expires_at' => $expiresAtStr,
             ]);
         } catch (\Exception $e) {
-            Log::error('Impersonation failed', ['user_id' => $user->id, 'error' => $e->getMessage()]);
-            return response()->json(['message' => 'Failed to impersonate user.'], 500);
+            // Log detailed error including stack trace to aid debugging
+            $logContext = [
+                'actor_id' => $request->user()?->id,
+                'target_user_id' => $user->id,
+                'error_message' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString(),
+            ];
+
+            // If this is the missing personal access client error, capture schema diagnostics
+            if (str_contains($e->getMessage(), 'Personal access client not found')) {
+                try {
+                    $oauthClientsExists = Schema::hasTable('oauth_clients');
+                    $oauthPacExists = Schema::hasTable('oauth_personal_access_clients');
+                    $oauthClientsCols = $oauthClientsExists ? Schema::getColumnListing('oauth_clients') : [];
+
+                    $logContext['oauth_clients_table'] = $oauthClientsExists;
+                    $logContext['oauth_personal_access_clients_table'] = $oauthPacExists;
+                    $logContext['oauth_clients_columns'] = $oauthClientsCols;
+                } catch (\Exception $diagEx) {
+                    $logContext['schema_diag_error'] = $diagEx->getMessage();
+                }
+            }
+
+            Log::error('Impersonation failed', $logContext);
+
+            // Construct a helpful response
+            if (str_contains($e->getMessage(), 'Personal access client not found')) {
+                $diagnostic = [];
+                try {
+                    $diagnostic['oauth_clients_table'] = Schema::hasTable('oauth_clients');
+                    $diagnostic['oauth_personal_access_clients_table'] = Schema::hasTable('oauth_personal_access_clients');
+                    if ($diagnostic['oauth_clients_table']) {
+                        $diagnostic['oauth_clients_columns'] = Schema::getColumnListing('oauth_clients');
+                    }
+                } catch (\Exception $diagEx) {
+                    $diagnostic['schema_diag_error'] = $diagEx->getMessage();
+                }
+
+                $message = 'Impersonation failed because Passport personal access client is missing. See logs for diagnostics.';
+                $details = config('app.debug') ? ['diagnostic' => $diagnostic, 'error' => $e->getMessage()] : null;
+                return response()->json(['message' => $message, 'details' => $details], 500);
+            }
+
+            // Generic fallback
+            $responseMsg = config('app.debug') ? $e->getMessage() : 'Failed to impersonate user.';
+            return response()->json(['message' => $responseMsg], 500);
         }
     }
 

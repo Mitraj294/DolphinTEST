@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\AnnouncementRead;
 
 class NotificationController extends Controller
 {
@@ -66,6 +67,12 @@ class NotificationController extends Controller
                     ->whereRaw('JSON_CONTAINS(announcement_groups.member_ids, ?)', [json_encode((string) $userId)]);
             });
         })->with(['organizations', 'groups', 'admins'])->orderByDesc('created_at')->get();
+
+        // Exclude announcements that the user has already read (stored in announcement_reads)
+        $announcements = $announcements->filter(function ($a) use ($userId) {
+            $exists = AnnouncementRead::where('announcement_id', $a->id)->where('user_id', $userId)->exists();
+            return !$exists;
+        })->values();
 
         // Normalize shape expected by frontend (some clients expect `body` and scheduled_at)
         $announcements->transform(function ($a) {
@@ -216,16 +223,16 @@ class NotificationController extends Controller
             $announcement = Announcement::with(['organizations', 'groups', 'admins'])->select()->findOrFail($id);
 
             $data = [
-                    'id' => $announcement->id,
-                    'body' => $announcement->body,
-                    // sender_id and sent_at are not stored on the announcements table
-                    // (schema only contains message/schedule_date/schedule_time). Expose
-                    // null explicitly to keep response shape stable for frontend clients.
-                    'sender_id' => $announcement->sender_id ?? null,
-                    'scheduled_at' => $announcement->scheduled_at,
-                    'sent_at' => $announcement->sent_at ?? null,
-                    'created_at' => $announcement->created_at,
-                    'updated_at' => $announcement->updated_at,
+                'id' => $announcement->id,
+                'body' => $announcement->body,
+                // sender_id and sent_at are not stored on the announcements table
+                // (schema only contains message/schedule_date/schedule_time). Expose
+                // null explicitly to keep response shape stable for frontend clients.
+                'sender_id' => $announcement->sender_id ?? null,
+                'scheduled_at' => $announcement->scheduled_at,
+                'sent_at' => $announcement->sent_at ?? null,
+                'created_at' => $announcement->created_at,
+                'updated_at' => $announcement->updated_at,
                 'organizations' => $announcement->organizations->map(fn($org) => [
                     'id' => $org->id,
                     // organizations table uses `name` column
@@ -249,16 +256,39 @@ class NotificationController extends Controller
                 ]),
             ];
 
-            $notifRows = DB::table('notifications')
+            // Try to read legacy `notifications` table rows related to this announcement
+            $notifRowsQuery = DB::table('notifications')
                 ->where('notifiable_type', 'App\\Models\\User')
                 ->whereRaw("JSON_EXTRACT(data, '$.announcement_id') = ?", [$announcement->id]);
 
             try {
-                $notifRows = $notifRows->get();
+                $notifRows = $notifRowsQuery->get();
             } catch (\Throwable $e) {
                 Log::warning('[showAnnouncement] notifications JSON_EXTRACT query failed', ['announcement_id' => $announcement->id, 'error' => $e->getMessage()]);
                 $notifRows = collect();
             }
+
+            // Also include reads persisted via announcement_reads so the UI can
+            // display per-user read timestamps even if the legacy `notifications`
+            // table is not used.
+            try {
+                $announcementReads = AnnouncementRead::where('announcement_id', $announcement->id)->get();
+            } catch (\Throwable $e) {
+                Log::warning('[showAnnouncement] failed to fetch announcement_reads', ['announcement_id' => $announcement->id, 'error' => $e->getMessage()]);
+                $announcementReads = collect();
+            }
+
+            // Map announcement_reads into the same shape as notification rows
+            $readRows = $announcementReads->map(function ($r) {
+                return (object) [
+                    'notifiable_id' => $r->user_id,
+                    'read_at' => $r->read_at,
+                    'data' => json_encode(['announcement_id' => $r->announcement_id]),
+                ];
+            });
+
+            // Merge both sources so frontend receives a single notifications array
+            $notifRows = collect($notifRows)->merge($readRows);
 
             $readUserMap = [];
             foreach ($notifRows as $nr) {
@@ -310,12 +340,26 @@ class NotificationController extends Controller
         if (!$user) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-        // Marking individual notifications as read requires persistent per-user
-        // tracking (typically the `notifications` table). The current schema
-        // does not include per-user read state. Return a clear message so the
-        // frontend can avoid trying to call this when the DB doesn't support
-        // it.
-        return response()->json(['error' => 'Read/unread tracking is not supported by current schema'], 501);
+        try {
+            $announcement = Announcement::findOrFail($id);
+
+            // Ensure the user is one of the intended recipients (admins/org/groups)
+            // For now allow marking read for announcements the user can see via unreadAnnouncements logic.
+
+            AnnouncementRead::updateOrCreate(
+                ['announcement_id' => $announcement->id, 'user_id' => $user->id],
+                ['read_at' => now()]
+            );
+
+            Log::info('Announcement marked as read', ['announcement_id' => $announcement->id, 'user_id' => $user->id]);
+
+            return response()->json(['message' => 'Marked as read']);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['error' => 'Announcement not found'], 404);
+        } catch (\Exception $e) {
+            Log::error('Failed to mark announcement as read', ['announcement_id' => $id, 'user_id' => $user->id, 'error' => $e->getMessage()]);
+            return response()->json(['error' => 'Failed to mark as read'], 500);
+        }
     }
 
     // Mark all notifications as read for the authenticated user
@@ -325,18 +369,48 @@ class NotificationController extends Controller
         if (!$user) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-
         try {
-            // Not supported: there's no per-user notification table in the
-            // existing schema. Inform caller that marking-as-read is not
-            // available.
-            return response()->json(['message' => 'Read/unread tracking not supported'], 501);
+            // Reuse the logic that finds announcements for the user (similar to userNotifications)
+            $userId = $user->id;
+            $orgId = $user->organization_id;
+            $groupIds = $user->groups()->pluck('groups.id')->toArray();
+
+            $announcements = Announcement::where(function ($q) use ($userId, $orgId, $groupIds) {
+                $q->whereHas('admins', function ($q2) use ($userId) {
+                    $q2->where('users.id', $userId);
+                });
+
+                if (!empty($orgId)) {
+                    $q->orWhereHas('organizations', function ($q2) use ($orgId) {
+                        $q2->where('organizations.id', $orgId);
+                    });
+                }
+
+                if (!empty($groupIds)) {
+                    $q->orWhereHas('groups', function ($q2) use ($groupIds) {
+                        $q2->whereIn('groups.id', $groupIds);
+                    });
+                }
+
+                $q->orWhereExists(function ($sub) use ($userId) {
+                    $sub->select(DB::raw(1))
+                        ->from('announcement_groups')
+                        ->whereColumn('announcement_groups.announcement_id', 'announcements.id')
+                        ->whereRaw('JSON_CONTAINS(announcement_groups.member_ids, ?)', [json_encode((string) $userId)]);
+                });
+            })->pluck('id');
+
+            foreach ($announcements as $aid) {
+                AnnouncementRead::updateOrCreate(['announcement_id' => $aid, 'user_id' => $userId], ['read_at' => now()]);
+            }
+
+            Log::info('Marked all announcements as read for user', ['user_id' => $userId, 'count' => count($announcements)]);
+
+            return response()->json(['message' => 'All marked as read']);
         } catch (\Exception $e) {
             Log::warning('Failed to mark all notifications as read', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+            return response()->json(['error' => 'Failed to mark all as read'], 500);
         }
-
-        // This code path is intentionally unreachable because above we return.
-        return response()->json(['message' => 'Read/unread tracking not supported'], 501);
     }
 
     // Manual API endpoint to create a notification record (for testing)

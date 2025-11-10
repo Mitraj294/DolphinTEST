@@ -78,8 +78,8 @@ class OrganizationUserController extends Controller
 
             $organization = Organization::findOrFail($orgId);
 
-            // Get existing member IDs
-            $existingMemberIds = $organization->members()->pluck('id')->toArray();
+            // Get existing member IDs (ensure users.id is selected to avoid ambiguous `id` from pivot table)
+            $existingMemberIds = $organization->members()->pluck('users.id')->toArray();
 
             // Get users with 'user' or 'salesperson' roles who are not already members
             $users = User::whereHas('roles', function ($query) {
@@ -357,17 +357,36 @@ class OrganizationUserController extends Controller
      */
     private function getOrganizationIdForCurrentUser(\App\Models\User $user): int
     {
-        $orgId = $user->organization_id;
+        // Prefer explicit organization_id column when available
+        $orgId = $user->organization_id ?? null;
 
-        if (!$orgId) {
+        // If not present, check organization_member pivot (user may be a member)
+        if (! $orgId) {
+            try {
+                $membership = $user->organizationMemberships()->first();
+                if ($membership) {
+                    $orgId = $membership->id;
+                }
+            } catch (\Throwable $e) {
+                // ignore and continue to other checks
+            }
+        }
+
+        // Fallback: organization record where this user is the owner/creator
+        if (! $orgId) {
             $organization = Organization::where('user_id', $user->id)->first();
             $orgId = $organization ? $organization->id : null;
         }
 
-        if (!$orgId) {
+        // Allow superadmins to specify organization via query param (optional)
+        if (! $orgId && request()->user() && request()->user()->roles()->where('name', 'superadmin')->exists()) {
+            $orgId = (int) request()->query('organization_id', 0) ?: null;
+        }
+
+        if (! $orgId) {
             throw new \Exception('Organization not found for user.');
         }
 
-        return $orgId;
+        return (int) $orgId;
     }
 }

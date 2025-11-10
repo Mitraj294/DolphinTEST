@@ -33,16 +33,16 @@
                 {{ announcementBodyShort }}
               </div>
               -
-              <div
+                <div
                 class="schedule-assessment-name"
                 style="
                   display: inline-block;
                   vertical-align: middle;
                   margin-left: 12px;
                 "
-              >
+                >
                 {{ formatDateTime(announcementScheduledAt) }}
-              </div>
+                </div>
             </div>
           </div>
 

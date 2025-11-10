@@ -797,10 +797,13 @@ export default {
           scheduled_at = `${YYYY}-${MM}-${DD} ${hh}:${mm}:${ss}`;
         }
 
+        // Backend expects `message` as the required string field.
+        // Keep `body` as well for backward compatibility with older code.
         const payload = {
           organization_ids: this.selectedOrganizations.map((org) => org.id),
           group_ids: this.selectedGroups.map((group) => group.id),
           admin_ids: this.selectedAdmins.map((admin) => admin.id),
+          message: this.messageBody || "",
           body: this.messageBody || "",
         };
         if (scheduled_at) payload.scheduled_at = scheduled_at;

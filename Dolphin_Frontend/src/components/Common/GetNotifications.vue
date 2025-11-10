@@ -42,8 +42,7 @@
               </button>
             </div>
             <button
-              v-if="tab === 'unread' && notifications.length > 0"
-              class="mark-all"
+              v-if="tab === 'unread' && notifications.length > 0 && !isImpersonating"
               :disabled="markAllLoading"
               @click="markAllAsRead"
               style="
@@ -101,7 +100,7 @@
                 "
               >
                 <button
-                  v-if="tab === 'unread' && !item.read_at"
+                  v-if="tab === 'unread' && !item.read_at && !isImpersonating"
                   class="mark-all"
                   @click="markAsRead(item.id)"
                   style="
@@ -179,6 +178,10 @@ export default {
     };
   },
   computed: {
+    // Whether the current session is an impersonation (super user switched into another account)
+    isImpersonating() {
+      return !!storage.get('superAuthToken');
+    },
     totalPages() {
       return Math.ceil(this.filteredNotifications.length / this.pageSize) || 1;
     },
@@ -240,7 +243,9 @@ export default {
         // `/api/notifications/unread` endpoint — superadmins don't need
         // the unread badge and the backend may restrict that route.
         const role = authMiddleware.getRole();
-        if (role === 'superadmin' && this.tab === 'unread') {
+        // If the user is a superadmin and not impersonating, skip fetching
+        // unread notifications (superadmins don't have per-user unread badge).
+        if (role === 'superadmin' && this.tab === 'unread' && !this.isImpersonating) {
           this.notificationsReady = true;
           this.notifications = [];
           this.readNotifications = [];
@@ -273,6 +278,8 @@ export default {
           .map((n) => this._normalizeNotification(n));
 
         this.notificationsReady = true;
+        // When impersonating, we still want to display notifications for the
+        // impersonated user, but disable read operations in the UI.
         this.notifications = mapped.filter((m) => !m.read_at);
         this.readNotifications = mapped.filter((m) => !!m.read_at);
       } catch (error) {

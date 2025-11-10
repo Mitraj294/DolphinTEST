@@ -15,53 +15,25 @@
               </div>
               <div class="subscription-plans-options">
                 <div
+                  v-for="plan in plans"
+                  :key="plan.id"
                   class="plan-card"
-                  :class="{ 'plan-card--current': userPlan === 250 }"
                 >
+                  <div v-if="plan.interval === 'yearly'" class="plan-card-badge">Save 2 Months</div>
                   <div class="plan-card-header">
-                    <span class="plan-card-name">Basic</span>
+                    <span class="plan-card-name">{{ plan.name }}</span>
                   </div>
                   <div class="plan-card-price">
-                    $250 <span class="plan-card-period">/month</span>
+                    {{ plan.currency && plan.currency.toLowerCase() === 'usd' ? '$' : '' }}{{ plan.amount }}
+                    <span class="plan-card-period">/{{ plan.interval === 'monthly' ? 'month' : 'annual' }}</span>
                   </div>
                   <button
-                    :class="[
-                      'plan-card-btn',
-                      { 'plan-card-btn--current': userPlan === 250 },
-                    ]"
+                    class="plan-card-btn"
                     :disabled="isLoading"
-                    @click="basicBtnAction()"
+                    @click="subscribe(plan.stripe_price_id)"
                   >
-                    <span v-if="isLoading && userPlan !== 250"
-                      >Redirecting...</span
-                    >
-                    <span v-else>{{ basicBtnText }}</span>
-                  </button>
-                </div>
-
-                <div
-                  class="plan-card"
-                  :class="{ 'plan-card--current': userPlan === 2500 }"
-                >
-                  <span class="plan-card-badge">Save 2 Months</span>
-                  <div class="plan-card-header">
-                    <span class="plan-card-name">Standard</span>
-                  </div>
-                  <div class="plan-card-price">
-                    $2500 <span class="plan-card-period">/annual</span>
-                  </div>
-                  <button
-                    :class="[
-                      'plan-card-btn',
-                      { 'plan-card-btn--current': userPlan === 2500 },
-                    ]"
-                    :disabled="isLoading"
-                    @click="standardBtnAction()"
-                  >
-                    <span v-if="isLoading && userPlan !== 2500"
-                      >Redirecting...</span
-                    >
-                    <span v-else>{{ standardBtnText }}</span>
+                    <span v-if="isLoading">Redirecting...</span>
+                    <span v-else>Choose Plan</span>
                   </button>
                 </div>
               </div>
@@ -87,35 +59,23 @@
               and may be pre-filled.
             </div>
             <div class="subscription-plans-options">
-              <div class="plan-card">
+              <div
+                v-for="plan in plans"
+                :key="plan.id"
+                class="plan-card"
+              >
+                <div v-if="plan.interval === 'yearly'" class="plan-card-badge">Save 2 Months</div>
                 <div class="plan-card-header">
-                  <span class="plan-card-name">Basic</span>
+                  <span class="plan-card-name">{{ plan.name }}</span>
                 </div>
                 <div class="plan-card-price">
-                  $250 <span class="plan-card-period">/month</span>
+                  {{ plan.currency && plan.currency.toLowerCase() === 'usd' ? '$' : '' }}{{ plan.amount }}
+                  <span class="plan-card-period">/{{ plan.interval === 'monthly' ? 'month' : 'annual' }}</span>
                 </div>
                 <button
                   class="plan-card-btn"
                   :disabled="isLoading"
-                  @click="startStripeCheckout('monthly')"
-                >
-                  <span v-if="isLoading">Redirecting...</span>
-                  <span v-else>Get Started</span>
-                </button>
-              </div>
-
-              <div class="plan-card">
-                <span class="plan-card-badge">Save 2 Months</span>
-                <div class="plan-card-header">
-                  <span class="plan-card-name">Standard</span>
-                </div>
-                <div class="plan-card-price">
-                  $2500 <span class="plan-card-period">/annual</span>
-                </div>
-                <button
-                  class="plan-card-btn"
-                  :disabled="isLoading"
-                  @click="startStripeCheckout('annually')"
+                  @click="subscribe(plan.stripe_price_id)"
                 >
                   <span v-if="isLoading">Redirecting...</span>
                   <span v-else>Get Started</span>
@@ -133,28 +93,17 @@
 </template>
 
 <script>
-// Component Imports
-
 import MainLayout from "@/components/layout/MainLayout.vue";
-import storage from "@/services/storage";
-import axios from "axios";
+import { getPlans, createCheckoutSession, getActiveSubscription } from "@/services/subscription";
 
 export default {
   name: "SubscriptionPlans",
   components: { MainLayout },
-
-  // Data
-
   data() {
     return {
-      planPeriod: "annually",
-      isAnnually: true,
       isLoading: false,
-      stripePriceIds: {
-        monthly: "price_1SERsJPnfSZSgS1XktSvPTQr",
-        annually: "price_1SERriPnfSZSgS1XYnWP4uM2",
-      },
-      userPlan: null,
+      plans: [],
+      subscription: null,
       isGuestView: false,
       guestParams: {
         email: null,
@@ -165,200 +114,80 @@ export default {
       },
     };
   },
-
-  // Computed Properties
-
-  computed: {
-    /**
-     * Determines the text for the Basic plan button based on the user's current plan.
-     */
-    basicBtnText() {
-      if (this.userPlan === 250) return "Current Plan";
-      if (this.userPlan === 2500) return "Change Plan";
-      return "Get Started";
-    },
-
-    /**
-     * Determines the action for the Basic plan button.
-     */
-    basicBtnAction() {
-      if (this.userPlan === 250) return this.goToBillingDetails;
-      return () => this.startStripeCheckout("monthly");
-    },
-
-    /**
-     * Determines the text for the Standard plan button.
-     */
-    standardBtnText() {
-      if (this.userPlan === 2500) return "Current Plan";
-      if (this.userPlan === 250) return "Upgrade Plan";
-      return "Get Started";
-    },
-
-    /**
-     * Determines the action for the Standard plan button.
-     */
-    standardBtnAction() {
-      if (this.userPlan === 2500) return this.goToBillingDetails;
-      return () => this.startStripeCheckout("annually");
-    },
-  },
-
-  // Watchers
-
-  watch: {
-    isAnnually(val) {
-      this.planPeriod = val ? "annually" : "monthly";
-    },
-  },
-
-  // Methods
-
   methods: {
-    /**
-     * Fetches the current user's subscription plan from the backend.
-     */
-    async fetchUserPlan() {
+    async loadPlans() {
       try {
-        const authToken = storage.get("authToken");
-        const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-        const res = await axios.get(`${API_BASE_URL}/api/subscription`, {
-          headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
-        });
-
-        // Support multiple payload shapes (new unified + legacy)
-        const payload = res.data || {};
-        const planObj = payload.plan || {};
-        const rawAmount =
-          payload.plan_amount ||
-          payload.amount ||
-          planObj.amount ||
-          null;
-
-        if (rawAmount !== null && rawAmount !== undefined) {
-          const parsed = Number.parseFloat(
-            String(rawAmount).replaceAll(/[,\s]/g, "")
-          );
-          // Basic plan = 250, Standard plan = 2500 (matching defined price IDs)
-          this.userPlan = Number.isFinite(parsed) ? Math.round(parsed) : null;
-        } else {
-          this.userPlan = null;
-        }
+        const plans = await getPlans();
+        this.plans = Array.isArray(plans) ? plans : [];
       } catch (e) {
-        this.userPlan = null;
-        console.error("[Subscription] Error fetching user plan:", e);
+        console.error("Failed to load plans:", e);
+        this.plans = [];
       }
     },
+    async loadSubscription() {
+      try {
+        const sub = await getActiveSubscription();
+        this.subscription = sub || null;
+      } catch (e) {
+        // Log the error to aid debugging (avoid swallowing exceptions silently)
+        console.warn('loadSubscription: failed to load active subscription', e?.message || e);
+        this.subscription = null;
+      }
+    },
+    getPlanButtonText(plan) {
+      // If user has an active subscription
+      if (this.subscription && this.subscription.plan_id) {
+        const currentPlanId = this.subscription.plan_id;
+        if (Number(currentPlanId) === Number(plan.id)) {
+          return "Current Plan";
+        }
 
-    /**
-     * Initiates a Stripe checkout session.
-     * @param {string} period - The subscription period ('monthly' or 'annually').
-     */
-    async startStripeCheckout(period) {
+        // Determine by amount if present (backend stores amounts as numbers/strings)
+        const currentAmount = Number(this.subscription.plan?.amount || this.subscription.latest_amount_paid || 0);
+        const planAmount = Number(plan.amount || 0);
+        if (currentAmount === 250 && planAmount === 2500) return "Upgrade Plan";
+        if (currentAmount === 2500 && planAmount === 250) return "Change Plan";
+      }
+      return "Choose Plan";
+    },
+    planButtonAction(plan) {
+      // If this is the user's current plan, go to billing details
+      if (this.subscription && this.subscription.plan_id && Number(this.subscription.plan_id) === Number(plan.id)) {
+        return this.goToBillingDetails;
+      }
+      // Otherwise start checkout flow
+      return () => this.subscribe(plan.stripe_price_id);
+    },
+    async subscribe(priceId) {
       this.isLoading = true;
       try {
-        const priceId =
-          this.stripePriceIds[period] || this.stripePriceIds.annually;
-        console.log(
-          "Starting checkout with period:",
-          period,
-          "priceId:",
-          priceId
-        );
-        const authToken = storage.get("authToken");
-        const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-        const payload = this.buildCheckoutPayload(priceId);
-        console.log("Checkout payload:", payload);
-
-        const res = await axios.post(
-          `${API_BASE_URL}/api/stripe/checkout-session`,
-          payload,
-          { headers: { Authorization: `Bearer ${authToken}` } }
-        );
-
-        if (res.data && res.data.url) {
-          globalThis.location.href = res.data.url;
+        const opts = {};
+        if (this.isGuestView) {
+          // forward guest params if present
+          Object.assign(opts, this.guestParams);
+        }
+        const res = await createCheckoutSession(priceId, opts);
+        // backend may return url or redirect_url; accept either
+        const redirectUrl = res?.url || res?.redirect_url || res?.redirectUrl || null;
+        if (redirectUrl) {
+          globalThis.location.href = redirectUrl;
         } else {
-          // Handle error
+          console.error('No redirect URL returned from createCheckoutSession', res);
         }
       } catch (e) {
-        console.error("[Subscription] Stripe checkout error:", e);
+        console.error("Error creating checkout session:", e);
       } finally {
         this.isLoading = false;
       }
     },
-
-    /**
-     * Builds the payload for the Stripe checkout session request.
-     * @param {string} priceId - The ID of the Stripe price.
-     * @returns {object} The payload for the request.
-     */
-    buildCheckoutPayload(priceId) {
-      const payload = { price_id: priceId };
-      if (this.isGuestView) {
-        // Add guest params but exclude null/undefined values to avoid overriding valid priceId
-        const filteredGuestParams = {};
-        for (const key of Object.keys(this.guestParams)) {
-          if (
-            this.guestParams[key] !== null &&
-            this.guestParams[key] !== undefined
-          ) {
-            // Don't override the priceId we already set
-            if (key !== "price_id") {
-              filteredGuestParams[key] = this.guestParams[key];
-            }
-          }
-        }
-        Object.assign(payload, filteredGuestParams);
-      }
-      return payload;
-    },
-
-    /**
-     * Legacy guest validation removed.
-     * Keep the method for compatibility but avoid calling backend leads endpoints;
-     * just return false so no network call is made.
-     */
-    async validateGuestToken(/* opts */) {
-      return false;
-    },
-
-    /**
-     * Navigates to the billing details page.
-     */
     goToBillingDetails() {
       this.$router.push({ name: "BillingDetails" });
     },
   },
-
-  // Lifecycle Hooks
-
   mounted() {
-    console.log("SubscriptionPlans mounted, URL:", globalThis.location.href);
-    const qs = new URLSearchParams(globalThis.location.search);
-    console.log("URL search params:", qs.toString());
-
-    const hasGuestParams = [
-      "email",
-      "lead_id",
-      "price_id",
-      "guest_code",
-      "guest_token",
-    ].some((p) => qs.has(p));
-
-    console.log("Guest params check:", {
-      hasGuestParams,
-      email: qs.has("email"),
-      lead_id: qs.has("lead_id"),
-      price_id: qs.has("price_id"),
-      guest_code: qs.has("guest_code"),
-      guest_token: qs.has("guest_token"),
-    });
-
+    const qs = new URLSearchParams(globalThis.location.search || "");
+    const hasGuestParams = ["email", "lead_id", "price_id", "guest_code", "guest_token"].some((p) => qs.has(p));
     if (hasGuestParams) {
-      // Enter guest view if URL contains guest params, but do not call
-      // the legacy leads/guest-validate backend endpoint (it's removed).
-      console.log("Setting guest view mode (no backend validation)");
       this.isGuestView = true;
       this.guestParams = {
         email: qs.get("email"),
@@ -367,11 +196,9 @@ export default {
         guest_code: qs.get("guest_code"),
         guest_token: qs.get("guest_token"),
       };
-      console.log("Guest params (no validation):", this.guestParams);
-    } else {
-      console.log("No guest params detected, fetching user plan");
-      this.fetchUserPlan();
     }
+    this.loadPlans();
+    this.loadSubscription();
   },
 };
 </script>

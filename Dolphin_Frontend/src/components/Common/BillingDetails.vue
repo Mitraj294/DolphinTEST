@@ -3,268 +3,57 @@
     <div class="page">
       <div class="table-outer">
         <div class="table-card">
-          <div class="billing-title">
-            Billing Details (Current Subscription)
-          </div>
+          <div class="billing-title">Billing Details (Current Subscription)</div>
+
           <div class="billing-plan-box">
-            <!-- If there is a current plan, show its details -->
-            <template v-if="currentPlan && Object.keys(currentPlan).length">
-              <div>
-                <div class="plan-name">
-                  <span
-                    v-if="
-                      currentPlan &&
-                      (Number(currentPlan.price) === 2500 ||
-                        Number(currentPlan.amount) === 2500)
-                    "
-                    >Standard</span
-                  >
-                  <span
-                    v-else-if="
-                      currentPlan &&
-                      (Number(currentPlan.price) === 250 ||
-                        Number(currentPlan.amount) === 250)
-                    "
-                    >Basic</span
-                  >
-                  <span v-else>{{ currentPlan?.name || "Plan" }}</span>
-                </div>
-                <div class="plan-price">
-                  <span
-                    v-if="
-                      currentPlan &&
-                      (Number(currentPlan.price) === 2500 ||
-                        Number(currentPlan.amount) === 2500)
-                    "
-                    >$2500/Annual</span
-                  >
-                  <span
-                    v-else-if="
-                      currentPlan &&
-                      (Number(currentPlan.price) === 250 ||
-                        Number(currentPlan.amount) === 250)
-                    "
-                    >$250/Month</span
-                  >
-                  <span v-else>
-                    {{
-                      currentPlan?.price
-                        ? `${currentPlan.price}`
-                        : currentPlan?.amount
-                        ? `${currentPlan.amount}`
-                        : ""
-                    }}
-                  </span>
+            <template v-if="subscription">
+              <div class="plan-left">
+                <div class="plan-name">{{ subscription.plan?.name || 'Plan' }}</div>
+                <div class="plan-price" style="text-align: left;">
+                  {{ subscription.plan?.currency && subscription.plan.currency.toLowerCase() === 'usd' ? '$' : '' }}{{ subscription.plan?.amount || subscription.latest_amount_paid || '' }}
+                  <span class="plan-card-period">/{{ subscription.plan?.interval === 'monthly' ? 'Month' : 'Annual' }}</span>
                 </div>
               </div>
-              <div class="plan-meta">
-                <div>
-                  Subscription Start :
-                  <b>{{
-                    currentPlan?.start ? formatDate(currentPlan.start) : "N/A"
-                  }}</b>
+
+              <div class="plan-right">
+                <div class="plan-meta-row">
+                  <div>Subscription Start : <b>{{ subscription.start ? formatDate(subscription.start) : (subscription.started_at ? formatDate(subscription.started_at) : 'N/A') }}</b></div>
                 </div>
-                <div>
-                  Subscription End :
-                  <b>{{
-                    currentPlan?.end ? formatDate(currentPlan.end) : "N/A"
-                  }}</b>
+                <div class="plan-meta-row">
+                  <div>Subscription End : <b>{{ subscription.end ? formatDate(subscription.end) : (subscription.ends_at ? formatDate(subscription.ends_at) : 'N/A') }}</b></div>
                 </div>
-                <div class="plan-next">
-                  (Next bill on
-                  {{
-                    currentPlan?.nextBill
-                      ? formatDate(currentPlan.nextBill)
-                      : currentPlan?.current_period_end
-                      ? formatDate(currentPlan.current_period_end)
-                      : currentPlan?.end
-                      ? formatDate(currentPlan.end)
-                      : "N/A"
-                  }})
-                </div>
+                <div class="plan-meta-row small">(Next bill on {{ subscription.current_period_end ? formatDate(subscription.current_period_end) : 'N/A' }})</div>
+               
               </div>
             </template>
-
-            <!-- If no current plan but billing history exists, show last billing info -->
-            <template
-              v-else-if="!currentPlan || !Object.keys(currentPlan).length"
-            >
-              <template v-if="billingHistory && billingHistory.length">
-                <div>
-                  <div class="plan-name">No active plan</div>
-                  <div class="plan-price">-</div>
-                </div>
-                <div class="plan-meta">
-                  <div>
-                    Last Subscription End :
-                    <b>{{
-                      lastBillingItem && lastBillingItem.subscriptionEnd
-                        ? formatDate(lastBillingItem.subscriptionEnd)
-                        : "Unknown"
-                    }}</b>
-                  </div>
-                  <div>
-                    Last Payment :
-                    <b>{{
-                      lastBillingItem && lastBillingItem.paymentDate
-                        ? formatDate(lastBillingItem.paymentDate)
-                        : "Unknown"
-                    }}</b>
-                  </div>
-                  <div class="plan-next">
-                    This plan expired — please renew to reactivate billing.
-                  </div>
-                </div>
-              </template>
-
-              <!-- Neither current plan nor history -->
-              <template v-else>
-                <div>
-                  <div class="plan-name">No plan selected</div>
-                  <div class="plan-price">—</div>
-                </div>
-                <div class="plan-meta">
-                  <div>
-                    Please select a subscription plan to enable features and
-                    billing.
-                  </div>
-                </div>
-              </template>
+            <template v-else>
+              <div class="plan-left">
+                <div class="plan-name">No active subscription</div>
+                <div class="plan-price">—</div>
+              </div>
+              <div class="plan-right">
+                <div class="plan-meta-row">Please choose a plan to get started.</div>
+              </div>
             </template>
           </div>
+
           <div class="billing-title">Billing History</div>
           <div class="table-container">
             <div class="table-scroll">
               <table class="table">
-                <TableHeader
-                  :columns="[
-                    {
-                      label: 'Payment Method',
-                      key: 'paymentMethodType',
-                      minWidth: '200px',
-                    },
-                    {
-                      label: 'Payment Date',
-                      key: 'paymentDate',
-                      minWidth: '200px',
-                      sortable: true,
-                    },
-                    {
-                      label: 'Subscription End',
-                      key: 'subscriptionEnd',
-                      minWidth: '200px',
-                      sortable: true,
-                    },
-                    {
-                      label: 'Amount',
-                      key: 'amount',
-                      minWidth: '200px',
-                      sortable: true,
-                    },
-                    { label: 'Download', key: 'invoice', minWidth: '200px' },
-                    {
-                      label: 'Description',
-                      key: 'description',
-                      minWidth: '200px',
-                    },
-                  ]"
-                  :active-sort-key="activeSortKey"
-                  :sort-asc="sortAsc"
-                  @sort="handleSort"
-                />
+                <!-- Reuse shared table header component for consistent styling -->
+                <TableHeader :columns="columns" />
                 <tbody>
-                  <tr v-for="(item, idx) in sortedBillingHistory" :key="idx">
-                    <td>
-                      {{ item.payment_method }}
-                    </td>
-
-                    <td>
-                      {{ item.paymentDate ? formatDate(item.paymentDate) : "" }}
-                    </td>
-                    <td>
-                      {{
-                        item.subscriptionEnd
-                          ? formatDate(item.subscriptionEnd)
-                          : ""
-                      }}
-                    </td>
-                    <td>
-                      <template v-if="item.amount">
-                        {{ item.currency && item.currency.toLowerCase() === 'usd' ? '$' : '' }}{{ item.amount }}
-                        <template v-if="item.currency && item.currency.toLowerCase() !== 'usd'"> {{ item.currency }}</template>
-                      </template>
-                    </td>
-                    <td>
-                      <!-- If server provides direct pdfUrl, use it (adds download attribute).
-                           Otherwise try to download via protected API (downloadInvoice) which includes auth header. -->
-                      <a
-                        v-if="item.pdfUrl"
-                        :href="item.pdfUrl"
-                        class="receipt-link"
-                        target="_blank"
-                        rel="noopener"
-                        :download="getFileNameFromUrl(item.pdfUrl)"
-                        style="margin-left: 8px"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          style="vertical-align: middle; margin-right: 4px"
-                        >
-                          <rect
-                            x="3"
-                            y="3"
-                            width="18"
-                            height="18"
-                            rx="2"
-                            stroke="#0074c2"
-                            stroke-width="2"
-                          />
-                          <path
-                            d="M7 7h10M7 11h10M7 15h6"
-                            stroke="#0074c2"
-                            stroke-width="2"
-                          />
-                        </svg>
-                        View / Download
-                      </a>
-
-                      <button
-                        v-else-if="hasInvoiceId(item)"
-                        @click="downloadInvoice(item)"
-                        class="receipt-link"
-                        style="background:none;border:0;padding:0;cursor:pointer;margin-left:8px"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          style="vertical-align: middle; margin-right: 4px"
-                        >
-                          <rect
-                            x="3"
-                            y="3"
-                            width="18"
-                            height="18"
-                            rx="2"
-                            stroke="#0074c2"
-                            stroke-width="2"
-                          />
-                          <path
-                            d="M7 7h10M7 11h10M7 15h6"
-                            stroke="#0074c2"
-                            stroke-width="2"
-                          />
-                        </svg>
-                        Download Receipt
-                      </button>
-
+                  <tr v-for="(invoice, idx) in invoices" :key="invoice.invoice_id || invoice.subscription_id || idx">
+                    <td data-label="Payment Method">{{ invoice.payment_method || subscription?.payment_method?.label || '-' }}</td>
+                    <td data-label="Payment Date">{{ invoice.paymentDate ? formatDate(invoice.paymentDate) : '' }}</td>
+                    <td data-label="Subscription End">{{ invoice.subscriptionEnd ? formatDate(invoice.subscriptionEnd) : '' }}</td>
+                    <td data-label="Amount">{{ invoice.currency && invoice.currency.toLowerCase() === 'usd' ? '$' : '' }}{{ invoice.amount ?? invoice.amount_paid ?? invoice.amount_due ?? '' }}</td>
+                    <td data-label="Receipt">
+                      <a v-if="invoice.pdfUrl" :href="invoice.pdfUrl" target="_blank" rel="noopener">View Receipt</a>
+                      <a v-else-if="invoice.hosted_invoice_url" :href="invoice.hosted_invoice_url" target="_blank" rel="noopener">View Receipt</a>
                       <span v-else>—</span>
                     </td>
-                    <td>{{ item.description || '' }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -277,149 +66,57 @@
 </template>
 
 <script>
-import TableHeader from "@/components/Common/Common_UI/TableHeader.vue";
 import MainLayout from "@/components/layout/MainLayout.vue";
-import storage from "@/services/storage";
-import axios from "axios";
-
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || "";
+import TableHeader from "@/components/Common/Common_UI/TableHeader.vue";
+import { getActiveSubscription, getInvoices, createBillingPortalSession } from "@/services/subscription";
 
 export default {
   name: "BillingDetails",
   components: { MainLayout, TableHeader },
   data() {
     return {
-      currentPlan: null,
-      billingHistory: [],
-      activeSortKey: "paymentDate",
-      sortAsc: false,
+      subscription: null,
+      invoices: [],
+      columns: [
+        { label: 'Payment Method', key: 'payment_method', minWidth: '180px' },
+        { label: 'Payment Date', key: 'paymentDate', minWidth: '160px', sortable: true },
+        { label: 'Subscription End', key: 'subscriptionEnd', minWidth: '160px' },
+        { label: 'Amount', key: 'amount', minWidth: '120px' },
+        { label: 'Receipt', key: 'pdfUrl', minWidth: '140px' },
+      ],
+      isCreatingPortal: false,
     };
   },
-  computed: {
-    lastBillingItem() {
-      if (!this.billingHistory || !this.billingHistory.length) return null;
-      const sorted = [...this.billingHistory].sort((a, b) => {
-        const ta = a.subscriptionEnd || a.paymentDate || "";
-        const tb = b.subscriptionEnd || b.paymentDate || "";
-        return new Date(tb) - new Date(ta);
-      });
-      return sorted[0] || null;
-    },
-    sortedBillingHistory() {
-      if (!this.activeSortKey) return this.billingHistory;
-      const sorted = [...this.billingHistory].sort((a, b) => {
-        let valA = a[this.activeSortKey];
-        let valB = b[this.activeSortKey];
-
-        if (
-          this.activeSortKey === "paymentDate" ||
-          this.activeSortKey === "subscriptionEnd"
-        ) {
-          valA = valA ? new Date(valA) : 0;
-          valB = valB ? new Date(valB) : 0;
-        }
-
-        if (valA < valB) return this.sortAsc ? -1 : 1;
-        if (valA > valB) return this.sortAsc ? 1 : -1;
-        return 0;
-      });
-      return sorted;
-    },
-  },
   methods: {
-    handleSort(key) {
-      if (this.activeSortKey === key) {
-        this.sortAsc = !this.sortAsc;
-      } else {
-        this.activeSortKey = key;
-        this.sortAsc = true;
-      }
-    },
-    hasInvoiceId(item) {
-      return Boolean(item.invoiceId || item.invoice_id || item.id);
-    },
-    getFileNameFromUrl(url) {
+    async loadBillingDetails() {
       try {
-        if (!url) return "";
-        const parsed = url.split("?")[0];
-        const parts = parsed.split("/");
-        return decodeURIComponent(parts[parts.length - 1]);
-      } catch {
-        return "";
-      }
-    },
-    getFilenameFromDisposition(disposition) {
-      if (!disposition) return null;
-      const fileNameMatch = /filename\*?=(?:UTF-8'')?["']?([^;"']+)["']?/i.exec(
-        disposition
-      );
-      return fileNameMatch ? decodeURIComponent(fileNameMatch[1]) : null;
-    },
-    async downloadInvoice(item) {
-      try {
-        const invoiceId = item.invoiceId || item.invoice_id || item.id;
-        if (!invoiceId) {
-          console.warn("No invoice id available for item", item);
-          return;
+        const sub = await getActiveSubscription();
+        this.subscription = sub || null;
+
+        // Attempt to fetch invoices for this subscription if available
+        let invRes = null;
+        try {
+          const params = {};
+          if (this.subscription && this.subscription.id) params.subscription_id = this.subscription.id;
+          invRes = await getInvoices(params);
+        } catch (e) {
+          // Could not fetch invoices for subscription, log and continue with empty
+          console.warn('Could not fetch invoices for subscription:', e);
+          invRes = null;
         }
-        const orgId = this.$route.query.orgId || null;
-        // Adjust endpoint if your backend uses a different path for downloading invoices.
-        const url = `${API_BASE_URL}/api/billing/invoice/${invoiceId}${
-          orgId ? `?org_id=${orgId}` : ""
-        }`;
 
-        const authToken = storage.get("authToken");
-        const headers = {};
-        if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
-
-        const res = await axios.get(url, {
-          headers,
-          responseType: "blob",
-        });
-
-        const filename =
-          this.getFilenameFromDisposition(res.headers["content-disposition"]) ||
-          this.getFileNameFromUrl(url) ||
-          `invoice_${invoiceId}.pdf`;
-
-        const blob = new Blob([res.data], { type: res.data.type || "application/pdf" });
-        const link = document.createElement("a");
-        const blobUrl = globalThis.URL.createObjectURL(blob);
-        link.href = blobUrl;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        globalThis.URL.revokeObjectURL(blobUrl);
+        // invRes may be paginated { data: [...] } or an array
+        if (Array.isArray(invRes)) {
+          this.invoices = invRes;
+        } else if (invRes && Array.isArray(invRes.data)) {
+          this.invoices = invRes.data;
+        } else {
+          this.invoices = [];
+        }
       } catch (e) {
-        console.error("Failed to download invoice:", e);
-      }
-    },
-    async fetchBillingDetails() {
-      try {
-        const authToken = storage.get("authToken");
-        const headers = {};
-        if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
-        // If orgId is supplied via query, request org-specific billing endpoints
-        const orgId = this.$route.query.orgId || null;
-        const planUrl = orgId
-          ? `${API_BASE_URL}/api/billing/current?org_id=${orgId}`
-          : `${API_BASE_URL}/api/billing/current`;
-        // Fetch current plan
-        const planRes = await axios.get(planUrl, { headers });
-        this.currentPlan = planRes.data || null;
-        // Fetch billing history
-        const historyUrl = orgId
-          ? `${API_BASE_URL}/api/billing/history?org_id=${orgId}`
-          : `${API_BASE_URL}/api/billing/history`;
-        const historyRes = await axios.get(historyUrl, { headers });
-        this.billingHistory = Array.isArray(historyRes.data)
-          ? historyRes.data
-          : [];
-      } catch (e) {
-        console.error("Error fetching billing details:", e);
-        this.currentPlan = null;
-        this.billingHistory = [];
+        console.error("Failed to load billing details:", e);
+        this.subscription = null;
+        this.invoices = [];
       }
     },
     formatDate(dateStr) {
@@ -432,9 +129,29 @@ export default {
         day: "numeric",
       });
     },
+    async manageSubscription() {
+      // Open billing portal (if backend supports it). Gracefully handle errors.
+      this.isCreatingPortal = true;
+      try {
+        const res = await createBillingPortalSession();
+        const url = res?.url || res?.data?.url || null;
+        if (url) {
+          globalThis.location.href = url;
+        } else {
+          console.warn('Billing portal endpoint did not return a URL:', res);
+          alert('Billing portal is not available.');
+        }
+      } catch (err) {
+        console.warn('Failed to create billing portal session', err && err.message ? err.message : err);
+        alert('Unable to open billing portal at this time.');
+      } finally {
+        this.isCreatingPortal = false;
+      }
+    },
+
   },
   mounted() {
-    this.fetchBillingDetails();
+    this.loadBillingDetails();
   },
 };
 </script>
@@ -467,6 +184,35 @@ export default {
   font-size: 32px;
   font-weight: 700;
   margin-bottom: 0;
+}
+.plan-left {
+  flex: 0 0 55%;
+}
+.plan-right {
+  flex: 0 0 45%;
+  text-align: right;
+}
+.plan-meta-row {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.plan-meta-row.small {
+  font-size: 13px;
+  color: #999;
+}
+
+/* Table tweaks for billing history */
+.table thead th {
+  background: #fafafa;
+  color: #333;
+  font-weight: 600;
+  padding: 12px 16px;
+  text-align: left;
+}
+.table tbody td {
+  padding: 12px 16px;
+  border-top: 1px solid #f0f0f0;
 }
 .plan-meta {
   text-align: right;
