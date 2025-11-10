@@ -12,11 +12,16 @@ class Announcement extends Model
         'message',
         'schedule_date',
         'schedule_time',
+        'sender_id',
+        'sent_at',
     ];
 
     protected $casts = [
         'schedule_date' => 'date',
-        'schedule_time' => 'datetime',
+        // schedule_time is stored as a SQL TIME column; cast to string and
+        // treat scheduled_at via the accessor which combines date + time.
+        'schedule_time' => 'string',
+        'sent_at' => 'datetime',
     ];
 
     public function groups(): BelongsToMany
@@ -78,7 +83,8 @@ class Announcement extends Model
         try {
             $dt = Carbon::parse($value);
             $this->attributes['schedule_date'] = $dt->toDateString();
-            $this->attributes['schedule_time'] = $dt->toDateTimeString();
+            // store only the time portion in the schedule_time column
+            $this->attributes['schedule_time'] = $dt->format('H:i:s');
         } catch (\Exception $e) {
             // ignore invalid values
         }

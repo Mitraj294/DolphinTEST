@@ -12,6 +12,11 @@ class InvoiceController extends Controller
      */
     public function index(Request $request)
     {
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
         $query = SubscriptionInvoice::query();
 
         if ($request->has('subscription_id')) {
@@ -29,6 +34,11 @@ class InvoiceController extends Controller
      */
     public function store(Request $request)
     {
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
         $validated = $request->validate([
             'subscription_id' => 'required|integer|exists:subscriptions,id',
             'stripe_invoice_id' => 'required|string|max:255',
@@ -62,6 +72,11 @@ class InvoiceController extends Controller
      */
     public function show(string $id)
     {
+        $user = request()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
         $invoice = SubscriptionInvoice::findOrFail($id);
         return response()->json(['invoice' => $invoice]);
     }
@@ -71,6 +86,11 @@ class InvoiceController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
         $invoice = SubscriptionInvoice::findOrFail($id);
 
         $validated = $request->validate([
@@ -103,6 +123,11 @@ class InvoiceController extends Controller
      */
     public function destroy(string $id)
     {
+        $user = request()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
         $invoice = SubscriptionInvoice::findOrFail($id);
         $invoice->delete();
 

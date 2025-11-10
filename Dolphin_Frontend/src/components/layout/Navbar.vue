@@ -721,7 +721,8 @@ export default {
     this.updateUserInfo();
     try {
       const token = storage.get("authToken");
-      if (token) {
+      // Do not fetch unread notifications for superadmin users
+      if (token && this.roleName !== 'superadmin') {
         this.fetchUnreadCount();
       }
     } catch (e) {
@@ -738,7 +739,10 @@ export default {
       this.updateUserInfo();
       this.updateNotificationCount();
       try {
-        this.fetchUnreadCount();
+        // Only fetch unread for non-superadmins
+        if (this.roleName !== 'superadmin') {
+          this.fetchUnreadCount();
+        }
         // Only fetch current user if not in guest access mode
         if (!this.isGuestAccess()) {
           this.fetchCurrentUser();

@@ -27,6 +27,9 @@ class AssessmentResultController extends Controller
      */
     public function calculate(Request $request): JsonResponse
     {
+        if (!\Illuminate\Support\Facades\Auth::check()) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
         $validator = Validator::make($request->all(), [
             'attempt_id' => 'required|integer',
             'assessment_id' => 'nullable|integer|exists:organization_assessments,id',
@@ -39,9 +42,10 @@ class AssessmentResultController extends Controller
             ], 422);
         }
 
-        $validated = $validator->validated();
-        $responseData = [];
-        $status = 200;
+    $validated = $validator->validated();
+    $attemptId = $validated['attempt_id'] ?? null;
+    $responseData = [];
+    $status = 200;
 
         try {
             $userId = Auth::id();
@@ -77,7 +81,7 @@ class AssessmentResultController extends Controller
             Log::error('Failed to calculate assessment results', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'attempt_id' => $validated['attempt_id']
+                'attempt_id' => $attemptId
             ]);
 
             $responseData = [
@@ -100,6 +104,9 @@ class AssessmentResultController extends Controller
     {
         try {
             $userId = Auth::id();
+            if (empty($userId)) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
             $assessmentId = $request->query('assessment_id');
             $type = $request->query('type'); // 'original' or 'adjust'
 
@@ -142,6 +149,9 @@ class AssessmentResultController extends Controller
     {
         try {
             $userId = Auth::id();
+            if (empty($userId)) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
 
             $result = AssessmentResult::where('id', $id)
                 ->where('user_id', $userId)
@@ -178,6 +188,9 @@ class AssessmentResultController extends Controller
     {
         try {
             $userId = Auth::id();
+            if (empty($userId)) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
             $assessmentId = $request->query('assessment_id');
 
             $query = AssessmentResult::where('user_id', $userId);

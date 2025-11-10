@@ -110,16 +110,21 @@ class UserController extends Controller
 
         $validatedData = $request->validate($rules);
 
-        // Capture the user's current primary role (if any) so we can detect
-        // transitions (e.g. organizationadmin -> user) and react accordingly.
-        $oldRoleName = $user->roles()->first()->name ?? null;
+    // Capture the user's current primary role (if any) so we can detect
+    // transitions (e.g. organizationadmin -> user) and react accordingly.
+    $oldRole = $user->roles()->first();
+    $oldRoleName = $oldRole->name ?? null;
 
         try {
             DB::transaction(function () use ($user, $validatedData, $request) {
                 $user->update($validatedData);
 
-                $role = Role::where('name', $validatedData['role'])->firstOrFail();
-                $user->roles()->sync([$role->id]);
+                $role = Role::where('name', $validatedData['role'])->first();
+                if ($role) {
+                    $user->roles()->sync([$role->id]);
+                } else {
+                    Log::warning('Requested role not found during updateRole', ['role' => $validatedData['role'], 'user_id' => $user->id]);
+                }
 
                 if ($request->has('name')) {
                     Organization::updateOrCreate(
@@ -183,11 +188,14 @@ class UserController extends Controller
             $tokenResult->token->expires_at = now()->addHours(1);
             $tokenResult->token->save();
 
+            $accessTokenString = $tokenResult->accessToken ?? null;
+            $expiresAtStr = $tokenResult->token?->expires_at?->toIso8601String() ?? null;
+
             return response()->json([
                 'message' => "Successfully impersonating {$user->first_name}.",
-                'impersonated_token' => $tokenResult->accessToken,
+                'impersonated_token' => $accessTokenString,
                 'user' => $this->formatUserPayload($user),
-                'expires_at' => $tokenResult->token->expires_at->toIso8601String(),
+                'expires_at' => $expiresAtStr,
             ]);
         } catch (\Exception $e) {
             Log::error('Impersonation failed', ['user_id' => $user->id, 'error' => $e->getMessage()]);
@@ -217,7 +225,11 @@ class UserController extends Controller
             }
 
             $role = Role::where('name', $data['role'])->first();
-            $user->roles()->attach($role);
+            if ($role) {
+                $user->roles()->attach($role);
+            } else {
+                Log::warning('Requested role not found during createUserWithRelations', ['role' => $data['role'] ?? null]);
+            }
 
             return $user;
         });

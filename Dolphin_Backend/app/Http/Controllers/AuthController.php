@@ -180,7 +180,20 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->token()->revoke();
+        try {
+            $token = $request->user()->token();
+            if ($token) {
+                // Revoke the current access token
+                $token->revoke();
+            } elseif (method_exists($request->user(), 'tokens')) {
+                // Fallback: delete all tokens for the user (safe in most dev contexts)
+                $request->user()->tokens()->delete();
+            }
+        } catch (\Exception $e) {
+            // Log and continue so logout remains idempotent
+            Log::warning('Failed to revoke token on logout', ['error' => $e->getMessage()]);
+        }
+
         return response()->json(['message' => 'Successfully logged out']);
     }
 
@@ -188,7 +201,20 @@ class AuthController extends Controller
 
     public function tokenStatus(Request $request)
     {
-        $token = $request->user()->token();
+        $token = null;
+        try {
+            $token = $request->user()->token();
+        } catch (\Exception $e) {
+            // ignore
+        }
+
+        if (empty($token)) {
+            return response()->json([
+                'valid' => false,
+                'expires_at' => null,
+            ]);
+        }
+
         return response()->json([
             'valid' => true,
             'expires_at' => $token->expires_at,

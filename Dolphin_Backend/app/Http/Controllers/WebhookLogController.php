@@ -9,6 +9,11 @@ class WebhookLogController extends Controller
 {
     public function index(Request $request)
     {
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
         $query = WebhookLog::query();
 
         // Filter by type if provided
@@ -34,6 +39,10 @@ class WebhookLogController extends Controller
             'payload' => 'required|array',
             'processed' => 'boolean'
         ]);
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
 
         $webhookLog = WebhookLog::create($validatedData);
 
@@ -42,12 +51,22 @@ class WebhookLogController extends Controller
 
     public function show(string $id)
     {
+        $user = request()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
         $webhookLog = WebhookLog::findOrFail($id);
         return response()->json(['webhook_log' => $webhookLog]);
     }
 
     public function update(Request $request, string $id)
     {
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
         $webhookLog = WebhookLog::findOrFail($id);
 
         $validatedData = $request->validate([
@@ -61,6 +80,11 @@ class WebhookLogController extends Controller
 
     public function destroy(string $id)
     {
+        $user = request()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
         $webhookLog = WebhookLog::findOrFail($id);
         $webhookLog->delete();
 
@@ -69,6 +93,11 @@ class WebhookLogController extends Controller
 
     public function markAsProcessed(string $id)
     {
+        $user = request()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
         $webhookLog = WebhookLog::findOrFail($id);
         $webhookLog->update(['processed' => true]);
 
@@ -77,6 +106,11 @@ class WebhookLogController extends Controller
 
     public function unprocessed()
     {
+        $user = request()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
         $webhookLogs = WebhookLog::where('processed', false)
             ->orderBy('created_at', 'asc')
             ->get();

@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
                 'first_name' => 'Super',
                 'last_name' => 'Admin',
                 'email' => 'sdolphin632@gmail.com',
-                'password' => bcrypt('superadmin@123'),
+                'password' => bcrypt('12345678'),
                 'email_verified_at' => now(),
                 'status' => 'active',
             ]);

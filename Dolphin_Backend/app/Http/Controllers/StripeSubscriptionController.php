@@ -57,9 +57,14 @@ class StripeSubscriptionController extends Controller
                 $successUrl = $this->buildSuccessUrl($frontend, $customerEmail, $leadId, $request);
                 Log::info('Success URL:', ['url' => $successUrl]);
 
-                Stripe::setApiKey(config('services.stripe.secret'));
+                if (empty(config('services.stripe.secret'))) {
+                    Log::error('Stripe secret not configured. Aborting createCheckoutSession.');
+                    $response = ['error' => 'Stripe not configured'];
+                    $status = 500;
+                } else {
+                    Stripe::setApiKey(config('services.stripe.secret'));
 
-                try {
+                    try {
                     $session = StripeSession::create([
                         'payment_method_types' => ['card'],
                         'mode' => 'subscription',
@@ -74,17 +79,18 @@ class StripeSubscriptionController extends Controller
 
                     $response = ['id' => $session->id, 'url' => $session->url];
                     $status = 200;
-                } catch (\Stripe\Exception\InvalidRequestException $e) {
+                    } catch (\Stripe\Exception\InvalidRequestException $e) {
                     Log::error('Stripe InvalidRequestException creating checkout session', [
                         'message' => $e->getMessage(),
                         'params' => ['price_id' => $priceId, 'email' => $customerEmail, 'lead_id' => $leadId]
                     ]);
                     $response = ['error' => 'Stripe rejected the request: ' . $e->getMessage()];
                     $status = 400;
-                } catch (\Throwable $e) {
+                    } catch (\Throwable $e) {
                     Log::error('Unexpected error creating Stripe checkout session: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
                     $response = ['error' => 'Could not create Stripe checkout session.'];
                     $status = 500;
+                }
                 }
             }
         }
@@ -270,6 +276,15 @@ class StripeSubscriptionController extends Controller
     public function createCustomerPortal(Request $request)
     {
         $user = Auth::user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
+        if (empty(config('services.stripe.secret'))) {
+            Log::error('Stripe secret not configured. Aborting createCustomerPortal.');
+            return response()->json(['error' => 'Stripe not configured'], 500);
+        }
+
         Stripe::setApiKey(config('services.stripe.secret'));
         $customers = Customer::all(['email' => $user->email, 'limit' => 1]);
         if (count($customers->data) === 0) {
@@ -293,6 +308,14 @@ class StripeSubscriptionController extends Controller
         $event = null;
 
         try {
+            // Ensure webhook secret is configured before attempting verification
+            if (empty(config('services.stripe.webhook_secret'))) {
+                Log::error('Stripe webhook secret is not configured. Rejecting webhook.');
+                // Persist raw payload for debugging if possible
+                $this->persistRawWebhookLog('webhook_secret_missing', $request->getContent(), false, 'webhook_secret_missing');
+                return response('Webhook endpoint not configured', 503);
+            }
+
             $event = $this->verifyAndConstructEvent($request);
             Log::info('Stripe Webhook Event Received:', [
                 'type' => $event->type,
@@ -358,10 +381,15 @@ class StripeSubscriptionController extends Controller
      */
     private function verifyAndConstructEvent(Request $request): Event
     {
+        $webhookSecret = config('services.stripe.webhook_secret');
+        if (empty($webhookSecret)) {
+            throw new \UnexpectedValueException('Stripe webhook secret not configured');
+        }
+
         return \Stripe\Webhook::constructEvent(
             $request->getContent(),
             $request->header('Stripe-Signature'),
-            config('services.stripe.webhook_secret')
+            $webhookSecret
         );
     }
 
@@ -371,6 +399,10 @@ class StripeSubscriptionController extends Controller
     private function handleCheckoutSessionCompleted(StripeSession $session): void
     {
         Log::info('Checkout Session Completed Payload:', (array) $session);
+        if (empty(config('services.stripe.secret'))) {
+            Log::error('Stripe secret not configured. Skipping processing of checkout.session.completed.');
+            return;
+        }
         Stripe::setApiKey(config('services.stripe.secret'));
 
         $user = User::where('email', $session->customer_email)->first();
@@ -380,10 +412,27 @@ class StripeSubscriptionController extends Controller
         }
 
         // Expand latest invoice and its payment_intent for details
-        $stripeSub = \Stripe\Subscription::retrieve($session->subscription, [
-            'expand' => ['latest_invoice.payment_intent']
-        ]);
-        $customer = Customer::retrieve($session->customer);
+        $stripeSub = null;
+        if (!empty($session->subscription)) {
+            try {
+                $stripeSub = \Stripe\Subscription::retrieve($session->subscription, [
+                    'expand' => ['latest_invoice.payment_intent']
+                ]);
+            } catch (\Throwable $e) {
+                Log::warning('Could not retrieve Stripe subscription from session', ['session_id' => $session->id, 'error' => $e->getMessage()]);
+                $stripeSub = null;
+            }
+        }
+
+        $customer = null;
+        if (!empty($session->customer)) {
+            try {
+                $customer = Customer::retrieve($session->customer);
+            } catch (\Throwable $e) {
+                Log::warning('Could not retrieve Stripe customer from session', ['session_id' => $session->id, 'error' => $e->getMessage()]);
+                $customer = null;
+            }
+        }
 
         // Try to fetch the latest invoice for this subscription (if available)
         $latestInvoice = null;
@@ -407,9 +456,9 @@ class StripeSubscriptionController extends Controller
         $start = $stripeSub->current_period_start ? Carbon::createFromTimestamp($stripeSub->current_period_start) : Carbon::now();
         $end = $stripeSub->current_period_end ? Carbon::createFromTimestamp($stripeSub->current_period_end) : null;
 
-        $amount = $session->amount_total ? $session->amount_total / 100 : null;
+        $amount = isset($session->amount_total) ? ($session->amount_total / 100) : null;
         if (is_null($end) || $start->equalTo($end)) {
-            if ($amount == 2500) {
+            if ($amount === 2500) {
                 $end = $start->copy()->addYear();
             } else {
                 $end = $start->copy()->addMonth();
@@ -419,7 +468,7 @@ class StripeSubscriptionController extends Controller
         $subscriptionData = [
             'user_id' => $user->id,
             'stripe_subscription_id' => $session->subscription,
-            'plan' => $stripeSub->items->data[0]->price->id ?? null,
+            'plan' => null,
             'status' => $stripeSub->status ?? 'active',
             'payment_date' => now(),
             'subscription_start' => $start instanceof Carbon ? $start->toDateTimeString() : (string)$start,
@@ -431,7 +480,7 @@ class StripeSubscriptionController extends Controller
             // Invoice-related fields may not be present on the session; populate from latest invoice when possible
             'receipt_url' => $latestInvoice->hosted_invoice_url ?? null,
             'invoice_number' => $latestInvoice->number ?? null,
-            'description' => $latestInvoice->lines->data[0]->description ?? null,
+            'description' => null,
             'stripe_invoice_id' => $latestInvoice->id ?? null,
             'amount_due' => isset($latestInvoice->amount_due) ? $latestInvoice->amount_due / 100 : null,
             'amount_paid' => isset($latestInvoice->amount_paid) ? $latestInvoice->amount_paid / 100 : null,
@@ -439,6 +488,16 @@ class StripeSubscriptionController extends Controller
             'invoice_status' => $latestInvoice->status ?? null,
             'paid_at' => isset($latestInvoice->status_transitions->paid_at) ? date('Y-m-d H:i:s', $latestInvoice->status_transitions->paid_at) : null,
         ];
+
+        // Safely extract plan id if available
+        if ($stripeSub && isset($stripeSub->items->data) && is_array($stripeSub->items->data) && isset($stripeSub->items->data[0]->price->id)) {
+            $subscriptionData['plan'] = $stripeSub->items->data[0]->price->id;
+        }
+
+        // Safely extract description from latest invoice if present
+        if ($latestInvoice && isset($latestInvoice->lines->data[0]->description)) {
+            $subscriptionData['description'] = $latestInvoice->lines->data[0]->description;
+        }
 
         $paymentMethodDetails = $this->getPaymentMethodDetailsFromSession($session, $stripeSub);
         $this->updateOrCreateSubscription(array_merge($subscriptionData, $paymentMethodDetails));
@@ -450,6 +509,10 @@ class StripeSubscriptionController extends Controller
     private function handleInvoicePaid(Invoice $invoice): void
     {
         Log::info('Invoice Paid Payload:', (array) $invoice);
+        if (empty(config('services.stripe.secret'))) {
+            Log::error('Stripe secret not configured. Skipping processing of invoice.paid.');
+            return;
+        }
         Stripe::setApiKey(config('services.stripe.secret'));
 
         $stripeSubscriptionId = $this->getSubscriptionIdFromInvoice($invoice);
@@ -458,8 +521,17 @@ class StripeSubscriptionController extends Controller
             return;
         }
 
-        $customer = Customer::retrieve($invoice->customer);
-        $user = User::where('email', $customer->email)->first();
+        $customer = null;
+        if (!empty($invoice->customer)) {
+            try {
+                $customer = Customer::retrieve($invoice->customer);
+            } catch (\Throwable $e) {
+                Log::warning('Could not retrieve customer for invoice.paid', ['invoice_id' => $invoice->id, 'error' => $e->getMessage()]);
+                return; // cannot proceed without customer email mapping
+            }
+        }
+
+        $user = $customer ? User::where('email', $customer->email)->first() : null;
         if (!$user) {
             Log::warning('User not found for invoice', ['email' => $customer->email]);
             return;
@@ -468,7 +540,7 @@ class StripeSubscriptionController extends Controller
         $stripeSub = \Stripe\Subscription::retrieve($stripeSubscriptionId, [
             'expand' => ['latest_invoice.payment_intent']
         ]);
-        $amount = $invoice->amount_paid / 100;
+    $amount = isset($invoice->amount_paid) ? ($invoice->amount_paid / 100) : null;
 
         // Fallback for subscription period if not available on the subscription object
         // Use Carbon to compute start/end consistently. If Stripe didn't provide
@@ -491,7 +563,7 @@ class StripeSubscriptionController extends Controller
             'stripe_customer_id' => $invoice->customer,
             'plan' => $stripeSub->items->data[0]->price->id ?? null,
             'status' => $stripeSub->status ?? null,
-            'payment_date' => date('Y-m-d H:i:s', $invoice->status_transitions->paid_at),
+            'payment_date' => isset($invoice->status_transitions->paid_at) ? date('Y-m-d H:i:s', $invoice->status_transitions->paid_at) : now(),
             'subscription_start' => $start instanceof Carbon ? $start->toDateTimeString() : (string)$start,
             'subscription_end' => $end instanceof Carbon ? $end->toDateTimeString() : (string)$end,
             'amount' => $amount,
@@ -502,7 +574,7 @@ class StripeSubscriptionController extends Controller
             'amount_paid' => $amount,
             'currency' => $invoice->currency,
             'invoice_status' => $invoice->status ?? null,
-            'paid_at' => date('Y-m-d H:i:s', $invoice->status_transitions->paid_at),
+            'paid_at' => isset($invoice->status_transitions->paid_at) ? date('Y-m-d H:i:s', $invoice->status_transitions->paid_at) : null,
             'description' => $invoice->lines->data[0]->description ?? null,
             'customer_name' => $customer->name,
             'customer_email' => $customer->email,
@@ -595,7 +667,7 @@ class StripeSubscriptionController extends Controller
      */
     private function getPaymentMethodDetailsFromInvoice(
         Invoice $invoice,
-        Customer $customer,
+        ?Customer $customer,
         \Stripe\Subscription $stripeSub
     ): array {
         $pm = null;

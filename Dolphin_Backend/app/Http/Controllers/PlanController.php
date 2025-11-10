@@ -10,12 +10,21 @@ class PlanController extends Controller
 {
     public function index()
     {
-        $plans = Plan::where('status', 'active')->get();
-        return response()->json(['plans' => $plans]);
+        try {
+            $plans = Plan::where('status', 'active')->get(['id', 'name', 'stripe_price_id', 'amount', 'currency', 'interval', 'description', 'slug']);
+            return response()->json(['plans' => $plans]);
+        } catch (\Throwable $e) {
+            // Return empty list on DB failure but keep endpoint stable
+            return response()->json(['plans' => []]);
+        }
     }
 
     public function store(Request $request)
     {
+        // This endpoint should be protected by middleware (superadmin), but guard defensively
+        if (!$request->user() || !$request->user()->hasRole('superadmin')) {
+            return response()->json(['error' => 'Unauthorized.'], 403);
+        }
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'stripe_price_id' => 'required|string|max:255',
@@ -28,21 +37,38 @@ class PlanController extends Controller
 
         $validatedData['slug'] = Str::slug($validatedData['name']);
 
-        $plan = Plan::create($validatedData);
-
-        return response()->json(['plan' => $plan], 201);
+        try {
+            $plan = Plan::create($validatedData);
+            return response()->json(['plan' => $plan], 201);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Could not create plan'], 500);
+        }
     }
 
     public function show(string $id)
     {
-        $plan = Plan::findOrFail($id);
-        return response()->json(['plan' => $plan]);
+        try {
+            $plan = Plan::find($id);
+            if (! $plan) {
+                return response()->json(['error' => 'Plan not found'], 404);
+            }
+            return response()->json(['plan' => $plan]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Plan not found'], 404);
+        }
     }
 
     public function update(Request $request, string $id)
     {
-        $plan = Plan::findOrFail($id);
+        // Protected: enforce superadmin guard in addition to middleware
+        if (!$request->user() || !$request->user()->hasRole('superadmin')) {
+            return response()->json(['error' => 'Unauthorized.'], 403);
+        }
 
+        $plan = Plan::find($id);
+        if (! $plan) {
+            return response()->json(['error' => 'Plan not found'], 404);
+        }
         $validatedData = $request->validate([
             'name' => 'sometimes|string|max:255',
             'stripe_price_id' => 'sometimes|string|max:255',
@@ -57,16 +83,32 @@ class PlanController extends Controller
             $validatedData['slug'] = Str::slug($validatedData['name']);
         }
 
-        $plan->update($validatedData);
-
-        return response()->json(['plan' => $plan]);
+        try {
+            $plan->update($validatedData);
+            return response()->json(['plan' => $plan]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Could not update plan'], 500);
+        }
     }
 
     public function destroy(string $id)
     {
-        $plan = Plan::findOrFail($id);
-        $plan->delete();
+        // Protected: enforce superadmin guard in addition to middleware
+        $user = request()->user();
+        if (!$user || !$user->hasRole('superadmin')) {
+            return response()->json(['error' => 'Unauthorized.'], 403);
+        }
 
-        return response()->json(['message' => 'Plan deleted successfully']);
+        $plan = Plan::find($id);
+        if (! $plan) {
+            return response()->json(['error' => 'Plan not found'], 404);
+        }
+
+        try {
+            $plan->delete();
+            return response()->json(['message' => 'Plan deleted successfully']);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Could not delete plan'], 500);
+        }
     }
 }

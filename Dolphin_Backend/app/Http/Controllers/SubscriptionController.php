@@ -135,6 +135,11 @@ class SubscriptionController extends Controller
         $authenticatedUser = $request->user();
         $orgId = $request->query('org_id') ?: $request->input('org_id');
 
+        // If unauthenticated, we cannot resolve a user
+        if (! $authenticatedUser) {
+            return null;
+        }
+
         if ($orgId && $authenticatedUser->hasRole('superadmin')) {
             $organization = Organization::find($orgId);
 

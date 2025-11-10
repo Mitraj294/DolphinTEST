@@ -31,6 +31,9 @@ class GroupController extends Controller
 
         try {
             $user = $request->user();
+            if (! $user) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
             $query = Group::with('users');
 
             if ($user->hasRole('organizationadmin')) {
@@ -66,6 +69,9 @@ class GroupController extends Controller
     {
         try {
             $user = $request->user();
+            if (! $user) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
             $validated = $request->validated();
 
             $orgId = $this->resolveOrganizationId($user);
@@ -105,6 +111,9 @@ class GroupController extends Controller
 
         try {
             $user = $request->user();
+            if (! $user) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
             $query = Group::with('users');
 
             if ($user->hasRole('organizationadmin')) {
@@ -165,6 +174,9 @@ class GroupController extends Controller
         $status_code = 200;
         try {
             $user = $request->user();
+            if (! $user) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
             $validated = $request->validated();
 
             $orgId = $this->resolveOrganizationId($user);
@@ -212,6 +224,9 @@ class GroupController extends Controller
         $status_code = 200;
         try {
             $user = $request->user();
+            if (! $user) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
             if (!$user->hasRole('organizationadmin')) {
                 $status_code = 403;
                 $response_data['error'] = 'Unauthorized.';

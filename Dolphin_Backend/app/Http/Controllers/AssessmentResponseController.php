@@ -43,7 +43,8 @@ class AssessmentResponseController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'responses' => 'required|array',
-                'responses.*.assessment_id' => 'required|exists:assessment,id',
+                // table name is `assessments`
+                'responses.*.assessment_id' => 'required|exists:assessments,id',
                 'responses.*.selected_options' => 'required|array',
                 'responses.*.start_time' => 'nullable|date',
                 'responses.*.end_time' => 'nullable|date',
@@ -58,11 +59,16 @@ class AssessmentResponseController extends Controller
             $attemptId = $request->input('attempt_id');
             $userId = Auth::id();
 
-            // If no attempt_id provided, generate one
-            if (!$attemptId) {
-                $attemptId = DB::table('assessment_responses')
+            if (empty($userId)) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
+
+            // If no attempt_id provided, generate one safely
+            if (empty($attemptId)) {
+                $maxAttempt = (int) DB::table('assessment_responses')
                     ->where('user_id', $userId)
-                    ->max('attempt_id') + 1;
+                    ->max('attempt_id');
+                $attemptId = $maxAttempt + 1;
             }
 
             DB::transaction(function () use ($responses, $userId, $attemptId) {
@@ -76,17 +82,21 @@ class AssessmentResponseController extends Controller
                     ]);
 
                     // Create timing data if provided
-                    if (isset($responseData['start_time']) && isset($responseData['end_time'])) {
-                        $startTime = new \DateTime($responseData['start_time']);
-                        $endTime = new \DateTime($responseData['end_time']);
-                        $timeSpent = $endTime->getTimestamp() - $startTime->getTimestamp();
+                    if (!empty($responseData['start_time']) && !empty($responseData['end_time'])) {
+                        try {
+                            $startTime = \Carbon\Carbon::parse($responseData['start_time']);
+                            $endTime = \Carbon\Carbon::parse($responseData['end_time']);
+                            $timeSpent = $endTime->getTimestamp() - $startTime->getTimestamp();
 
-                        AssessmentTime::create([
-                            'assessment_response_id' => $assessmentResponse->id,
-                            'start_time' => $startTime,
-                            'end_time' => $endTime,
-                            'time_spent' => $timeSpent,
-                        ]);
+                            AssessmentTime::create([
+                                'assessment_response_id' => $assessmentResponse->id,
+                                'start_time' => $startTime,
+                                'end_time' => $endTime,
+                                'time_spent' => $timeSpent,
+                            ]);
+                        } catch (\Throwable $e) {
+                            Log::warning('Failed to store assessment timing', ['error' => $e->getMessage()]);
+                        }
                     }
                 }
             });
@@ -148,6 +158,9 @@ class AssessmentResponseController extends Controller
     {
         try {
             $userId = Auth::id();
+            if (empty($userId)) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
             $attemptId = $request->query('attempt_id');
 
             $query = AssessmentResponse::where('user_id', $userId)
@@ -189,6 +202,9 @@ class AssessmentResponseController extends Controller
     {
         try {
             $userId = Auth::id();
+            if (empty($userId)) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
 
             $attempts = AssessmentResponse::where('user_id', $userId)
                 ->select('attempt_id', DB::raw('MIN(created_at) as created_at'))
@@ -216,6 +232,9 @@ class AssessmentResponseController extends Controller
     {
         try {
             $userId = Auth::id();
+            if (empty($userId)) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
             $attemptId = $request->query('attempt_id');
 
             $validator = Validator::make(['attempt_id' => $attemptId], [

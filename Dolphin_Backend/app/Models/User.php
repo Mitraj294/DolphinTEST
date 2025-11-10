@@ -25,6 +25,7 @@ class User extends Authenticatable
         'last_name',
         'email',
         'phone_number',
+        'organization_id',
         'email_verified_at',
         'status',
         'password',
@@ -47,22 +48,19 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast to native types.
      *
-     * @return array<string, string>
+     * @var array<string,string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'last_login_at' => 'datetime',
-            'force_password_change' => 'boolean',
-            'trial_ends_at' => 'datetime',
-            'created_at' => 'datetime',
-            'updated_at' => 'datetime',
-            'deleted_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'last_login_at' => 'datetime',
+        'force_password_change' => 'boolean',
+        'trial_ends_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
 
     // Role relationship is defined on the model directly for clarity. The
     // HasRoles trait provides helper methods (hasRole/hasAnyRole) and will

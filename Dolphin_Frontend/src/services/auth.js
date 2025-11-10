@@ -52,8 +52,19 @@ const authService = {
         email,
         password,
       });
-      const { token, user, expires_at } = response.data;
-      this.setToken(token, expires_at);
+      // Accept both shapes from backend:
+      // - { access_token, refresh_token, expires_in, user }
+      // - { token, user, expires_at }
+      const data = response.data || {};
+      const token = data.token || data.access_token || null;
+      const user = data.user || null;
+      const expiresAt = data.expires_at
+        ? data.expires_at
+        : data.expires_in
+        ? new Date(Date.now() + data.expires_in * 1000).toISOString()
+        : null;
+
+      this.setToken(token, expiresAt);
       if (user?.id) {
         storage.set("user_id", user.id);
       }

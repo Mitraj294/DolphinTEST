@@ -236,11 +236,33 @@ export default {
     },
     async fetchNotifications() {
       try {
+        // If the logged-in user is a superadmin, skip fetching the
+        // `/api/notifications/unread` endpoint — superadmins don't need
+        // the unread badge and the backend may restrict that route.
+        const role = authMiddleware.getRole();
+        if (role === 'superadmin' && this.tab === 'unread') {
+          this.notificationsReady = true;
+          this.notifications = [];
+          this.readNotifications = [];
+          // Ensure any global badge/consumers are updated
+          try {
+            this.updateNotificationCount();
+          } catch (err) {
+            // Log a debug message so the exception is handled and visible
+            // during development rather than being silently ignored.
+            // This satisfies the lint rule that caught exceptions must be
+            // handled or rethrown.
+            // eslint-disable-next-line no-console
+            console.debug('GetNotifications: updateNotificationCount failed', err);
+          }
+          return;
+        }
+
         const config = this._getAuthHeaders();
-  const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || '';
-  const endpoint = this._getNotificationEndpoint();
-  const fullEndpoint = endpoint.startsWith('/api/') ? `${API_BASE_URL}${endpoint}` : endpoint;
-  const response = await this._fetchDataWithFallback(fullEndpoint, config);
+        const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || '';
+        const endpoint = this._getNotificationEndpoint();
+        const fullEndpoint = endpoint.startsWith('/api/') ? `${API_BASE_URL}${endpoint}` : endpoint;
+        const response = await this._fetchDataWithFallback(fullEndpoint, config);
         const notificationsArr = this._extractNotifications(response);
 
         const storedUserId = storage.get('userId') || storage.get('user_id');

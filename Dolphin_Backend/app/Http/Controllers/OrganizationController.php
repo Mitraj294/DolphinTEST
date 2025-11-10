@@ -42,18 +42,17 @@ class OrganizationController extends Controller
         $userIds = $organizationsCollection->pluck('user_id')->filter()->unique()->values()->all();
         $latestSubscriptions = [];
         if (!empty($userIds)) {
+            // Fetch latest subscription per user_id and keep model instances to avoid
+            // extra queries (previous implementation converted to array and re-fetched).
             $subs = Subscription::whereIn('user_id', $userIds)
-                // subscriptions table uses `ends_at` (not `subscription_end`)
                 ->orderByDesc('ends_at')
                 ->get()
                 ->groupBy('user_id')
-                ->map(fn($group) => $group->first())
-                ->toArray();
+                ->map(fn($group) => $group->first());
 
-            // normalize to user_id => subscription model (not array)
+            // subs is a collection keyed by user_id => Subscription model
             foreach ($subs as $uid => $s) {
-                // Re-fetch model instance for each id to keep typical model behavior
-                $latestSubscriptions[$uid] = Subscription::find($s['id']);
+                $latestSubscriptions[$uid] = $s;
             }
         }
 

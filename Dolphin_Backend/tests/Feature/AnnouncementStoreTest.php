@@ -12,8 +12,7 @@ class AnnouncementStoreTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
-    public function superadmin_can_create_and_dispatch_announcement()
+    public function test_superadmin_can_create_and_dispatch_announcement()
     {
     /** @var \App\Models\User $superadmin */
     $superadmin = User::factory()->create();

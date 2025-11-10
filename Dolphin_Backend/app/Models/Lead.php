@@ -18,6 +18,18 @@ class Lead extends Model
         'email',
         'phone_number',
         'status',
+        'assessment_sent_at',
+        'registered_at',
+    ];
+
+    /**
+     * Cast date/time fields to Carbon instances.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'assessment_sent_at' => 'datetime',
+        'registered_at' => 'datetime',
     ];
 
     public function organization(): BelongsTo

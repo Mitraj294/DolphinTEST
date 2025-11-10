@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Log;
 use App\Notifications\GeneralNotification;
+use App\Http\Resources\AnnouncementResource;
 
 class AnnouncementController extends Controller
 {
@@ -19,7 +20,8 @@ class AnnouncementController extends Controller
         $announcements = Announcement::orderBy('schedule_date', 'desc')
             ->orderBy('schedule_time', 'desc')
             ->get();
-        return response()->json(['announcements' => $announcements]);
+
+        return response()->json(['announcements' => AnnouncementResource::collection($announcements)]);
     }
 
     /**
@@ -34,11 +36,11 @@ class AnnouncementController extends Controller
             'schedule_time' => 'nullable|date_format:H:i',
             // recipients (optional)
             'organization_ids' => 'nullable|array',
-            'organization_ids.*' => 'integer',
+            'organization_ids.*' => 'integer|exists:organizations,id',
             'admin_ids' => 'nullable|array',
-            'admin_ids.*' => 'integer',
+            'admin_ids.*' => 'integer|exists:users,id',
             'group_ids' => 'nullable|array',
-            'group_ids.*' => 'integer',
+            'group_ids.*' => 'integer|exists:groups,id',
             // alternative scheduling input
             'scheduled_at' => 'nullable|date',
         ]);
@@ -54,11 +56,12 @@ class AnnouncementController extends Controller
             }
         }
 
-        $announcement = Announcement::create([
+            $announcement = Announcement::create([
             'message' => $validated['message'],
             'schedule_date' => $validated['schedule_date'] ?? null,
             'schedule_time' => $validated['schedule_time'] ?? null,
-            'sender_id' => $request->user()->id ?? null,
+            // Use null-safe operator in case request is unauthenticated
+            'sender_id' => $request->user()?->id ?? null,
         ]);
 
         // Attach recipients if provided
@@ -90,6 +93,7 @@ class AnnouncementController extends Controller
 
             if ($recipients->count() > 0) {
                 Notification::send($recipients, $notification);
+                // Mark announcement as sent now that notifications were dispatched
                 $announcement->sent_at = now();
                 $announcement->save();
             }
@@ -102,7 +106,7 @@ class AnnouncementController extends Controller
         }
 
         return response()->json([
-            'announcement' => $announcement,
+            'announcement' => new AnnouncementResource($announcement),
             'message' => 'Announcement created and dispatched (if recipients provided)'
         ], 201);
     }
@@ -112,8 +116,13 @@ class AnnouncementController extends Controller
      */
     public function show(string $id)
     {
-        $announcement = Announcement::findOrFail($id);
-        return response()->json(['announcement' => $announcement]);
+        try {
+            $announcement = Announcement::findOrFail($id);
+            return response()->json(['announcement' => new AnnouncementResource($announcement)]);
+        } catch (\Exception $e) {
+            Log::warning('[AnnouncementController@show] failed to find announcement', ['id' => $id, 'error' => $e->getMessage()]);
+            return response()->json(['error' => 'Announcement not found'], 404);
+        }
     }
 
     /**
@@ -142,10 +151,14 @@ class AnnouncementController extends Controller
      */
     public function destroy(string $id)
     {
-        $announcement = Announcement::findOrFail($id);
-        $announcement->delete();
-
-        return response()->json(['message' => 'Announcement deleted successfully']);
+        try {
+            $announcement = Announcement::findOrFail($id);
+            $announcement->delete();
+            return response()->json(['message' => 'Announcement deleted successfully']);
+        } catch (\Exception $e) {
+            Log::warning('[AnnouncementController@destroy] failed to delete announcement', ['id' => $id, 'error' => $e->getMessage()]);
+            return response()->json(['error' => 'Announcement not found or could not be deleted'], 404);
+        }
     }
 
     /**
@@ -153,11 +166,16 @@ class AnnouncementController extends Controller
      */
     public function todayScheduled()
     {
-        $today = Carbon::today()->format('Y-m-d');
-        $announcements = Announcement::whereDate('schedule_date', $today)
-            ->orderBy('schedule_time', 'asc')
-            ->get();
-        return response()->json(['announcements' => $announcements]);
+        try {
+            $today = Carbon::today()->format('Y-m-d');
+            $announcements = Announcement::whereDate('schedule_date', $today)
+                ->orderBy('schedule_time', 'asc')
+                ->get();
+            return response()->json(['announcements' => AnnouncementResource::collection($announcements)]);
+        } catch (\Exception $e) {
+            Log::warning('[AnnouncementController@todayScheduled] DB query failed', ['error' => $e->getMessage()]);
+            return response()->json(['announcements' => []]);
+        }
     }
 
     /**
@@ -169,16 +187,20 @@ class AnnouncementController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date'
         ]);
+        try {
+            $announcements = Announcement::whereBetween('schedule_date', [
+                $request->start_date,
+                $request->end_date
+            ])
+                ->orderBy('schedule_date', 'asc')
+                ->orderBy('schedule_time', 'asc')
+                ->get();
 
-        $announcements = Announcement::whereBetween('schedule_date', [
-            $request->start_date,
-            $request->end_date
-        ])
-            ->orderBy('schedule_date', 'asc')
-            ->orderBy('schedule_time', 'asc')
-            ->get();
-
-        return response()->json(['announcements' => $announcements]);
+            return response()->json(['announcements' => AnnouncementResource::collection($announcements)]);
+        } catch (\Exception $e) {
+            Log::warning('[AnnouncementController@byDateRange] DB query failed', ['error' => $e->getMessage()]);
+            return response()->json(['announcements' => []]);
+        }
     }
 
     /**
@@ -187,18 +209,23 @@ class AnnouncementController extends Controller
     private function getRecipientsForAnnouncement(Announcement $announcement)
     {
         // Prefer organization members over legacy users pivot
-        $announcement->load(['organizations.members', 'groups.users', 'admins']);
+        try {
+            $announcement->load(['organizations.members', 'groups.users', 'admins']);
 
-        $adminUsers = $announcement->admins;
-        $orgUsers = $announcement->organizations->flatMap(function ($org) {
-            return $org->members; // users of the organization via organization_member
-        });
+            $adminUsers = $announcement->admins ?? collect();
+            $orgUsers = $announcement->organizations->flatMap(function ($org) {
+                return $org->members ?? collect(); // users of the organization via organization_member
+            });
 
-        $groupUsers = $announcement->groups->flatMap(function ($group) {
-            return $group->users;
-        });
+            $groupUsers = $announcement->groups->flatMap(function ($group) {
+                return $group->users ?? collect();
+            });
 
-        // Merge all users and remove duplicates
-        return $adminUsers->merge($orgUsers)->merge($groupUsers)->unique('id');
+            // Merge all users and remove duplicates
+            return $adminUsers->merge($orgUsers)->merge($groupUsers)->unique('id');
+        } catch (\Throwable $e) {
+            Log::warning('[getRecipientsForAnnouncement] failed to load recipients', ['announcement_id' => $announcement->id ?? null, 'error' => $e->getMessage()]);
+            return collect();
+        }
     }
 }

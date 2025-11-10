@@ -48,19 +48,24 @@ class LeadNoteController extends Controller
             'created_by' => $request->user() ? $request->user()->id : null,
         ];
 
-        $leadNote = LeadNote::create($noteData);
-        $leadNote->load('creator:id,first_name,last_name,email');
+        try {
+            $leadNote = LeadNote::create($noteData);
+            $leadNote->load('creator:id,first_name,last_name,email');
 
-        Log::info('Lead note created', [
-            'lead_id' => $leadId,
-            'note_id' => $leadNote->id,
-            'created_by' => $leadNote->created_by,
-        ]);
+            Log::info('Lead note created', [
+                'lead_id' => $leadId,
+                'note_id' => $leadNote->id,
+                'created_by' => $leadNote->created_by,
+            ]);
 
-        return response()->json([
-            'message' => 'Note added successfully',
-            'note' => $leadNote,
-        ], 201);
+            return response()->json([
+                'message' => 'Note added successfully',
+                'note' => $leadNote,
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('Failed to create lead note', ['lead_id' => $leadId, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to add note'], 500);
+        }
     }
 
     /**
@@ -95,19 +100,25 @@ class LeadNoteController extends Controller
             'note_date' => 'sometimes|nullable|date',
         ]);
 
-        $note->update($validated);
-        $note->load('creator:id,first_name,last_name,email');
+        try {
+            $note->update($validated);
+            $note->load('creator:id,first_name,last_name,email');
 
-        Log::info('Lead note updated', [
-            'lead_id' => $leadId,
-            'note_id' => $noteId,
-            'updated_by' => $request->user() ? $request->user()->id : null,
-        ]);
+            Log::info('Lead note updated', [
+                'lead_id' => $leadId,
+                'note_id' => $noteId,
+                'updated_by' => $request->user() ? $request->user()->id : null,
+            ]);
 
-        return response()->json([
-            'message' => 'Note updated successfully',
-            'note' => $note,
-        ]);
+            return response()->json([
+                'message' => 'Note updated successfully',
+                'note' => $note,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to update lead note', ['lead_id' => $leadId, 'note_id' => $noteId, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to update note'], 500);
+        }
+
     }
 
     /**
@@ -121,16 +132,22 @@ class LeadNoteController extends Controller
             return response()->json(['message' => 'Note not found'], 404);
         }
 
-        $note->delete();
+        try {
+            $note->delete();
 
-        Log::info('Lead note deleted', [
-            'lead_id' => $leadId,
-            'note_id' => $noteId,
-            'deleted_by' => $request->user() ? $request->user()->id : null,
-        ]);
+            Log::info('Lead note deleted', [
+                'lead_id' => $leadId,
+                'note_id' => $noteId,
+                'deleted_by' => $request->user() ? $request->user()->id : null,
+            ]);
 
-        return response()->json([
-            'message' => 'Note deleted successfully',
-        ]);
+            return response()->json([
+                'message' => 'Note deleted successfully',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to delete lead note', ['lead_id' => $leadId, 'note_id' => $noteId, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to delete note'], 500);
+        }
+
     }
 }

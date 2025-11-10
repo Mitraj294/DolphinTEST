@@ -113,28 +113,31 @@ class NotificationController extends Controller
             $announcement = Announcement::with(['organizations', 'groups', 'admins'])->select()->findOrFail($id);
 
             $data = [
-                'id' => $announcement->id,
-                'body' => $announcement->body,
-                'sender_id' => $announcement->sender_id,
-                'scheduled_at' => $announcement->scheduled_at,
-                'sent_at' => $announcement->sent_at,
-                'created_at' => $announcement->created_at,
-                'updated_at' => $announcement->updated_at,
+                    'id' => $announcement->id,
+                    'body' => $announcement->body,
+                    // sender_id and sent_at are not stored on the announcements table
+                    // (schema only contains message/schedule_date/schedule_time). Expose
+                    // null explicitly to keep response shape stable for frontend clients.
+                    'sender_id' => $announcement->sender_id ?? null,
+                    'scheduled_at' => $announcement->scheduled_at,
+                    'sent_at' => $announcement->sent_at ?? null,
+                    'created_at' => $announcement->created_at,
+                    'updated_at' => $announcement->updated_at,
                 'organizations' => $announcement->organizations->map(fn($org) => [
                     'id' => $org->id,
                     // organizations table uses `name` column
                     'name' => $org->name,
-                    'contact_email' => $org->user->email ?? null,
+                    'contact_email' => $org->user?->email ?? null,
                     'user_id' => $org->user_id,
-                    'user_first_name' => $org->user->first_name ?? null,
-                    'user_last_name' => $org->user->last_name ?? null,
+                    'user_first_name' => $org->user?->first_name ?? null,
+                    'user_last_name' => $org->user?->last_name ?? null,
                 ]),
                 'groups' => $announcement->groups->map(fn($g) => [
                     'id' => $g->id,
                     'name' => $g->name,
                     'organization_id' => $g->organization_id,
-                    'organization_name' => $g->organization->name ?? null,
-                    'org_contact_email' => $g->organization->user->email ?? null,
+                    'organization_name' => $g->organization?->name ?? null,
+                    'org_contact_email' => $g->organization?->user?->email ?? null,
                 ]),
                 'admins' => $announcement->admins->map(fn($a) => [
                     'id' => $a->id,
@@ -145,8 +148,14 @@ class NotificationController extends Controller
 
             $notifRows = DB::table('notifications')
                 ->where('notifiable_type', 'App\\Models\\User')
-                ->whereRaw("JSON_EXTRACT(data, '$.announcement_id') = ?", [$announcement->id])
-                ->get();
+                ->whereRaw("JSON_EXTRACT(data, '$.announcement_id') = ?", [$announcement->id]);
+
+            try {
+                $notifRows = $notifRows->get();
+            } catch (\Throwable $e) {
+                Log::warning('[showAnnouncement] notifications JSON_EXTRACT query failed', ['announcement_id' => $announcement->id, 'error' => $e->getMessage()]);
+                $notifRows = collect();
+            }
 
             $readUserMap = [];
             foreach ($notifRows as $nr) {
@@ -210,9 +219,16 @@ class NotificationController extends Controller
     public function markAllAsRead(Request $request)
     {
         $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
 
-        // Mark all unread notifications for this user as read
-        $user->unreadNotifications->markAsRead();
+        try {
+            // Mark all unread notifications for this user as read
+            $user->unreadNotifications->markAsRead();
+        } catch (\Exception $e) {
+            Log::warning('Failed to mark all notifications as read', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+        }
 
         return response()->json([
             'message' => 'All notifications marked as read',

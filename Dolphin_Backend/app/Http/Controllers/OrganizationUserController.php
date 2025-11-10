@@ -26,6 +26,9 @@ class OrganizationUserController extends Controller
     {
         try {
             $user = $request->user();
+            if (! $user) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
             $orgId = $this->getOrganizationIdForCurrentUser($user);
 
             $organization = Organization::findOrFail($orgId);
@@ -42,7 +45,7 @@ class OrganizationUserController extends Controller
                         'first_name' => $member->first_name,
                         'last_name' => $member->last_name,
                         'email' => $member->email,
-                        'phone' => $member->phone ?? null,
+                            'phone' => $member->phone_number ?? null,
                         'roles' => $member->roles->pluck('name'),
                         'groups' => $member->groups->map(function ($group) {
                             return [
@@ -68,12 +71,15 @@ class OrganizationUserController extends Controller
     {
         try {
             $user = $request->user();
+            if (! $user) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
             $orgId = $this->getOrganizationIdForCurrentUser($user);
 
             $organization = Organization::findOrFail($orgId);
 
             // Get existing member IDs
-            $existingMemberIds = $organization->members()->pluck('users.id')->toArray();
+            $existingMemberIds = $organization->members()->pluck('id')->toArray();
 
             // Get users with 'user' or 'salesperson' roles who are not already members
             $users = User::whereHas('roles', function ($query) {
@@ -106,6 +112,9 @@ class OrganizationUserController extends Controller
     {
         try {
             $user = $request->user();
+            if (! $user) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
             $orgId = $this->getOrganizationIdForCurrentUser($user);
 
             $organization = Organization::findOrFail($orgId);
@@ -142,6 +151,9 @@ class OrganizationUserController extends Controller
             ]);
 
             $user = $request->user();
+            if (! $user) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
             $orgId = $this->getOrganizationIdForCurrentUser($user);
 
             // Verify group belongs to organization
@@ -186,6 +198,9 @@ class OrganizationUserController extends Controller
             ]);
 
             $user = $request->user();
+            if (! $user) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
             $orgId = $this->getOrganizationIdForCurrentUser($user);
 
             // Verify group belongs to organization
@@ -218,6 +233,9 @@ class OrganizationUserController extends Controller
             ]);
 
             $user = $request->user();
+            if (! $user) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
             $orgId = $this->getOrganizationIdForCurrentUser($user);
 
             // Verify group belongs to organization
@@ -287,7 +305,7 @@ class OrganizationUserController extends Controller
                     'first_name' => $member->first_name,
                     'last_name' => $member->last_name,
                     'email' => $member->email,
-                    'phone' => $member->phone ?? null,
+                    'phone' => $member->phone_number ?? null,
                     'roles' => $member->roles->pluck('name'),
                 ],
             ]);
