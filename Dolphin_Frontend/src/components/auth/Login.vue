@@ -107,6 +107,16 @@ const API_BASE_URL =
   process.env.VUE_APP_API_BASE_URL ||
   "";
 
+// Runtime-aware client credentials
+const CLIENT_ID =
+  (globalThis.__env && globalThis.__env.VUE_APP_CLIENT_ID) ||
+  process.env.VUE_APP_CLIENT_ID ||
+  "";
+const CLIENT_SECRET =
+  (globalThis.__env && globalThis.__env.VUE_APP_CLIENT_SECRET) ||
+  process.env.VUE_APP_CLIENT_SECRET ||
+  "";
+
 export default {
   name: "Login",
   components: { Toast, FormLabel },
@@ -286,8 +296,8 @@ export default {
         const response = await axios.post(`${API_BASE_URL}/oauth/token`, {
           grant_type: "refresh_token",
           refresh_token: refreshToken,
-          client_id: process.env.VUE_APP_CLIENT_ID,
-          client_secret: process.env.VUE_APP_CLIENT_SECRET,
+          client_id: CLIENT_ID,
+          client_secret: CLIENT_SECRET,
         });
 
         const newAccessToken = response.data.access_token;

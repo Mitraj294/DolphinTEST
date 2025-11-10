@@ -23,16 +23,57 @@ class NotificationController extends Controller
         if (!$user) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-        // Get all announcements sent to this user that are not marked as read
-        $unread = $user->unreadNotifications()->where('type', 'App\\Notifications\\GeneralNotification')->get();
-        // Decode data payload for frontend
-        $unread->transform(function ($n) {
-            if (is_string($n->data)) {
-                $n->data = json_decode($n->data, true);
+        // The project does not use the Laravel `notifications` table in this
+        // database. Instead announcements are stored in the `announcements`
+        // and related pivot tables (`announcement_organizations`,
+        // `announcement_groups`, `announcement_dolphin_admins`).
+        //
+        // Since there is no per-user persistent "read" tracking in the
+        // existing schema, we treat all announcements addressed to the user
+        // as "unread" (i.e. return all relevant announcements). This avoids
+        // relying on a missing `notifications` table and keeps the API
+        // functional for the frontend.
+
+        $userId = $user->id;
+        $orgId = $user->organization_id;
+        $groupIds = $user->groups()->pluck('groups.id')->toArray();
+
+        $announcements = Announcement::where(function ($q) use ($userId, $orgId, $groupIds) {
+            // Announcements sent explicitly to this admin
+            $q->whereHas('admins', function ($q2) use ($userId) {
+                $q2->where('users.id', $userId);
+            });
+
+            // Announcements targeted to the user's organization
+            if (!empty($orgId)) {
+                $q->orWhereHas('organizations', function ($q2) use ($orgId) {
+                    $q2->where('organizations.id', $orgId);
+                });
             }
-            return $n;
+
+            // Announcements targeted to groups the user belongs to
+            if (!empty($groupIds)) {
+                $q->orWhereHas('groups', function ($q2) use ($groupIds) {
+                    $q2->whereIn('groups.id', $groupIds);
+                });
+            }
+
+            // Also check announcement_groups.member_ids JSON for direct user ids
+            $q->orWhereExists(function ($sub) use ($userId) {
+                $sub->select(DB::raw(1))
+                    ->from('announcement_groups')
+                    ->whereColumn('announcement_groups.announcement_id', 'announcements.id')
+                    ->whereRaw('JSON_CONTAINS(announcement_groups.member_ids, ?)', [json_encode((string) $userId)]);
+            });
+        })->with(['organizations', 'groups', 'admins'])->orderByDesc('created_at')->get();
+
+        // Normalize shape expected by frontend (some clients expect `body` and scheduled_at)
+        $announcements->transform(function ($a) {
+            $a->body = $a->message ?? $a->body ?? null;
+            return $a;
         });
-        return response()->json(['unread' => $unread]);
+
+        return response()->json(['unread' => $announcements]);
     }
 
     // Adapter for frontend: GET /api/notifications (all)
@@ -56,20 +97,59 @@ class NotificationController extends Controller
                 }
             }
 
-            $notifications = DB::table('notifications')
-                ->where('notifiable_type', $notifiableType)
-                ->where('notifiable_id', $notifiableId)
-                ->orderByDesc('created_at')
-                ->get();
+            // The legacy `notifications` table is not available. Provide a
+            // best-effort mapping from the announcement tables based on the
+            // requested notifiable filter. For users, return announcements
+            // addressed to that user. For organizations, return announcements
+            // for that organization. Other types are not supported by this
+            // adapter.
 
-            // Decode payloads
-            $notifications->transform(function ($n) {
-                if (isset($n->data) && is_string($n->data)) {
-                    $n->data = json_decode($n->data, true);
+            if ($notifiableType === 'App\\Models\\User') {
+                $user = User::find($notifiableId);
+                if (!$user) {
+                    return response()->json(['notifications' => []]);
                 }
-                return $n;
-            });
-            return response()->json(['notifications' => $notifications]);
+                // Reuse logic from unreadAnnouncements but for the supplied id
+                $groupIds = $user->groups()->pluck('groups.id')->toArray();
+                $orgId = $user->organization_id;
+
+                $notifications = Announcement::where(function ($q) use ($notifiableId, $orgId, $groupIds) {
+                    $q->whereHas('admins', function ($q2) use ($notifiableId) {
+                        $q2->where('users.id', $notifiableId);
+                    });
+
+                    if (!empty($orgId)) {
+                        $q->orWhereHas('organizations', function ($q2) use ($orgId) {
+                            $q2->where('organizations.id', $orgId);
+                        });
+                    }
+
+                    if (!empty($groupIds)) {
+                        $q->orWhereHas('groups', function ($q2) use ($groupIds) {
+                            $q2->whereIn('groups.id', $groupIds);
+                        });
+                    }
+
+                    $q->orWhereExists(function ($sub) use ($notifiableId) {
+                        $sub->select(DB::raw(1))
+                            ->from('announcement_groups')
+                            ->whereColumn('announcement_groups.announcement_id', 'announcements.id')
+                            ->whereRaw('JSON_CONTAINS(announcement_groups.member_ids, ?)', [json_encode((string) $notifiableId)]);
+                    });
+                })->with(['organizations', 'groups', 'admins'])->orderByDesc('created_at')->get();
+
+                return response()->json(['notifications' => $notifications]);
+            }
+
+            if ($notifiableType === 'App\\Models\\Organization') {
+                $notifications = Announcement::whereHas('organizations', function ($q) use ($notifiableId) {
+                    $q->where('organizations.id', $notifiableId);
+                })->with(['organizations', 'groups', 'admins'])->orderByDesc('created_at')->get();
+
+                return response()->json(['notifications' => $notifications]);
+            }
+
+            return response()->json(['error' => 'Unsupported notifiable_type for announcements adapter'], 400);
         } catch (\Exception $e) {
             Log::error('Failed to fetch notifications', ['error' => $e->getMessage()]);
             return response()->json(['error' => 'Failed to fetch notifications'], 500);
@@ -84,13 +164,36 @@ class NotificationController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
         try {
-            $notifications = $user->notifications()->orderByDesc('created_at')->get();
-            $notifications->transform(function ($n) {
-                if (is_string($n->data)) {
-                    $n->data = json_decode($n->data, true);
+            // Provide announcements relevant to the authenticated user.
+            $userId = $user->id;
+            $orgId = $user->organization_id;
+            $groupIds = $user->groups()->pluck('groups.id')->toArray();
+
+            $notifications = Announcement::where(function ($q) use ($userId, $orgId, $groupIds) {
+                $q->whereHas('admins', function ($q2) use ($userId) {
+                    $q2->where('users.id', $userId);
+                });
+
+                if (!empty($orgId)) {
+                    $q->orWhereHas('organizations', function ($q2) use ($orgId) {
+                        $q2->where('organizations.id', $orgId);
+                    });
                 }
-                return $n;
-            });
+
+                if (!empty($groupIds)) {
+                    $q->orWhereHas('groups', function ($q2) use ($groupIds) {
+                        $q2->whereIn('groups.id', $groupIds);
+                    });
+                }
+
+                $q->orWhereExists(function ($sub) use ($userId) {
+                    $sub->select(DB::raw(1))
+                        ->from('announcement_groups')
+                        ->whereColumn('announcement_groups.announcement_id', 'announcements.id')
+                        ->whereRaw('JSON_CONTAINS(announcement_groups.member_ids, ?)', [json_encode((string) $userId)]);
+                });
+            })->with(['organizations', 'groups', 'admins'])->orderByDesc('created_at')->get();
+
             return response()->json(['notifications' => $notifications]);
         } catch (\Exception $e) {
             Log::error('Failed to fetch user notifications', ['user_id' => $user->id, 'error' => $e->getMessage()]);
@@ -207,12 +310,12 @@ class NotificationController extends Controller
         if (!$user) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-        $notification = $user->notifications()->where('id', $id)->first();
-        if ($notification) {
-            $notification->markAsRead();
-            return response()->json(['success' => true]);
-        }
-        return response()->json(['error' => 'Notification not found'], 404);
+        // Marking individual notifications as read requires persistent per-user
+        // tracking (typically the `notifications` table). The current schema
+        // does not include per-user read state. Return a clear message so the
+        // frontend can avoid trying to call this when the DB doesn't support
+        // it.
+        return response()->json(['error' => 'Read/unread tracking is not supported by current schema'], 501);
     }
 
     // Mark all notifications as read for the authenticated user
@@ -224,43 +327,31 @@ class NotificationController extends Controller
         }
 
         try {
-            // Mark all unread notifications for this user as read
-            $user->unreadNotifications->markAsRead();
+            // Not supported: there's no per-user notification table in the
+            // existing schema. Inform caller that marking-as-read is not
+            // available.
+            return response()->json(['message' => 'Read/unread tracking not supported'], 501);
         } catch (\Exception $e) {
             Log::warning('Failed to mark all notifications as read', ['user_id' => $user->id, 'error' => $e->getMessage()]);
         }
 
-        return response()->json([
-            'message' => 'All notifications marked as read',
-            // send back updated list
-            'notifications' => $user->notifications
-        ]);
+        // This code path is intentionally unreachable because above we return.
+        return response()->json(['message' => 'Read/unread tracking not supported'], 501);
     }
 
     // Manual API endpoint to create a notification record (for testing)
     public function createNotification(Request $request)
     {
-        $data = $request->validate([
-            'notifiable_type' => 'required|string',
-            'notifiable_id' => 'required|integer',
-            'data' => 'required|array',
-        ]);
+        // Validation omitted: this endpoint currently returns 501 because
+        // creating ad-hoc notification records is not supported by the
+        // current schema. Keep the method shape but avoid validating unused data.
 
         try {
-            $payload = json_encode($data['data']);
-            $id = (string) \Illuminate\Support\Str::uuid();
-            DB::table('notifications')->insert([
-                'id' => $id,
-                'type' => 'App\\Notifications\\GeneralNotification',
-                'notifiable_type' => $data['notifiable_type'],
-                'notifiable_id' => $data['notifiable_id'],
-                'data' => $payload,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            $row = DB::table('notifications')->where('id', $id)->first();
-            return response()->json(['success' => true, 'notification' => $row]);
+            // Creating a record in the `notifications` table is not possible
+            // since that table is not present. If the goal is to create an
+            // announcement, use the announcements endpoints instead. Return a
+            // clear 501 so callers can adapt.
+            return response()->json(['error' => 'Creating ad-hoc notification records is not supported; use announcements API'], 501);
         } catch (\Exception $e) {
             Log::error('[createNotification] failed', ['error' => $e->getMessage()]);
             return response()->json(['error' => 'Failed to create notification'], 500);

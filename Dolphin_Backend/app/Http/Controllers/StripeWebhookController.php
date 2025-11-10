@@ -201,15 +201,53 @@ class StripeWebhookController extends Controller
 
     private function convertStripeObjectToArray($object): array
     {
-        if (is_array($object)) {
-            return $object;
-        }
+        // Convert Stripe objects/collections to arrays safely.
+        // Limit recursion depth and avoid expensive json_encode on huge nested structures.
+    $initialDepth = 3;
 
-        if (is_object($object)) {
-            return json_decode(json_encode($object), true) ?: [];
-        }
+    $convert = function ($value, $depth) use (&$convert) {
+            if ($depth < 0) {
+                return null;
+            }
 
-        return [];
+            if (is_array($value)) {
+                $out = [];
+                foreach ($value as $k => $v) {
+                    $out[$k] = $convert($v, $depth - 1);
+                }
+
+                return $out;
+            }
+
+            if (is_object($value)) {
+                // Prefer native toArray / jsonSerialize if available on Stripe objects
+                if (method_exists($value, 'toArray')) {
+                    $arr = $value->toArray();
+                } elseif ($value instanceof \JsonSerializable) {
+                    $arr = $value->jsonSerialize();
+                } else {
+                    // Fallback to a safe json encode/decode but catch any exceptions
+                    try {
+                        $arr = json_decode(json_encode($value), true) ?: [];
+                    } catch (\Throwable $e) {
+                        return null;
+                    }
+                }
+
+                // Recursively convert but limit depth
+                $out = [];
+                foreach ($arr as $k => $v) {
+                    $out[$k] = $convert($v, $depth - 1);
+                }
+
+                return $out;
+            }
+
+            // scalar
+            return $value;
+        };
+
+        return $convert($object, $initialDepth) ?: [];
     }
 
     private function timestampToCarbon($value): ?Carbon

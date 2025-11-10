@@ -2,6 +2,17 @@ import axios from "axios";
 import router from "../router";
 import storage from "./storage";
 
+// Runtime-aware client credentials: prefer runtime `globalThis.__env` (from /env.json)
+// then fallback to build-time process.env values.
+const CLIENT_ID =
+  (globalThis.__env && globalThis.__env.VUE_APP_CLIENT_ID) ||
+  process.env.VUE_APP_CLIENT_ID ||
+  "";
+const CLIENT_SECRET =
+  (globalThis.__env && globalThis.__env.VUE_APP_CLIENT_SECRET) ||
+  process.env.VUE_APP_CLIENT_SECRET ||
+  "";
+
 // Helpers
 const isTokenExpired = (expiry) => {
   if (!expiry) return false;
@@ -105,8 +116,8 @@ axios.interceptors.response.use(
           .post(`${API_BASE_URL}/oauth/token`, {
             grant_type: "refresh_token",
             refresh_token: refreshToken,
-            client_id: process.env.VUE_APP_CLIENT_ID,
-            client_secret: process.env.VUE_APP_CLIENT_SECRET,
+            client_id: CLIENT_ID,
+            client_secret: CLIENT_SECRET,
           })
           .then((res) => {
             const newAccessToken = res.data.access_token;
