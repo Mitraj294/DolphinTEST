@@ -87,33 +87,14 @@
               <i class="fas fa-user"></i>
               <div class="navbar-dropdown-item" v-if="roleName">Profile</div>
             </div>
-            <div
-              class="navbar-dropdown-item0"
-              v-if="
-                !['superadmin', 'dolphinadmin', 'salesperson'].includes(
-                  roleName
-                )
-              "
-              @click="
-                $router.push({ name: 'ManageSubscription' });
-                dropdownOpen = false;
-              "
+           <div
+              class="navbar-dropdown-item"
+              v-if="isOrgAdmin"
+              @click="$router.push({ name: 'ManageSubscription' }); dropdownOpen = false"
+              style="cursor: pointer;"
             >
               <i class="fas fa-credit-card"></i>
-              <div
-                class="navbar-dropdown-item"
-                v-if="
-                  !['superadmin', 'dolphinadmin', 'salesperson'].includes(
-                    roleName
-                  )
-                "
-                @click="
-                  $router.push({ name: 'ManageSubscription' });
-                  dropdownOpen = false;
-                "
-              >
-                Manage Subscriptions
-              </div>
+              <div class="navbar-dropdown-item">Manage Subscriptions</div>
             </div>
             <div class="navbar-dropdown-item0" @click="confirmLogout">
               <i class="fas fa-sign-out-alt"></i>
@@ -195,6 +176,16 @@ export default {
 
       if (this.userEmail && this.userEmail.trim()) return this.userEmail.trim();
       return "User";
+    },
+    isOrgAdmin() {
+      try {
+        const r = this.roleName || "";
+        return String(r).toLowerCase() === "organizationadmin";
+      } catch (e) {
+        // Log at debug level so linters don't complain about empty catch blocks
+        console.debug("Navbar: isOrgAdmin check failed", e);
+        return false;
+      }
     },
     role() {
       return authMiddleware.getRole();
@@ -542,9 +533,7 @@ export default {
           config
         );
         const data = res && res.data ? res.data : null;
-        name =
-          (data && (data.organization_name || data.name || data.orgName)) ||
-          null;
+        name = (data && (data.organization_name || data.name || data.orgName)) || null;
         if (name && this.isNavbarAlive) this.orgNameCache[orgId] = name;
       } catch (e) {
         console.debug(`Navbar: fetchOrgName failed for id=${orgId}`, e);
@@ -552,49 +541,6 @@ export default {
         if (this.isNavbarAlive) delete this.orgNameFetching[orgId];
       }
       return name;
-    },
-    async fetchSummary() {
-      if (!this.assessmentId) return;
-      try {
-        const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-        const res = await axios.get(
-          `${API_BASE_URL}/api/assessments/${this.assessmentId}/summary`
-        );
-        const data = res.data;
-
-        if (data.assessment && data.assessment.name) {
-          const assessmentName = data.assessment.name;
-          if (this.$root && this.$root.$emit) {
-            this.$root.$emit(
-              "page-title-override",
-              `Assessment ${assessmentName} Summary`
-            );
-          }
-        }
-
-        this.rows = (data.members || []).map((member) => ({
-          name:
-            member.name ||
-            (member.member_id ? `Member #${member.member_id}` : "Unknown"),
-          result:
-            member.answers && member.answers.length > 0
-              ? "Submitted"
-              : "Pending",
-          assessment: (member.answers || []).map((a) => ({
-            question: a.question,
-            answer: a.answer,
-          })),
-        }));
-        this.summary = data.summary || {
-          total_sent: 0,
-          submitted: 0,
-          pending: 0,
-        };
-      } catch (e) {
-        this.rows = [];
-        this.summary = { total_sent: 0, submitted: 0, pending: 0 };
-        console.error("Failed to fetch assessment summary:", e);
-      }
     },
     _getAuthConfig() {
       let token = storage.get("authToken");
@@ -722,7 +668,7 @@ export default {
     try {
       const token = storage.get("authToken");
       // Do not fetch unread notifications for superadmin users
-      if (token && this.roleName !== 'superadmin') {
+      if (token && this.roleName !== "superadmin") {
         this.fetchUnreadCount();
       }
     } catch (e) {
@@ -740,7 +686,7 @@ export default {
       this.updateNotificationCount();
       try {
         // Only fetch unread for non-superadmins
-        if (this.roleName !== 'superadmin') {
+        if (this.roleName !== "superadmin") {
           this.fetchUnreadCount();
         }
         // Only fetch current user if not in guest access mode

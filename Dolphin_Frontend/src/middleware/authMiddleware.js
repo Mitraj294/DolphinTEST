@@ -3,21 +3,24 @@ import storage from "../services/storage";
 
 const authMiddleware = {
   loginAny(email, role = "superadmin") {
-    storage.set("role", role);
+    storage.set("role", String(role).toLowerCase());
     storage.set("name", email.split("@")[0] || "User");
     storage.set("email", email);
     return true;
   },
   isAuthenticated() {
     const role = storage.get("role");
-    return !!role && Object.values(ROLES).includes(role);
+    const normalized = role ? String(role).toLowerCase() : "";
+    return !!normalized && Object.values(ROLES).includes(normalized);
   },
   getRole() {
-    return storage.get("role") || "";
+    const role = storage.get("role") || "";
+    return role ? String(role).toLowerCase() : "";
   },
   canAccess(type, name) {
     const role = storage.get("role");
-    return canAccess(role, type, name);
+    const normalized = role ? String(role).toLowerCase() : "";
+    return canAccess(normalized, type, name);
   },
 };
 

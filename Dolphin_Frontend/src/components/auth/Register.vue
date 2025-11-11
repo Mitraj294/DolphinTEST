@@ -288,11 +288,7 @@
 </template>
 
 <script>
-import {
-  FormDropdown,
-  FormLabel,
-  FormRow,
-} from '@/components/Common/Common_UI/Form';
+import { FormDropdown, FormLabel } from '@/components/Common/Common_UI/Form';
 import {
   normalizeOrgSize,
   orgSizeOptions,
@@ -306,7 +302,7 @@ const API_BASE_URL =
 
 export default {
   name: 'Register',
-  components: { Toast, FormLabel, FormDropdown, FormRow },
+  components: { Toast, FormLabel, FormDropdown },
   setup() {
     const toast = useToast();
     return { toast };
@@ -338,9 +334,7 @@ export default {
       orgSizeOptions: orgSizeOptions,
       showPassword: false,
       showConfirmPassword: false,
-      loading: false,
-      successMessage: '',
-      errorMessage: '',
+  // transient UI state
       errors: {},
     };
   },
@@ -364,7 +358,8 @@ export default {
         }, 50);
       });
     },
-    focusRef(refName, opts = { scroll: true }) {
+    focusRef(refName, opts) {
+      opts = opts && typeof opts === 'object' ? opts : { scroll: true };
       const ref = this.$refs[refName];
       if (!ref) return;
       const doFocus = (el) => {
@@ -401,7 +396,7 @@ export default {
     normalizeValidationErrors(errs) {
       if (!errs || typeof errs !== 'object') return {};
       const out = { ...errs };
-      // Map backend keys to UI field keys
+  // Map backend keys to UI field keys
       if (errs.organization_name) out.organization_name = errs.organization_name;
       if (errs.organization_size) out.organization_size = errs.organization_size;
       if (errs.address) out.organization_address = errs.address;
@@ -658,8 +653,7 @@ export default {
     async fetchReferralSources() {
       try {
         const res = await axios.get(`${API_BASE_URL}/api/referral-sources`);
-        // Preserve backend order (already ordered by id); do not sort alphabetically client-side
-        this.referralSources = (res.data || []).sort((a,b) => a.id - b.id);
+        this.referralSources = (res.data || []).sort((a, b) => a.id - b.id);
       } catch (e) {
         console.warn('Failed to fetch referral sources', e);
       }

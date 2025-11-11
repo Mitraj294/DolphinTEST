@@ -49,6 +49,8 @@ Route::get('/health', function () {
 });
 
 Route::post('/register', [AuthController::class, 'register']);
+// Simple user-only registration (used by homepage/simple flows)
+Route::post('/register-user', [AuthController::class, 'registerUserOnly']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::prefix('password')->group(function () {
     Route::post('/forgot', [AuthController::class, 'forgotPassword']);
@@ -95,11 +97,8 @@ Route::prefix('cities')->group(function () {
 
 Route::get('/referral-sources', [LocationController::class, 'referralSources']);
 
-// Public routes for plans (subscription options)
-Route::prefix('plans')->group(function () {
-    Route::get('/', [PlanController::class, 'index']);
-    Route::get('/{id}', [PlanController::class, 'show']);
-});
+// NOTE: Plans are only available to organization admins via API.
+// Moved into authenticated routes below and protected by role middleware.
 
 /*
 |--------------------------------------------------------------------------
@@ -114,6 +113,12 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/change-password', [AuthController::class, 'changePassword']);
 
     Route::post('/stripe/checkout-session', [SubscriptionController::class, 'createCheckoutSession']);
+
+    // Plans (subscription options) - organization admins only
+    Route::middleware('auth.role:organizationadmin')->prefix('plans')->group(function () {
+        Route::get('/', [PlanController::class, 'index']);
+        Route::get('/{id}', [PlanController::class, 'show']);
+    });
 
     // Make assessments list available to all authenticated users (no subscription required)
     Route::get('/assessments-list', [AssessmentResponseController::class, 'getAssessments']);
@@ -137,12 +142,14 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
     });
 
-    Route::prefix('subscription')->group(function () {
+    // Subscription endpoints (organization admin only)
+    Route::middleware('auth.role:organizationadmin')->prefix('subscription')->group(function () {
         Route::get('/', [BillingController::class, 'current']);
         Route::get('/status', [BillingController::class, 'status']);
     });
 
-    Route::prefix('billing')->group(function () {
+    // Billing endpoints (organization admin only)
+    Route::middleware('auth.role:organizationadmin')->prefix('billing')->group(function () {
         Route::get('/current', [BillingController::class, 'current']);
         Route::get('/history', [BillingController::class, 'history']);
     });

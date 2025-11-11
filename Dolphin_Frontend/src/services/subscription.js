@@ -34,6 +34,20 @@ export async function createCheckoutSession(priceId, opts = {}) {
 // Backwards-compatibility wrapper used throughout the app.
 // Many components import `fetchSubscriptionStatus` so keep it available.
 export async function fetchSubscriptionStatus() {
+  // If the current user is not an organization admin, do not call the
+  // subscription status endpoint — it's intentionally restricted server-side
+  // and will return 403. Return a safe default instead to avoid noisy 403s
+  // in the browser and to keep frontend logic simple.
+  try {
+    const role = storage.get("role") || "";
+    if (String(role).toLowerCase() !== "organizationadmin") {
+      return { status: "none" };
+    }
+  } catch (e) {
+    // if storage access fails for any reason, fall back to calling the API
+    console.debug('fetchSubscriptionStatus: could not read role from storage, attempting API call', e);
+  }
+
   const headers = authHeaders();
   try {
     const res = await axios.get(`${API_BASE_URL}/api/subscription/status`, { headers });

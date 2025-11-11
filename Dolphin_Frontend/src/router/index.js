@@ -17,12 +17,12 @@ import { createRouter, createWebHistory } from "vue-router";
 import { ROLES, canAccess } from "@/permissions"; // Permissions helper
 import storage from "@/services/storage"; // Services folder for storage utils
 import { fetchSubscriptionStatus } from "@/services/subscription"; // Subscription service
-import axios from "axios";
 
 // STATIC COMPONENT IMPORTS (Core/Essential)
 import ForgotPassword from "@/components/auth/ForgotPassword.vue";
 import Login from "@/components/auth/Login.vue";
 import Register from "@/components/auth/Register.vue";
+import SimpleRegister from "@/components/auth/SimpleRegister.vue";
 import ResetPassword from "@/components/auth/ResetPassword.vue";
 import AssessmentAnswerPage from "@/components/Common/AssessmentAnswerPage.vue";
 import Dashboard from "@/components/Common/Dashboard/Dashboard.vue";
@@ -101,6 +101,12 @@ const routes = [
     meta: { public: true, guestOnly: true },
   },
   {
+    path: "/register-simple",
+    name: "RegisterSimple",
+    component: SimpleRegister,
+    meta: { public: true, guestOnly: true },
+  },
+  {
     path: "/forgot-password",
     name: "ForgotPassword",
     component: ForgotPassword,
@@ -150,13 +156,13 @@ const routes = [
     path: "/manage-subscription",
     name: "ManageSubscription",
     component: ManageSubscription,
-    meta: { requiresAuth: true, roles: [ROLES.USER, ROLES.ORGANIZATIONADMIN] },
+    meta: { requiresAuth: true, roles: [ROLES.ORGANIZATIONADMIN] },
   },
   {
     path: "/subscriptions/plans",
     name: "SubscriptionPlans",
     component: SubscriptionPlans,
-    meta: { requiresAuth: true, roles: [ROLES.USER, ROLES.ORGANIZATIONADMIN] },
+    meta: { requiresAuth: true, roles: [ROLES.ORGANIZATIONADMIN] },
   },
   {
     path: "/subscriptions/success",
@@ -169,7 +175,7 @@ const routes = [
     name: "BillingDetails",
     component: BillingDetails,
     props: true,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, roles: [ROLES.ORGANIZATIONADMIN] },
   },
 
   //  ORGANIZATIONS
@@ -396,11 +402,9 @@ const checkPermissionsAndNavigate = (to, role, next) => {
   Handles navigation for authenticated routes, including subscription logic.
  */
 const handleAuthenticatedRoutes = async (to, role, next) => {
-  const subscriptionPages = [
-    "ManageSubscription",
-    "SubscriptionPlans",
-    "BillingDetails",
-  ];
+  // Only allow BillingDetails unconditionally in this early path.
+  // ManageSubscription and SubscriptionPlans must pass regular permission checks.
+  const subscriptionPages = ["BillingDetails"];
   if (subscriptionPages.includes(to.name)) {
     return next();
   }
@@ -432,26 +436,24 @@ const handleAuthenticatedRoutes = async (to, role, next) => {
  */
 router.beforeEach(async (to, from, next) => {
   const authToken = storage.get("authToken");
-  const role = storage.get("role");
+  // Normalize role to a lowercase string to avoid casing mismatches
+  const rawRole = storage.get("role");
+  const role = rawRole ? String(rawRole).toLowerCase() : "";
+
+  // Defensive: explicitly block access to known subscription routes
+  // so typing the URL directly never shows the page to non-org-admins.
+  const subscriptionOnlyRoutes = ["ManageSubscription", "SubscriptionPlans", "BillingDetails"];
+  if (subscriptionOnlyRoutes.includes(to.name) && role !== ROLES.ORGANIZATIONADMIN) {
+    return next("/dashboard");
+  }
 
   // Handle public routes (Login, Register, etc)
   if (handlePublicRoutes(to, authToken, next)) {
     return;
   }
-  // If the incoming URL is the plans page and contains guest data, allow
-  // navigation immediately so the component can handle redemption. This
-  // prevents redirect-to-login when the validation request fails or is slow.
-  const isPlansWithData =
-    to.name === "SubscriptionPlans" &&
-    (Boolean(to.query?.email) ||
-      Boolean(to.query?.lead_id) ||
-      Boolean(to.query?.price_id) ||
-      Boolean(to.query?.guest_token) ||
-      Boolean(to.query?.guest_code));
-  if (isPlansWithData) {
-    next();
-    return;
-  }
+  // Do not special-case SubscriptionPlans based on query params. Allow the
+  // normal permission checks to run so only authorized roles (organizationadmin)
+  // can access subscription pages.
 
   // Authenticated user flow
   if (authToken) {

@@ -72,7 +72,7 @@
       </form>
       <div class="switch-auth">
         <span>Don't have an account?</span>
-        <router-link to="/register" class="switch-link"
+        <router-link to="/register-simple" class="switch-link"
           >Register here</router-link
         >
       </div>

@@ -12,6 +12,12 @@ class BillingController extends Controller
     /** GET /api/subscription */
     public function current(Request $request)
     {
+        // Enforce role at controller level as a defensive check in case
+        // middleware is misapplied. Only organization admins may access billing.
+        $user = $request->user();
+        if (! $user || ! method_exists($user, 'hasRole') || ! $user->hasRole('organizationadmin')) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
         try {
             $subscription = $this->resolveCurrentSubscription($request);
             if (! $subscription) {
@@ -64,6 +70,10 @@ class BillingController extends Controller
     /** GET /api/subscription/status */
     public function status(Request $request)
     {
+        $user = $request->user();
+        if (! $user || ! method_exists($user, 'hasRole') || ! $user->hasRole('organizationadmin')) {
+            return response()->json(['status' => 'none', 'message' => 'Unauthorized.'], 403);
+        }
         try {
             $subscription = $this->resolveLatestSubscription($request);
             if (! $subscription) {
@@ -109,6 +119,10 @@ class BillingController extends Controller
     /** GET /api/billing/history */
     public function history(Request $request)
     {
+        $user = $request->user();
+        if (! $user || ! method_exists($user, 'hasRole') || ! $user->hasRole('organizationadmin')) {
+            return response()->json([], 403);
+        }
         try {
             $user = $this->resolveUser($request);
             if (! $user) {

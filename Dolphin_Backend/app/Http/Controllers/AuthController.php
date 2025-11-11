@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\SimpleRegisterRequest;
 use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Models\User;
@@ -34,6 +35,51 @@ class AuthController extends Controller
             return response()->json(['message' => 'User registered successfully', 'user' => $user], 201);
         } catch (\Exception $e) {
             Log::error('User registration failed', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'An unexpected error occurred during registration.'], 500);
+        }
+    }
+
+    // Simple user-only registration. Does not create or link organizations.
+    public function registerUserOnly(SimpleRegisterRequest $request)
+    {
+        DB::beginTransaction();
+        try {
+            $validated = $request->validated();
+
+            // Create a user record with minimal fields
+            $user = User::create([
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'phone_number' => $validated['phone_number'] ?? $validated['phone'] ?? null,
+                'organization_id' => null,
+            ]);
+
+            // Assign default 'user' role if present
+            try {
+                $role = Role::where('name', 'user')->first();
+                if ($role) {
+                    $user->roles()->attach($role);
+                }
+            } catch (\Exception $e) {
+                // Non-fatal: log and continue
+                Log::warning('Failed to attach role during simple registration', ['error' => $e->getMessage()]);
+            }
+
+            // Update lead status if applicable (best-effort)
+            try {
+                (new AuthUserService())->updateLeadStatus($user->email);
+            } catch (\Exception $e) {
+                Log::warning('Failed to update lead status after simple registration', ['email' => $user->email, 'error' => $e->getMessage()]);
+            }
+
+            DB::commit();
+
+            return response()->json(['message' => 'User registered successfully', 'user' => $user], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Simple user registration failed', ['error' => $e->getMessage()]);
             return response()->json(['message' => 'An unexpected error occurred during registration.'], 500);
         }
     }

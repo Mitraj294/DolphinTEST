@@ -10,6 +10,12 @@ class PlanController extends Controller
 {
     public function index()
     {
+        // Defensive: only organization admins should be able to list available plans
+        $user = request()->user();
+        if (! $user || ! method_exists($user, 'hasRole') || ! $user->hasRole('organizationadmin')) {
+            return response()->json(['error' => 'Unauthorized.'], 403);
+        }
+
         try {
             $plans = Plan::where('status', 'active')->get(['id', 'name', 'stripe_price_id', 'amount', 'currency', 'interval', 'description', 'slug']);
             return response()->json(['plans' => $plans]);
@@ -47,6 +53,12 @@ class PlanController extends Controller
 
     public function show(string $id)
     {
+        // Defensive: only organization admins should be able to view plan details
+        $user = request()->user();
+        if (! $user || ! method_exists($user, 'hasRole') || ! $user->hasRole('organizationadmin')) {
+            return response()->json(['error' => 'Unauthorized.'], 403);
+        }
+
         try {
             $plan = Plan::find($id);
             if (! $plan) {

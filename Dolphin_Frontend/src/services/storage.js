@@ -14,6 +14,10 @@ const storage = {
 
   set(key, value) {
     try {
+      // Normalize role values to lowercase to keep role checks consistent
+      if (key === "role" && typeof value === "string") {
+        value = value.toLowerCase();
+      }
       const stringValue = JSON.stringify(value);
       try {
         const encrypted = CryptoJS.AES.encrypt(
@@ -64,12 +68,17 @@ const storage = {
 
     // Not encrypted: try to parse JSON, otherwise return raw string
     try {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      // Normalize role reads as well
+      if (key === "role" && typeof parsed === "string") return parsed.toLowerCase();
+      return parsed;
     } catch (e) {
       console.warn(
         `JSON parse failed for key "${key}". Returning raw value.`,
         e
       );
+      // If raw string was stored (unencrypted), normalize role as needed
+      if (key === "role" && typeof raw === "string") return raw.toLowerCase();
       return raw;
     }
   },
