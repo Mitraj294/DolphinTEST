@@ -11,11 +11,18 @@ class IndexAssessmentRequest extends FormRequest
         return true;
     }
 
+    /**
+     * Validation rules for listing assessments.
+     *
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [
-            'organization_id' => 'nullable|integer|exists:organizations,id',
-            'user_id' => 'nullable',
+                'organization_id' => 'sometimes|integer|exists:organizations,id',
+                'group_id' => 'sometimes|integer|exists:groups,id',
+                'member_id' => 'sometimes|integer',
+                'page' => 'sometimes|integer|min:1',
         ];
     }
 }

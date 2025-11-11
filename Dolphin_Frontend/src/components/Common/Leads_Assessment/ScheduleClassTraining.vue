@@ -5,8 +5,7 @@
         <div class="schedule-demo-card">
           <h2 class="schedule-demo-title">Schedule Classes/Training</h2>
           <div class="schedule-demo-desc">
-            Lorem Ipsum is simply dummy text of the printing and typesetting
-            industry.
+            Lorem Ipsum is simply dummy text of the printing and typesetting industry.
           </div>
           <form class="schedule-demo-form">
             <FormRow>
@@ -36,30 +35,21 @@
               </div>
               <div class="schedule-demo-field">
                 <FormLabel>Select Classes/Training</FormLabel>
-                <FormDropdown
-                  v-model="classType"
-                  icon="fas fa-chalkboard-teacher"
-                >
+                <FormDropdown v-model="classType" icon="fas fa-chalkboard-teacher">
                   <option value="">Select</option>
                 </FormDropdown>
               </div>
               <div class="schedule-demo-field schedule-demo-schedule-field">
                 <FormLabel>Schedule</FormLabel>
                 <div class="schedule-demo-schedule-inputs">
-                  <FormInput
-                    v-model="date"
-                    type="date"
-                    placeholder="MM/DD/YYYY"
-                  />
+                  <FormInput v-model="date" type="date" placeholder="MM/DD/YYYY" />
                   <FormInput v-model="time" type="time" placeholder="00:00" />
                 </div>
               </div>
             </FormRow>
             <!-- Button moved outside FormRow for proper right alignment -->
             <div class="schedule-demo-actions">
-              <button type="submit" class="btn btn-primary">
-                Schedule Classes/Training
-              </button>
+              <button type="submit" class="btn btn-primary">Schedule Classes/Training</button>
             </div>
           </form>
         </div>
@@ -69,25 +59,20 @@
 </template>
 
 <script>
-import {
-  FormDropdown,
-  FormInput,
-  FormLabel,
-  FormRow,
-} from "@/components/Common/Common_UI/Form";
-import MainLayout from "../../layout/MainLayout.vue";
+import { FormDropdown, FormInput, FormLabel, FormRow } from '@/components/Common/Common_UI/Form';
+import MainLayout from '../../layout/MainLayout.vue';
 export default {
-  name: "ScheduleClassTraining",
+  name: 'ScheduleClassTraining',
   components: { MainLayout, FormInput, FormDropdown, FormRow, FormLabel },
   data() {
     return {
-      organization: "",
-      admin: "",
-      user: "",
-      subject: "",
-      classType: "",
-      date: "",
-      time: "",
+      organization: '',
+      admin: '',
+      user: '',
+      subject: '',
+      classType: '',
+      date: '',
+      time: '',
     };
   },
 };
@@ -194,8 +179,8 @@ export default {
 .schedule-demo-schedule-inputs .form-input-noicon-wrap {
   width: 100%;
 }
-.schedule-demo-schedule-inputs input.form-input[type="date"],
-.schedule-demo-schedule-inputs input.form-input[type="time"] {
+.schedule-demo-schedule-inputs input.form-input[type='date'],
+.schedule-demo-schedule-inputs input.form-input[type='time'] {
   width: 100%;
   background: #fafafa;
   border: 1.5px solid #e0e0e0;

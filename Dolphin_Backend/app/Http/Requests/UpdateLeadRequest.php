@@ -6,7 +6,6 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateLeadRequest extends FormRequest
 {
-
     //Determine if the user is authorized to make this request.
     //@return bool
 
@@ -16,9 +15,11 @@ class UpdateLeadRequest extends FormRequest
     }
 
 
-    //Get the validation rules that apply to the request.
-    //@return array<string, mixed>
+    // Get the validation rules that apply to the request.
 
+    /**
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         // Handle the special case where only 'notes' is being updated via a PATCH request.

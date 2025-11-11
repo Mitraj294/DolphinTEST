@@ -9,20 +9,15 @@
         <div class="group-header-row">
           <div
             class="group-info"
-            style="
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              width: 100%;
-            "
+            style="display: flex; justify-content: space-between; align-items: center; width: 100%"
           >
             <div class="group-value">
-              {{ group ? group.name : "—" }}
+              {{ group ? group.name : '—' }}
             </div>
             <div class="meta-item" style="text-align: right">
               <div class="meta-label">Created</div>
               <div class="meta-value">
-                {{ group ? formatDate(group.created_at) : "—" }}
+                {{ group ? formatDate(group.created_at) : '—' }}
               </div>
             </div>
           </div>
@@ -36,18 +31,12 @@
         <br />
         <div class="group-section">
           <h4 class="section-title">Members</h4>
-          <div v-if="members.length === 0" class="no-data">
-            No members found for this group.
-          </div>
+          <div v-if="members.length === 0" class="no-data">No members found for this group.</div>
 
           <div v-else class="detail-row">
             <div
               class="detail-table"
-              style="
-                width: 100% !important;
-                max-width: 800px !important;
-                margin: 0 !important;
-              "
+              style="width: 100% !important; max-width: 800px !important; margin: 0 !important"
             >
               <div class="recipient-table-wrap">
                 <div class="table-scroll">
@@ -81,23 +70,16 @@
                         <td>
                           {{
                             m.first_name || m.last_name
-                              ? (
-                                  (m.first_name || "") +
-                                  " " +
-                                  (m.last_name || "")
-                                ).trim()
-                              : m.email || "Unknown"
+                              ? ((m.first_name || '') + ' ' + (m.last_name || '')).trim()
+                              : m.email || 'Unknown'
                           }}
                         </td>
-                        <td>{{ m.email || "" }}</td>
+                        <td>{{ m.email || '' }}</td>
                         <td>
                           {{
-                            Array.isArray(m.member_roles) &&
-                            m.member_roles.length
-                              ? m.member_roles
-                                  .map((r) => r.name || r)
-                                  .join(", ")
-                              : ""
+                            Array.isArray(m.member_roles) && m.member_roles.length
+                              ? m.member_roles.map((r) => r.name || r).join(', ')
+                              : ''
                           }}
                         </td>
                         <td>
@@ -110,11 +92,7 @@
                               })
                             "
                           >
-                            <img
-                              src="@/assets/images/Notes.svg"
-                              alt="View"
-                              class="btn-view-icon"
-                            />
+                            <img src="@/assets/images/Notes.svg" alt="View" class="btn-view-icon" />
                             View
                           </button>
                         </td>
@@ -132,11 +110,11 @@
 </template>
 
 <script>
-import TableHeader from "@/components/Common/Common_UI/TableHeader.vue";
-import storage from "@/services/storage";
-import axios from "axios";
+import TableHeader from '@/components/Common/Common_UI/TableHeader.vue';
+import storage from '@/services/storage';
+import axios from 'axios';
 export default {
-  name: "GroupDetails",
+  name: 'GroupDetails',
   components: { TableHeader },
   props: {
     visible: { type: Boolean, required: true },
@@ -166,55 +144,52 @@ export default {
       }
 
       try {
-        const authToken = storage.get("authToken");
+        const authToken = storage.get('authToken');
         const headers = {};
-        if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+        if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-        const res = await axios.get(
-          `${API_BASE_URL}/api/groups/${this.groupId}`,
-          { headers }
-        );
+        const res = await axios.get(`${API_BASE_URL}/api/groups/${this.groupId}`, { headers });
         const data = res && res.data ? res.data : null;
         // Expecting the backend to return group and members arrays
         this.group = data && data.group ? data.group : data;
         // Use members data as-is since member_roles comes correctly from backend
         this.members = data && data.members ? data.members : [];
       } catch (e) {
-        console.error("Error fetching group details:", e);
+        console.debug && console.debug('Error fetching group details:', e);
         this.group = null;
         this.members = [];
       }
     },
     formatDate(dt) {
-      if (!dt) return "—";
+      if (!dt) return '—';
       try {
         const d = new Date(dt);
         if (Number.isNaN(d.getTime())) return dt;
         const day = d.getDate();
         const months = [
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec",
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
         ];
         const month = months[d.getMonth()];
         const year = d.getFullYear();
         let hours = d.getHours();
-        const minutes = String(d.getMinutes()).padStart(2, "0");
-        const ampm = hours >= 12 ? "PM" : "AM";
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
         hours = hours % 12;
         if (hours === 0) hours = 12;
         return `${day} ${month},${year} ${hours}:${minutes} ${ampm}`;
       } catch (e) {
-        console.warn("Error formatting date:", e);
+        console.debug && console.debug('Error formatting date:', e);
         return dt;
       }
     },
@@ -223,7 +198,7 @@ export default {
 </script>
 
 <style scoped>
-@import "@/assets/modelcssnotificationandassesment.css";
-@import "@/assets/global.css";
-@import "@/assets/table.css";
+@import '@/assets/modelcssnotificationandassesment.css';
+@import '@/assets/global.css';
+@import '@/assets/table.css';
 </style>

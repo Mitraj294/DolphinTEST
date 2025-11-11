@@ -1,10 +1,5 @@
 <template>
-  <div
-    class="form-box"
-    ref="dropdownRoot"
-    @click.stop="toggleDropdown"
-    @keydown="handleKeyDown"
-  >
+  <div class="form-box" ref="dropdownRoot" @click.stop="toggleDropdown" @keydown="handleKeyDown">
     <div>
       <span class="form-input-icon">
         <i :class="icon"></i>
@@ -12,34 +7,20 @@
     </div>
     <div class="selected-container" @click="toggleDropdown">
       <template v-if="selectedItems && selectedItems.length">
-        <span
-          v-for="(s, idx) in selectedItems"
-          :key="idx"
-          class="selected-chip"
-          @click.stop
-        >
+        <span v-for="(s, idx) in selectedItems" :key="idx" class="selected-chip" @click.stop>
           <span class="chip-label">{{ labelFor(s) }}</span>
-          <button class="chip-remove" @click.stop.prevent="removeSelected(s)">
-            ×
-          </button>
+          <button class="chip-remove" @click.stop.prevent="removeSelected(s)">×</button>
         </span>
       </template>
       <template v-else>
-        <span class="selected-placeholder">{{
-          placeholder || "Select..."
-        }}</span>
+        <span class="selected-placeholder">{{ placeholder || 'Select...' }}</span>
       </template>
     </div>
     <Button class="form-dropdown-chevron" type="button" tabindex="0">
       <i class="fas fa-chevron-down" aria-hidden="true"></i>
     </Button>
     <teleport to="body">
-      <div
-        v-if="showDropdown"
-        ref="dropdownEl"
-        class="dropdown-list"
-        :style="dropdownStyle"
-      >
+      <div v-if="showDropdown" ref="dropdownEl" class="dropdown-list" :style="dropdownStyle">
         <input
           class="dropdown-search"
           placeholder="Search"
@@ -47,16 +28,9 @@
           @keydown="handleSearchKeyDown"
           ref="searchInput"
         />
-        <div
-          v-if="enableSelectAll"
-          class="dropdown-item"
-          @click="toggleSelectAll"
-        >
+        <div v-if="enableSelectAll" class="dropdown-item" @click="toggleSelectAll">
           <span><strong>Select All</strong></span>
-          <span
-            class="dropdown-checkbox"
-            :class="{ checked: isAllSelected }"
-          ></span>
+          <span class="dropdown-checkbox" :class="{ checked: isAllSelected }"></span>
         </div>
         <div
           v-for="(item, index) in displayItems"
@@ -87,26 +61,26 @@
 </template>
 
 <script>
-import Button from "primevue/button";
+import Button from 'primevue/button';
 
 export default {
-  name: "MultiSelectDropdown",
+  name: 'MultiSelectDropdown',
   components: {
     Button,
   },
   props: {
     options: { type: Array, required: true },
     selectedItems: { type: Array, required: true },
-    placeholder: { type: String, default: "" },
-    icon: { type: String, default: "fas fa-users" },
-    optionLabel: { type: String, default: "name" },
-    optionValue: { type: String, default: "id" },
+    placeholder: { type: String, default: '' },
+    icon: { type: String, default: 'fas fa-users' },
+    optionLabel: { type: String, default: 'name' },
+    optionValue: { type: String, default: 'id' },
     enableSelectAll: { type: Boolean, default: false },
   },
   data() {
     return {
       showDropdown: false,
-      search: "",
+      search: '',
       dropdownStyle: {},
       focusedIndex: -1,
     };
@@ -115,9 +89,7 @@ export default {
     filteredItems() {
       if (!this.search) return this.options;
       return this.options.filter((item) =>
-        (item[this.optionLabel] || "")
-          .toLowerCase()
-          .includes(this.search.toLowerCase())
+        (item[this.optionLabel] || '').toLowerCase().includes(this.search.toLowerCase())
       );
     },
     // If there are no filtered options but there are selected items, show the
@@ -132,7 +104,7 @@ export default {
           // can access optionValue/optionLabel safely. For primitive values we keep
           // value under the optionValue key and leave optionLabel undefined so
           // label helpers will resolve it.
-          if (typeof s === "string" || typeof s === "number") {
+          if (typeof s === 'string' || typeof s === 'number') {
             return { [this.optionValue]: s };
           }
           return s;
@@ -143,33 +115,30 @@ export default {
     isAllSelected() {
       if (!this.filteredItems.length) return false;
       return this.filteredItems.every((item) =>
-        this.selectedItems.some(
-          (i) => i[this.optionValue] === item[this.optionValue]
-        )
+        this.selectedItems.some((i) => i[this.optionValue] === item[this.optionValue])
       );
     },
     // Build a readable string for selected items; handles primitives, objects, id references,
     // nested shapes, and circular objects via a safe stringify fallback.
     selectedLabelString() {
-      if (!Array.isArray(this.selectedItems) || this.selectedItems.length === 0)
-        return "";
+      if (!Array.isArray(this.selectedItems) || this.selectedItems.length === 0) return '';
 
       const labels = this.selectedItems
         .map((s) => this.labelForSelected(s))
-        .filter((x) => x !== "");
+        .filter((x) => x !== '');
 
-      return labels.join(", ");
+      return labels.join(', ');
     },
   },
   mounted() {
-    document.addEventListener("mousedown", this.handleClickOutside);
-    globalThis.addEventListener("resize", this.updateDropdownPosition);
-    globalThis.addEventListener("scroll", this.updateDropdownPosition, true);
+    document.addEventListener('mousedown', this.handleClickOutside);
+    globalThis.addEventListener('resize', this.updateDropdownPosition);
+    globalThis.addEventListener('scroll', this.updateDropdownPosition, true);
   },
   beforeUnmount() {
-    document.removeEventListener("mousedown", this.handleClickOutside);
-    globalThis.removeEventListener("resize", this.updateDropdownPosition);
-    globalThis.removeEventListener("scroll", this.updateDropdownPosition, true);
+    document.removeEventListener('mousedown', this.handleClickOutside);
+    globalThis.removeEventListener('resize', this.updateDropdownPosition);
+    globalThis.removeEventListener('scroll', this.updateDropdownPosition, true);
   },
   watch: {
     showDropdown(newVal) {
@@ -177,7 +146,7 @@ export default {
         this.$nextTick(() => this.updateDropdownPosition());
       } else {
         this.focusedIndex = -1;
-        this.search = "";
+        this.search = '';
       }
     },
     search() {
@@ -187,13 +156,13 @@ export default {
   },
   methods: {
     labelFor(s) {
-      if (s === null || s === undefined) return "";
+      if (s === null || s === undefined) return '';
 
       if (this.isPrimitive(s)) {
         return this.labelForPrimitive(s);
       }
 
-      if (typeof s === "object") {
+      if (typeof s === 'object') {
         return this.labelForObject(s);
       }
 
@@ -201,7 +170,7 @@ export default {
     },
 
     isPrimitive(val) {
-      return typeof val === "string" || typeof val === "number";
+      return typeof val === 'string' || typeof val === 'number';
     },
 
     labelForPrimitive(val) {
@@ -219,9 +188,7 @@ export default {
       }
 
       if (obj[this.optionValue] !== undefined) {
-        const opt = this.options.find(
-          (o) => o[this.optionValue] === obj[this.optionValue]
-        );
+        const opt = this.options.find((o) => o[this.optionValue] === obj[this.optionValue]);
         if (opt && opt[this.optionLabel]) {
           return opt[this.optionLabel];
         }
@@ -245,8 +212,8 @@ export default {
         return JSON.stringify(
           obj,
           (k, v) => {
-            if (v && typeof v === "object") {
-              if (seen.has(v)) return "[Circular]";
+            if (v && typeof v === 'object') {
+              if (seen.has(v)) return '[Circular]';
               seen.add(v);
             }
             return v;
@@ -254,16 +221,16 @@ export default {
           2
         );
       } catch (e) {
-        console.error("Error stringifying object", e);
+        console.debug && console.debug('Error stringifying object', e);
         try {
-          if (obj && typeof obj === "object") {
+          if (obj && typeof obj === 'object') {
             const parts = Object.keys(obj)
               .slice(0, 4)
               .map((k) => `${k}:${String(obj[k])}`);
-            return parts.join(" ");
+            return parts.join(' ');
           }
         } catch (error) {
-          console.error("Error in fallback stringify", error);
+          console.debug && console.debug('Error in fallback stringify', error);
         }
         return String(obj);
       }
@@ -274,8 +241,7 @@ export default {
       const opt = this.options.find((o) => o[this.optionValue] === val);
       if (
         opt &&
-        (typeof opt[this.optionLabel] === "string" ||
-          typeof opt[this.optionLabel] === "number")
+        (typeof opt[this.optionLabel] === 'string' || typeof opt[this.optionLabel] === 'number')
       )
         return String(opt[this.optionLabel]);
       return null;
@@ -285,8 +251,8 @@ export default {
       for (const key of commonLabelKeys) {
         if (item && Object.hasOwn(item, key)) {
           const v = item[key];
-          if (typeof v === "string" && v.trim()) return v.trim();
-          if (typeof v === "number") return String(v);
+          if (typeof v === 'string' && v.trim()) return v.trim();
+          if (typeof v === 'number') return String(v);
         }
       }
       return null;
@@ -294,10 +260,10 @@ export default {
 
     extractNestedLabel(item) {
       // keep this loop minimal; delegate branching to getLabelFromNested
-      const nestedKeys = ["role", "user", "data"];
+      const nestedKeys = ['role', 'user', 'data'];
       for (const key of nestedKeys) {
         const nested = item && item[key];
-        if (nested && typeof nested === "object") {
+        if (nested && typeof nested === 'object') {
           const lbl = this.getLabelFromNested(nested);
           if (lbl) return lbl;
         }
@@ -306,13 +272,13 @@ export default {
     },
 
     getLabelFromNested(nested) {
-      if (!nested || typeof nested !== "object") return null;
-      const tryKeys = [this.optionLabel, "name"];
+      if (!nested || typeof nested !== 'object') return null;
+      const tryKeys = [this.optionLabel, 'name'];
       for (const k of tryKeys) {
         if (Object.hasOwn(nested, k)) {
           const v = nested[k];
-          if (typeof v === "string" && v.trim()) return v.trim();
-          if (typeof v === "number") return String(v);
+          if (typeof v === 'string' && v.trim()) return v.trim();
+          if (typeof v === 'number') return String(v);
           return this.safeStringify(v);
         }
       }
@@ -322,10 +288,10 @@ export default {
     extractAnyStringValue(item) {
       try {
         const vals = Object.values(item || {});
-        const strVal = vals.find((v) => typeof v === "string" && v.trim());
+        const strVal = vals.find((v) => typeof v === 'string' && v.trim());
         if (strVal) return strVal.trim();
       } catch (e) {
-        console.error("Error extracting string from object", e);
+        console.debug && console.debug('Error extracting string from object', e);
       }
       return null;
     },
@@ -333,23 +299,23 @@ export default {
     labelForSelected(s) {
       const commonLabelKeys = [
         this.optionLabel,
-        "name",
-        "label",
-        "title",
-        "role",
-        "display_name",
-        "text",
+        'name',
+        'label',
+        'title',
+        'role',
+        'display_name',
+        'text',
       ];
 
-      if (s === null || s === undefined) return "";
+      if (s === null || s === undefined) return '';
 
       // primitive selected (id or label)
-      if (typeof s === "string" || typeof s === "number") {
+      if (typeof s === 'string' || typeof s === 'number') {
         const optLabel = this.getOptionLabelByValue(s);
         return optLabel ?? String(s);
       }
 
-      if (typeof s === "object") {
+      if (typeof s === 'object') {
         const common = this.extractCommonLabel(s, commonLabelKeys);
         if (common) return common;
 
@@ -369,11 +335,11 @@ export default {
     },
     removeSelected(item) {
       const newSelected = this.selectedItems.filter((i) => {
-        const a = typeof i === "object" ? i[this.optionValue] : i;
-        const b = typeof item === "object" ? item[this.optionValue] : item;
+        const a = typeof i === 'object' ? i[this.optionValue] : i;
+        const b = typeof item === 'object' ? item[this.optionValue] : item;
         return a !== b;
       });
-      this.$emit("update:selectedItems", newSelected);
+      this.$emit('update:selectedItems', newSelected);
     },
     toggleDropdown() {
       this.showDropdown = !this.showDropdown;
@@ -395,20 +361,15 @@ export default {
       );
       if (idx > -1) {
         this.$emit(
-          "update:selectedItems",
-          this.selectedItems.filter(
-            (i) => i[this.optionValue] !== item[this.optionValue]
-          )
+          'update:selectedItems',
+          this.selectedItems.filter((i) => i[this.optionValue] !== item[this.optionValue])
         );
       } else {
-        this.$emit("update:selectedItems", [...this.selectedItems, item]);
+        this.$emit('update:selectedItems', [...this.selectedItems, item]);
       }
     },
     selectFocusedOption() {
-      if (
-        this.focusedIndex >= 0 &&
-        this.focusedIndex < this.filteredItems.length
-      ) {
+      if (this.focusedIndex >= 0 && this.focusedIndex < this.filteredItems.length) {
         this.toggleItem(this.filteredItems[this.focusedIndex]);
       }
     },
@@ -430,36 +391,32 @@ export default {
           }
           // Check if item is below the visible area
           else if (itemRect.bottom > dropdownRect.bottom) {
-            dropdownEl.scrollTop =
-              item.offsetTop - dropdownEl.clientHeight + item.clientHeight;
+            dropdownEl.scrollTop = item.offsetTop - dropdownEl.clientHeight + item.clientHeight;
           }
         }
       });
     },
     handleKeyDown(event) {
       switch (event.key) {
-        case "ArrowDown":
-        case "Down":
+        case 'ArrowDown':
+        case 'Down':
           event.preventDefault();
           if (this.showDropdown) {
-            this.focusedIndex = Math.min(
-              this.focusedIndex + 1,
-              this.filteredItems.length - 1
-            );
+            this.focusedIndex = Math.min(this.focusedIndex + 1, this.filteredItems.length - 1);
             this.scrollToFocusedItem();
           } else {
             this.toggleDropdown();
           }
           break;
-        case "ArrowUp":
-        case "Up":
+        case 'ArrowUp':
+        case 'Up':
           event.preventDefault();
           if (this.showDropdown) {
             this.focusedIndex = Math.max(this.focusedIndex - 1, 0);
             this.scrollToFocusedItem();
           }
           break;
-        case "Enter":
+        case 'Enter':
           event.preventDefault();
           if (this.showDropdown) {
             this.selectFocusedOption();
@@ -467,13 +424,13 @@ export default {
             this.toggleDropdown();
           }
           break;
-        case "Escape":
+        case 'Escape':
           event.preventDefault();
           this.showDropdown = false;
           this.focusedIndex = -1;
           break;
-        case " ":
-        case "Spacebar":
+        case ' ':
+        case 'Spacebar':
           if (this.showDropdown) {
             // already open — no-op
             break;
@@ -485,26 +442,23 @@ export default {
     },
     handleSearchKeyDown(event) {
       switch (event.key) {
-        case "ArrowDown":
-        case "Down":
+        case 'ArrowDown':
+        case 'Down':
           event.preventDefault();
-          this.focusedIndex = Math.min(
-            this.focusedIndex + 1,
-            this.filteredItems.length - 1
-          );
+          this.focusedIndex = Math.min(this.focusedIndex + 1, this.filteredItems.length - 1);
           this.scrollToFocusedItem();
           break;
-        case "ArrowUp":
-        case "Up":
+        case 'ArrowUp':
+        case 'Up':
           event.preventDefault();
           this.focusedIndex = Math.max(this.focusedIndex - 1, 0);
           this.scrollToFocusedItem();
           break;
-        case "Enter":
+        case 'Enter':
           event.preventDefault();
           this.selectFocusedOption();
           break;
-        case "Escape":
+        case 'Escape':
           event.preventDefault();
           this.showDropdown = false;
           this.focusedIndex = -1;
@@ -514,25 +468,19 @@ export default {
     toggleSelectAll() {
       if (this.isAllSelected) {
         // Unselect all filtered — use a Set for faster lookups
-        const filteredIds = new Set(
-          this.filteredItems.map((i) => i[this.optionValue])
-        );
-        const newSelected = this.selectedItems.filter(
-          (i) => !filteredIds.has(i[this.optionValue])
-        );
-        this.$emit("update:selectedItems", newSelected);
+        const filteredIds = new Set(this.filteredItems.map((i) => i[this.optionValue]));
+        const newSelected = this.selectedItems.filter((i) => !filteredIds.has(i[this.optionValue]));
+        this.$emit('update:selectedItems', newSelected);
       } else {
         // Select all filtered
         // Merge with already selected (avoid duplicates)
         const merged = [...this.selectedItems];
         for (const item of this.filteredItems) {
-          if (
-            !merged.some((i) => i[this.optionValue] === item[this.optionValue])
-          ) {
+          if (!merged.some((i) => i[this.optionValue] === item[this.optionValue])) {
             merged.push(item);
           }
         }
-        this.$emit("update:selectedItems", merged);
+        this.$emit('update:selectedItems', merged);
       }
     },
     handleClickOutside(event) {
@@ -540,8 +488,7 @@ export default {
         const root = this.$refs.dropdownRoot;
         const dropdownEl = this.$refs.dropdownEl;
         const clickedInsideRoot = root && root.contains(event.target);
-        const clickedInsideDropdown =
-          dropdownEl && dropdownEl.contains(event.target);
+        const clickedInsideDropdown = dropdownEl && dropdownEl.contains(event.target);
         if (!clickedInsideRoot && !clickedInsideDropdown) {
           this.showDropdown = false;
         }
@@ -556,7 +503,7 @@ export default {
       const left = rect.left + globalThis.scrollX;
       const width = rect.width;
       this.dropdownStyle = {
-        position: "absolute",
+        position: 'absolute',
         top: `${top}px`,
         left: `${left}px`,
         width: `${width}px`,
@@ -754,19 +701,21 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s, border 0.15s;
+  transition:
+    background 0.15s,
+    border 0.15s;
 }
 .dropdown-checkbox.checked {
   background: #f6f6f6;
   border-color: #888;
 }
 .dropdown-checkbox.checked:after {
-  content: "\2713";
+  content: '\2713';
   color: #888;
   font-size: 13px;
   font-weight: bold;
 }
 .dropdown-checkbox:after {
-  content: "";
+  content: '';
 }
 </style>

@@ -6,11 +6,10 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreAssessmentScheduleRequest extends FormRequest
 {
-
     // Determine if the user is authorized to make this request.
     // @return bool
 
-    public function authorize()
+    public function authorize(): bool
     {
         // Set to true to allow anyone to make this request.
         // You can add your own authorization logic here if needed.
@@ -21,7 +20,12 @@ class StoreAssessmentScheduleRequest extends FormRequest
     // Get the validation rules that apply to the request.
     // @return array
 
-    public function rules()
+    /**
+     * Validation rules for scheduling an assessment.
+     *
+     * @return array<string, mixed>
+     */
+    public function rules(): array
     {
         return [
             'assessment_id' => 'required|exists:organization_assessments,id',

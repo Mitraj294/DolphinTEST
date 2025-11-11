@@ -142,14 +142,14 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
     });
 
-    // Subscription endpoints (organization admin only)
-    Route::middleware('auth.role:organizationadmin')->prefix('subscription')->group(function () {
+    // Subscription endpoints (organization admin or superadmin)
+    Route::middleware('auth.role:organizationadmin,superadmin')->prefix('subscription')->group(function () {
         Route::get('/', [BillingController::class, 'current']);
         Route::get('/status', [BillingController::class, 'status']);
     });
 
     // Billing endpoints (organization admin only)
-    Route::middleware('auth.role:organizationadmin')->prefix('billing')->group(function () {
+    Route::middleware('auth.role:organizationadmin,superadmin')->prefix('billing')->group(function () {
         Route::get('/current', [BillingController::class, 'current']);
         Route::get('/history', [BillingController::class, 'history']);
     });

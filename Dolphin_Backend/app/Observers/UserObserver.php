@@ -12,7 +12,7 @@ class UserObserver
     /**
      * Handle the User "deleted" event (soft delete).
      */
-    public function deleted(User $user)
+    public function deleted(User $user): void
     {
         $now = Carbon::now();
         try {
@@ -56,10 +56,9 @@ class UserObserver
     /**
      * Handle the User "restored" event.
      */
-    public function restored(User $user)
+    public function restored(User $user): void
     {
-        // We will not automatically restore or reassign records that were nullified
-        // because the original mapping may no longer exist. Manual restoration
-        // should be performed by an admin if needed.
+        // Currently no additional restore handling is needed; method retained for parity.
+        Log::info('User restored', ['user_id' => $user->getKey()]);
     }
 }

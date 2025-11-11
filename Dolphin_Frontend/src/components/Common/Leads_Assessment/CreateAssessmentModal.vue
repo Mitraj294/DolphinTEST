@@ -32,7 +32,7 @@
 
         <div class="modal-form-actions">
           <button type="submit" class="modal-save-btn" :disabled="isSubmitting">
-            {{ isSubmitting ? "Creating..." : "Create" }}
+            {{ isSubmitting ? 'Creating...' : 'Create' }}
           </button>
           <button
             type="button"
@@ -49,63 +49,64 @@
 </template>
 
 <script>
-import storage from "@/services/storage";
-import axios from "axios";
+import storage from '@/services/storage';
+import axios from 'axios';
 
 export default {
-  name: "CreateAssessmentModal",
-  emits: ["close", "assessment-created", "validation-error", "error"],
+  name: 'CreateAssessmentModal',
+  emits: ['close', 'assessment-created', 'validation-error', 'error'],
   data() {
     return {
       assessment: {
-        name: "",
+        name: '',
       },
       isSubmitting: false,
     };
   },
   methods: {
     resetForm() {
-      this.assessment = { name: "" };
+      this.assessment = { name: '' };
       this.isSubmitting = false;
     },
     async handleSubmit() {
-      if (!this.assessment.name || this.assessment.name.trim() === "") {
-        this.$emit("validation-error", {
-          type: "warn",
-          title: "Missing Data",
-          message: "Please enter a name for the assessment.",
+      const name = (this.assessment.name || '').toString().trim();
+      if (!name) {
+        this.$emit('validation-error', {
+          type: 'warn',
+          title: 'Missing Data',
+          message: 'Please enter a name for the assessment.',
         });
         return;
       }
 
       this.isSubmitting = true;
       try {
-        const authToken = storage.get("authToken");
-        const res = await axios.post(
-          process.env.VUE_APP_API_BASE_URL + "/api/assessments",
-          { name: this.assessment.name },
-          { headers: { Authorization: `Bearer ${authToken}` } }
-        );
+        const authToken = storage.get('authToken');
+        const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || '';
+        const url = `${API_BASE_URL}/api/assessments`;
+        const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
 
-        if (res.data && res.data.assessment) {
-          this.$emit("assessment-created", res.data.assessment);
+        const res = await axios.post(url, { name }, { headers });
+
+        if (res?.data && res.data.assessment) {
+          this.$emit('assessment-created', res.data.assessment);
           this.resetForm();
-          this.$emit("close");
+          this.$emit('close');
         } else {
-          this.$emit("error", {
-            type: "error",
-            title: "Error",
-            message: "Failed to create assessment. Please try again.",
+          this.$emit('error', {
+            type: 'error',
+            title: 'Error',
+            message: 'Failed to create assessment. Please try again.',
           });
         }
       } catch (e) {
-        console.error("Error creating assessment", e);
-        this.$emit("error", {
-          type: "error",
-          title: "Error",
+        console.debug && console.debug('Error creating assessment', e);
+        this.$emit('error', {
+          type: 'error',
+          title: 'Error',
           message:
             (e.response && e.response.data && e.response.data.message) ||
-            "Failed to create assessment. Please try again.",
+            'Failed to create assessment. Please try again.',
         });
       } finally {
         this.isSubmitting = false;

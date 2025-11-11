@@ -24,50 +24,43 @@
 </template>
 
 <script setup>
-import Dropdown from "@/components/Common/Common_UI/Dropdown.vue";
-import {
-  BarElement,
-  CategoryScale,
-  Chart,
-  Legend,
-  LinearScale,
-  Tooltip,
-} from "chart.js";
-import { ref } from "vue";
-import { Bar } from "vue-chartjs";
+import Dropdown from '@/components/Common/Common_UI/Dropdown.vue';
+import { BarElement, CategoryScale, Chart, Legend, LinearScale, Tooltip } from 'chart.js';
+import { ref } from 'vue';
+import { Bar } from 'vue-chartjs';
 
 Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-const orgType = ref("Entire Organization");
-const orgQuarter = ref("Q4-2024");
-const deptType = ref("Single Department");
-const deptQuarter = ref("Q2-2024");
+const orgType = ref('Entire Organization');
+const orgQuarter = ref('Q4-2024');
+const deptType = ref('Single Department');
+const deptQuarter = ref('Q2-2024');
 
 const orgTypeOptions = [
-  { label: "Entire Organization", value: "Entire Organization" },
-  { label: "Single Department", value: "Single Department" },
+  { label: 'Entire Organization', value: 'Entire Organization' },
+  { label: 'Single Department', value: 'Single Department' },
 ];
 const deptTypeOptions = [
-  { label: "Single Department", value: "Single Department" },
-  { label: "Entire Organization", value: "Entire Organization" },
+  { label: 'Single Department', value: 'Single Department' },
+  { label: 'Entire Organization', value: 'Entire Organization' },
 ];
 
 const quarterOptions = [
-  { label: "Q1-2025", value: "Q1-2025" },
-  { label: "Q2-2025", value: "Q2-2025" },
-  { label: "Q3-2025", value: "Q3-2025" },
-  { label: "Q4-2025", value: "Q4-2025" },
+  { label: 'Q1-2025', value: 'Q1-2025' },
+  { label: 'Q2-2025', value: 'Q2-2025' },
+  { label: 'Q3-2025', value: 'Q3-2025' },
+  { label: 'Q4-2025', value: 'Q4-2025' },
 ];
 
 const hiddenCultureData = [60, 100, 40, 40, 20, 60];
 const currentStateData = [80, 40, 60, 20, 30, 50];
 
 const hiddenCultureChartData = {
-  labels: ["Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6"],
+  labels: ['Info 1', 'Info 2', 'Info 3', 'Info 4', 'Info 5', 'Info 6'],
   datasets: [
     {
-      label: "Hidden Culture",
-      backgroundColor: "#0164A5",
+      label: 'Hidden Culture',
+      backgroundColor: '#0164A5',
       data: hiddenCultureData,
       barPercentage: 0.7,
       categoryPercentage: 0.7,
@@ -76,11 +69,11 @@ const hiddenCultureChartData = {
 };
 
 const currentStateChartData = {
-  labels: ["Info 1", "Info 2", "Info 3", "Info 4", "Info 5", "Info 6"],
+  labels: ['Info 1', 'Info 2', 'Info 3', 'Info 4', 'Info 5', 'Info 6'],
   datasets: [
     {
-      label: "Current State",
-      backgroundColor: "#0164A5",
+      label: 'Current State',
+      backgroundColor: '#0164A5',
       data: currentStateData,
       barPercentage: 0.7,
       categoryPercentage: 0.7,

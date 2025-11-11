@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<ruleset name="Dolphin Backend Custom Rules">
+    <description>Custom PHPCS rules for Dolphin_Backend: extend PSR12 and increase max line length to 320.</description>
+
+    <!-- Start with PSR12 ruleset -->
+    <rule ref="PSR12" />
+
+    <!-- Increase maximum allowed line length to 320 characters to avoid spending time reflowing long HTML and template strings. -->
+    <rule ref="Generic.Files.LineLength">
+        <properties>
+            <!-- Soft limit used for warnings -->
+            <property name="lineLimit" value="320" />
+            <!-- Disable the absolute hard limit (set to 0) so very long lines won't be treated as fatal errors here -->
+            <property name="absoluteLineLimit" value="0" />
+        </properties>
+    </rule>
+
+    <!-- You can add other project-specific overrides here as needed. -->
+</ruleset>

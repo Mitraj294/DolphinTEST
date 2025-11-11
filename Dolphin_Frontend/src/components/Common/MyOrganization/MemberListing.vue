@@ -46,11 +46,7 @@
                     <tr v-else-if="paginatedMembers.length === 0">
                       <td colspan="5" class="no-data">No members found.</td>
                     </tr>
-                    <tr
-                      v-else
-                      v-for="member in paginatedMembers"
-                      :key="member.id"
-                    >
+                    <tr v-else v-for="member in paginatedMembers" :key="member.id">
                       <td>{{ member.first_name }} {{ member.last_name }}</td>
                       <td>{{ member.email }}</td>
                       <td>{{ member.phone }}</td>
@@ -60,15 +56,8 @@
                         </span>
                       </td>
                       <td>
-                        <button
-                          class="btn-view"
-                          @click="openMemberModal(member)"
-                        >
-                          <img
-                            src="@/assets/images/Notes.svg"
-                            alt="View"
-                            class="btn-view-icon"
-                          />
+                        <button class="btn-view" @click="openMemberModal(member)">
+                          <img src="@/assets/images/Notes.svg" alt="View" class="btn-view-icon" />
                           View
                         </button>
                       </td>
@@ -92,15 +81,9 @@
         </template>
 
         <!-- Member Details Modal -->
-        <div
-          v-if="showMemberModal"
-          class="modal-overlay"
-          @click.self="closeMemberModal"
-        >
+        <div v-if="showMemberModal" class="modal-overlay" @click.self="closeMemberModal">
           <div class="modal-card" style="max-width: 800px; width: 90%">
-            <button class="modal-close-btn" @click="closeMemberModal">
-              &times;
-            </button>
+            <button class="modal-close-btn" @click="closeMemberModal">&times;</button>
             <div class="modal-title">Member Details</div>
             <div class="modal-desc">Details for the selected member.</div>
 
@@ -116,13 +99,13 @@
                 <div class="profile-info-row">
                   <div class="profile-label">First Name</div>
                   <div class="profile-value">
-                    {{ selectedMemberEdit.first_name || "Not provided" }}
+                    {{ selectedMemberEdit.first_name || 'Not provided' }}
                   </div>
                 </div>
                 <div class="profile-info-row">
                   <div class="profile-label">Last Name</div>
                   <div class="profile-value">
-                    {{ selectedMemberEdit.last_name || "Not provided" }}
+                    {{ selectedMemberEdit.last_name || 'Not provided' }}
                   </div>
                 </div>
                 <div class="profile-info-row">
@@ -136,15 +119,10 @@
                   <div class="profile-value">
                     <span
                       v-if="
-                        selectedMemberEdit.memberRoles &&
-                        selectedMemberEdit.memberRoles.length > 0
+                        selectedMemberEdit.memberRoles && selectedMemberEdit.memberRoles.length > 0
                       "
                     >
-                      {{
-                        selectedMemberEdit.memberRoles
-                          .map((role) => role.name)
-                          .join(", ")
-                      }}
+                      {{ selectedMemberEdit.memberRoles.map((role) => role.name).join(', ') }}
                     </span>
                     <span v-else>No roles assigned</span>
                   </div>
@@ -153,7 +131,7 @@
                 <div class="profile-info-row">
                   <div class="profile-label">Phone</div>
                   <div class="profile-value">
-                    {{ selectedMemberEdit.phone || "Not provided" }}
+                    {{ selectedMemberEdit.phone || 'Not provided' }}
                   </div>
                 </div>
                 <div class="profile-info-row">
@@ -161,10 +139,8 @@
                   <div class="profile-value">
                     <span
                       v-if="
-                        (selectedMemberEdit.groups &&
-                          selectedMemberEdit.groups.length > 0) ||
-                        (selectedMemberEdit.group_ids &&
-                          selectedMemberEdit.group_ids.length > 0)
+                        (selectedMemberEdit.groups && selectedMemberEdit.groups.length > 0) ||
+                        (selectedMemberEdit.group_ids && selectedMemberEdit.group_ids.length > 0)
                       "
                     >
                       {{ formatMemberGroups(selectedMemberEdit) }}
@@ -180,12 +156,12 @@
 
                 <div class="profile-actions">
                   <button
-                  class="btn btn-danger"
-                  @click="deleteMember(selectedMemberEdit)"
-                  title="Remove member from organization"
+                    class="btn btn-danger"
+                    @click="deleteMember(selectedMemberEdit)"
+                    title="Remove member from organization"
                   >
-                  <i class="fas fa-user-minus"></i>
-                  Remove from Organization
+                    <i class="fas fa-user-minus"></i>
+                    Remove from Organization
                   </button>
                 </div>
               </div>
@@ -198,16 +174,16 @@
 </template>
 
 <script>
-import TableHeader from "@/components/Common/Common_UI/TableHeader.vue";
-import MainLayout from "@/components/layout/MainLayout.vue";
-import Pagination from "@/components/layout/Pagination.vue";
-import storage from "@/services/storage";
-import axios from "axios";
-import Toast from "primevue/toast";
-import { useConfirm } from "primevue/useconfirm";
+import TableHeader from '@/components/Common/Common_UI/TableHeader.vue';
+import MainLayout from '@/components/layout/MainLayout.vue';
+import Pagination from '@/components/layout/Pagination.vue';
+import storage from '@/services/storage';
+import axios from 'axios';
+import Toast from 'primevue/toast';
+import { useConfirm } from 'primevue/useconfirm';
 
 export default {
-  name: "MemberListing",
+  name: 'MemberListing',
   components: {
     MainLayout,
     Pagination,
@@ -222,9 +198,9 @@ export default {
     return {
       currentPage: 1,
       pageSize: 10,
-      searchQuery: "",
+      searchQuery: '',
       showPageDropdown: false,
-      sortKey: "",
+      sortKey: '',
       sortAsc: true,
       members: [],
       filteredMembers: [],
@@ -243,8 +219,8 @@ export default {
       const sorted = [...this.filteredMembers];
       if (this.sortKey) {
         sorted.sort((a, b) => {
-          const aVal = a[this.sortKey] || "";
-          const bVal = b[this.sortKey] || "";
+          const aVal = a[this.sortKey] || '';
+          const bVal = b[this.sortKey] || '';
           if (aVal < bVal) return this.sortAsc ? -1 : 1;
           if (aVal > bVal) return this.sortAsc ? 1 : -1;
           return 0;
@@ -259,13 +235,13 @@ export default {
         return Array.from({ length: total }, (_, i) => i + 1);
       }
       const pages = [1];
-      if (this.currentPage > 4) pages.push("...");
+      if (this.currentPage > 4) pages.push('...');
       const start = Math.max(2, this.currentPage - 1);
       const end = Math.min(total - 1, this.currentPage + 1);
       for (let i = start; i <= end; i++) {
         pages.push(i);
       }
-      if (this.currentPage < total - 3) pages.push("...");
+      if (this.currentPage < total - 3) pages.push('...');
       pages.push(total);
       return pages;
     },
@@ -274,9 +250,7 @@ export default {
     normalizeMember(member) {
       if (!member) return {};
       const normalized = { ...member };
-      normalized.memberRoles = Array.isArray(normalized.memberRoles)
-        ? normalized.memberRoles
-        : [];
+      normalized.memberRoles = Array.isArray(normalized.memberRoles) ? normalized.memberRoles : [];
 
       // Convert memberRoles to member_role_ids for editing
       if (normalized.memberRoles.length > 0) {
@@ -294,7 +268,7 @@ export default {
     async openMemberModal(member) {
       // Always fetch full member data from the API by ID so we use the DB's created_at
       let memberId = null;
-      if (typeof member === "string" || typeof member === "number") {
+      if (typeof member === 'string' || typeof member === 'number') {
         memberId = member;
       }
 
@@ -326,53 +300,43 @@ export default {
     async fetchMemberById(memberId) {
       // NOTE: Deprecated /api/members endpoint removed. Using cached member data instead.
       try {
-        const existingMember = this.members.find(
-          (m) => m.id === Number.parseInt(memberId)
-        );
+        const existingMember = this.members.find((m) => m.id === Number.parseInt(memberId));
         if (existingMember) {
           this.selectedMemberEdit = this.normalizeMember(existingMember);
         } else {
           this.$toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: "Member not found.",
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Member not found.',
             life: 3000,
           });
         }
       } catch (error) {
-        console.error("Failed to fetch member details:", error);
+        console.debug && console.debug('Failed to fetch member details:', error);
         this.$toast.add({
-          severity: "error",
-          summary: "Error",
-          detail: "Could not load member details.",
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Could not load member details.',
           life: 3000,
         });
       }
     },
 
     formatMemberRoles(member) {
-      if (
-        member &&
-        Array.isArray(member.memberRoles) &&
-        member.memberRoles.length > 0
-      ) {
-        return member.memberRoles.map((r) => r.name).join(", ");
+      if (member && Array.isArray(member.memberRoles) && member.memberRoles.length > 0) {
+        return member.memberRoles.map((r) => r.name).join(', ');
       }
-      return member.member_role || "No Role";
+      return member.member_role || 'No Role';
     },
 
     formatMemberGroups(member) {
       // If we have full group objects with names, use them
       if (member && Array.isArray(member.groups) && member.groups.length > 0) {
-        return member.groups.map((group) => group.name).join(", ");
+        return member.groups.map((group) => group.name).join(', ');
       }
 
       // If we only have group IDs, look them up in our groups cache
-      if (
-        member &&
-        Array.isArray(member.group_ids) &&
-        member.group_ids.length > 0
-      ) {
+      if (member && Array.isArray(member.group_ids) && member.group_ids.length > 0) {
         const groupNames = member.group_ids
           .map((groupId) => {
             const group = this.groupsForSelectMap[groupId];
@@ -380,27 +344,25 @@ export default {
           })
           .filter(Boolean); // Remove any null/undefined names
 
-        return groupNames.length > 0
-          ? groupNames.join(", ")
-          : "No groups assigned";
+        return groupNames.length > 0 ? groupNames.join(', ') : 'No groups assigned';
       }
 
-      return "No groups assigned";
+      return 'No groups assigned';
     },
 
     formatDate(dateString) {
-      if (!dateString) return "Not available";
+      if (!dateString) return 'Not available';
       try {
         const date = new Date(dateString);
-        if (Number.isNaN(date.getTime())) return "Invalid date";
-        return date.toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
+        if (Number.isNaN(date.getTime())) return 'Invalid date';
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
         });
       } catch (error) {
-        console.warn("Error formatting date:", error);
-        return "Invalid date";
+        console.debug && console.debug('Error formatting date:', error);
+        return 'Invalid date';
       }
     },
 
@@ -413,17 +375,16 @@ export default {
     },
 
     async deleteMember(member) {
-      const memberDisplay =
-        `${member.first_name} ${member.last_name}`.trim() || member.email;
+      const memberDisplay = `${member.first_name} ${member.last_name}`.trim() || member.email;
       this.confirm.require({
         message: `Are you sure you want to delete ${memberDisplay}?`,
-        header: "Confirm Delete",
-        icon: "pi pi-trash",
+        header: 'Confirm Delete',
+        icon: 'pi pi-trash',
         accept: async () => {
           try {
             // NOTE: /api/members DELETE endpoint removed (used non-existent members table)
             // Use /api/organization/members/remove endpoint instead
-            const authToken = storage.get("authToken");
+            const authToken = storage.get('authToken');
             const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
             await axios.post(
               `${API_BASE_URL}/api/organization/members/remove`,
@@ -439,17 +400,17 @@ export default {
             this.onSearch();
             this.showMemberModal = false;
             this.$toast.add({
-              severity: "info",
-              summary: "Deleted",
-              detail: "Member has been removed from the organization.",
+              severity: 'info',
+              summary: 'Deleted',
+              detail: 'Member has been removed from the organization.',
               life: 3000,
             });
           } catch (e) {
-            console.error("Failed to remove member", e);
+            console.debug && console.debug('Failed to remove member', e);
             this.$toast.add({
-              severity: "error",
-              summary: "Remove Failed",
-              detail: "Failed to remove member from organization.",
+              severity: 'error',
+              summary: 'Remove Failed',
+              detail: 'Failed to remove member from organization.',
               sticky: true,
             });
           }
@@ -461,9 +422,7 @@ export default {
       const query = this.searchQuery.trim().toLowerCase();
       if (query) {
         this.filteredMembers = this.members.filter((m) =>
-          Object.values(m).some((val) =>
-            String(val).toLowerCase().includes(query)
-          )
+          Object.values(m).some((val) => String(val).toLowerCase().includes(query))
         );
       } else {
         this.filteredMembers = [...this.members];
@@ -472,7 +431,7 @@ export default {
     },
 
     goToPage(page) {
-      if (typeof page === "number" && page >= 1 && page <= this.totalPages) {
+      if (typeof page === 'number' && page >= 1 && page <= this.totalPages) {
         this.currentPage = page;
       }
     },
@@ -495,7 +454,7 @@ export default {
     async fetchInitialData() {
       this.loading = true;
       try {
-        const authToken = storage.get("authToken");
+        const authToken = storage.get('authToken');
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
 
         const [membersRes, groupsRes] = await Promise.all([
@@ -515,13 +474,10 @@ export default {
             id: g.id,
             name: g.name,
           }));
-          this.groupsForSelectMap = this.groupsForSelect.reduce(
-            (map, group) => {
-              map[group.id] = group;
-              return map;
-            },
-            {}
-          );
+          this.groupsForSelectMap = this.groupsForSelect.reduce((map, group) => {
+            map[group.id] = group;
+            return map;
+          }, {});
         }
 
         // Process members data - now these are users with groups
@@ -542,7 +498,7 @@ export default {
               user.groups && user.groups.length > 0
                 ? user.groups.map((g) => ({
                     id: g.id,
-                    name: g.pivot?.role || "member",
+                    name: g.pivot?.role || 'member',
                   }))
                 : [],
           };
@@ -550,11 +506,11 @@ export default {
         });
         this.filteredMembers = [...this.members];
       } catch (error) {
-        console.error("Failed to fetch initial data:", error);
+        console.debug && console.debug('Failed to fetch initial data:', error);
         this.$toast.add({
-          severity: "error",
-          summary: "Failed to load data",
-          detail: "Could not fetch members from the server.",
+          severity: 'error',
+          summary: 'Failed to load data',
+          detail: 'Could not fetch members from the server.',
           life: 5000,
         });
       } finally {
@@ -566,16 +522,15 @@ export default {
     await this.fetchInitialData();
     const memberIdFromQuery = this.$route.query.member_id;
     if (memberIdFromQuery) {
-      const member = this.members.find(
-        (m) => m.id === Number.parseInt(memberIdFromQuery)
-      );
+      const member = this.members.find((m) => m.id === Number.parseInt(memberIdFromQuery));
       if (member) {
         await this.openMemberModal(member);
       } else {
         // If member not found in initial list, try to fetch by ID
-        console.warn(
-          `Member with ID ${memberIdFromQuery} not found in the initial list. Attempting to fetch...`
-        );
+        console.debug &&
+          console.debug(
+            `Member with ID ${memberIdFromQuery} not found in the initial list. Attempting to fetch...`
+          );
         await this.openMemberModal(memberIdFromQuery);
       }
     }
@@ -584,8 +539,8 @@ export default {
 </script>
 
 <style>
-@import "@/assets/global.css";
-@import "@/assets/modelcssnotificationandassesment.css";
+@import '@/assets/global.css';
+@import '@/assets/modelcssnotificationandassesment.css';
 
 .org-search {
   width: 260px;
@@ -595,7 +550,7 @@ export default {
   background: #f8f8f8;
   font-size: 14px;
   outline: none;
-  background-image: url("@/assets/images/Search.svg");
+  background-image: url('@/assets/images/Search.svg');
   background-repeat: no-repeat;
   background-position: 8px center;
   background-size: 16px 16px;

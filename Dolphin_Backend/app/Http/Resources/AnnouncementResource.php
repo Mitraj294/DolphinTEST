@@ -4,10 +4,27 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin \App\Models\Announcement
+ *
+ * @property int|null $id
+ * @property string|null $message
+ * @property int|null $sender_id
+ * @property string|null $schedule_date
+ * @property string|null $schedule_time
+ * @property \Illuminate\Support\Collection<int, \App\Models\Organization>|null $organizations
+ * @property \Illuminate\Support\Collection<int, \App\Models\Group>|null $groups
+ * @property \Illuminate\Support\Collection<int, \App\Models\User>|null $admins
+ * @property \Illuminate\Support\Carbon|null $sent_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ */
 class AnnouncementResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
+     *
+     * @return array<string,mixed>
      */
     public function toArray($request): array
     {

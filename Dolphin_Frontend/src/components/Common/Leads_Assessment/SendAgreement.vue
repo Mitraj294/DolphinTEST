@@ -10,27 +10,16 @@
           </div>
 
           <!-- Agreement Form -->
-          <form
-            class="send-agreement-form"
-            @submit.prevent="handleSendAgreement"
-          >
+          <form class="send-agreement-form" @submit.prevent="handleSendAgreement">
             <!-- Recipient and Subject Row -->
             <FormRow>
               <div class="send-agreement-field">
                 <FormLabel>To</FormLabel>
-                <FormInput
-                  v-model="to"
-                  type="email"
-                  placeholder="recipient@example.com"
-                />
+                <FormInput v-model="to" type="email" placeholder="recipient@example.com" />
               </div>
               <div class="send-agreement-field">
                 <FormLabel>Subject</FormLabel>
-                <FormInput
-                  v-model="subject"
-                  type="text"
-                  placeholder="Type subject"
-                />
+                <FormInput v-model="subject" type="text" placeholder="Type subject" />
               </div>
             </FormRow>
 
@@ -63,12 +52,8 @@
             <!-- Form Actions -->
             <div class="send-agreement-link-actions-row">
               <div class="send-agreement-actions">
-                <button
-                  type="submit"
-                  class="btn btn-primary"
-                  :disabled="sending"
-                >
-                  {{ sending ? "Sending..." : "Send Agreement" }}
+                <button type="submit" class="btn btn-primary" :disabled="sending">
+                  {{ sending ? 'Sending...' : 'Send Agreement' }}
                 </button>
               </div>
             </div>
@@ -81,78 +66,73 @@
 
 <script>
 // Layout and Form UI imports
-import {
-  FormInput,
-  FormLabel,
-  FormRow,
-} from "@/components/Common/Common_UI/Form";
-import MainLayout from "@/components/layout/MainLayout.vue";
-import Editor from "@tinymce/tinymce-vue";
-import axios from "axios";
+import { FormInput, FormLabel, FormRow } from '@/components/Common/Common_UI/Form';
+import MainLayout from '@/components/layout/MainLayout.vue';
+import Editor from '@tinymce/tinymce-vue';
+import axios from 'axios';
 
 // Component: SendAgreement
 // Purpose: Send agreement/payment link email to leads. Supports TinyMCE editor
 //          with dynamic asset loading and passive event shimming.
 export default {
-  name: "SendAgreement",
+  name: 'SendAgreement',
   components: { MainLayout, Editor, FormInput, FormRow, FormLabel },
 
   data() {
     return {
       leadId: null, // Lead ID (from route param or query)
-      to: "", // Recipient email
-      recipientName: "", // Recipient name
-      subject: "Agreement and Payment Link", // Default subject
-      templateContent: "", // Email template HTML content
+      to: '', // Recipient email
+      recipientName: '', // Recipient name
+      subject: 'Agreement and Payment Link', // Default subject
+      templateContent: '', // Email template HTML content
       sending: false, // Sending state
 
       // TinyMCE Configuration (Self-hosted assets)
       tinymceConfigSelfHosted: {
         height: 500,
-        base_url: "/tinymce",
-        suffix: ".min",
-        skin_url: "/tinymce/skins/ui/oxide",
-        content_css: "/tinymce/skins/content/default/content.css",
-        menubar: "edit view insert format tools table help",
+        base_url: '/tinymce',
+        suffix: '.min',
+        skin_url: '/tinymce/skins/ui/oxide',
+        content_css: '/tinymce/skins/content/default/content.css',
+        menubar: 'edit view insert format tools table help',
         plugins: [
-          "advlist",
-          "autolink",
-          "lists",
-          "link",
-          "image",
-          "charmap",
-          "preview",
-          "anchor",
-          "searchreplace",
-          "visualblocks",
-          "code",
-          "fullscreen",
-          "insertdatetime",
-          "media",
-          "table",
-          "wordcount",
-          "help",
+          'advlist',
+          'autolink',
+          'lists',
+          'link',
+          'image',
+          'charmap',
+          'preview',
+          'anchor',
+          'searchreplace',
+          'visualblocks',
+          'code',
+          'fullscreen',
+          'insertdatetime',
+          'media',
+          'table',
+          'wordcount',
+          'help',
         ],
         toolbar:
-          "undo redo | formatselect | bold italic underline strikethrough | " +
-          "alignleft aligncenter alignright alignjustify | " +
-          "bullist numlist outdent indent | link image table | " +
-          "code preview fullscreen | help",
-        valid_elements: "*[*]",
+          'undo redo | formatselect | bold italic underline strikethrough | ' +
+          'alignleft aligncenter alignright alignjustify | ' +
+          'bullist numlist outdent indent | link image table | ' +
+          'code preview fullscreen | help',
+        valid_elements: '*[*]',
         cleanup: false,
         convert_urls: false,
         remove_script_host: false,
         relative_urls: false,
         block_formats:
-          "Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3; Heading 4=h4; Heading 5=h5; Heading 6=h6; Preformatted=pre",
+          'Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3; Heading 4=h4; Heading 5=h5; Heading 6=h6; Preformatted=pre',
         branding: false,
         statusbar: false,
         elementpath: false,
-        resize: "both",
+        resize: 'both',
         promotion: false,
-        content_style:
-          "body { font-family: Arial, sans-serif; font-size: 14px; margin: 20px; }",
-        license_key: "gpl",
+        content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; margin: 20px; }',
+        license_key: 'gpl',
       },
       tinyMceLoaded: false, // Whether TinyMCE assets are loaded
       tinyMceShimPatched: false, // Whether passive event shim is patched
@@ -172,7 +152,7 @@ export default {
         this.tinyMceLoaded = true;
       })
       .catch((e) => {
-        console.warn("Failed to load TinyMCE assets:", e);
+        console.debug && console.debug('Failed to load TinyMCE assets:', e);
         this.tinyMceLoaded = false;
       });
 
@@ -200,23 +180,21 @@ export default {
     async loadInitialLeadData(leadId) {
       try {
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-        const storage = require("@/services/storage").default;
-        const token = storage.get("authToken");
+        const storage = require('@/services/storage').default;
+        const token = storage.get('authToken');
         const res = await axios.get(`${API_BASE_URL}/api/leads/${leadId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         const leadObj = res.data?.lead;
         if (leadObj) {
-          this.to = leadObj.email || "";
-          this.recipientName = `${leadObj.first_name || ""} ${
-            leadObj.last_name || ""
-          }`.trim();
+          this.to = leadObj.email || '';
+          this.recipientName = `${leadObj.first_name || ''} ${leadObj.last_name || ''}`.trim();
           // Fetch template using lead's data
           this.fetchServerTemplate();
         }
       } catch (e) {
-        console.error("Failed to load initial lead data:", e);
-        this.templateContent = "<p>Error: Could not load lead data.</p>";
+        console.debug && console.debug('Failed to load initial lead data:', e);
+        this.templateContent = '<p>Error: Could not load lead data.</p>';
       }
     },
 
@@ -224,31 +202,26 @@ export default {
     async fetchServerTemplate() {
       try {
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-        const name =
-          this.recipientName ||
-          this.to.substring(0, this.to.indexOf("@")) ||
-          "";
+        const name = this.recipientName || this.to.substring(0, this.to.indexOf('@')) || '';
         // Preview URL for plans (used in template)
-        const frontendBase = "http://127.0.0.1:8080";
+        const frontendBase = 'http://127.0.0.1:8080';
         const previewPlansLink = `${frontendBase}/subscriptions/plans`;
         const params = { checkout_url: previewPlansLink, name };
-        const res = await axios.get(
-          `${API_BASE_URL}/api/email-template/lead-agreement`,
-          { params }
-        );
-        let html = res?.data ? String(res.data) : "";
+        const res = await axios.get(`${API_BASE_URL}/api/email-template/lead-agreement`, {
+          params,
+        });
+        let html = res?.data ? String(res.data) : '';
 
         // Only extract the .email-container inner HTML for editor
         const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
-        const container = doc.querySelector(".email-container");
+        const doc = parser.parseFromString(html, 'text/html');
+        const container = doc.querySelector('.email-container');
         if (container) html = container.innerHTML;
 
         this.templateContent = html;
       } catch (e) {
-        console.error("Failed to fetch server template:", e?.message || e);
-        this.templateContent =
-          "<p>Error: Could not load the email template.</p>";
+        console.debug && console.debug('Failed to fetch server template:', e?.message || e);
+        this.templateContent = '<p>Error: Could not load the email template.</p>';
       }
     },
 
@@ -257,12 +230,9 @@ export default {
       if (this.sending) return;
       this.sending = true;
       try {
-        const name =
-          this.recipientName ||
-          this.to.substring(0, this.to.indexOf("@")) ||
-          "";
+        const name = this.recipientName || this.to.substring(0, this.to.indexOf('@')) || '';
         // Replace # placeholder links with real plans link
-        const plansLink = "http://127.0.0.1:8080/subscriptions/plans";
+        const plansLink = 'http://127.0.0.1:8080/subscriptions/plans';
         const bodyWithLinks = String(this.templateContent).replaceAll(
           /href=(["'])#(?:0)?\1/g,
           `href=$1${plansLink}$1`
@@ -277,19 +247,16 @@ export default {
         };
         if (this.leadId) payload.lead_id = this.leadId;
 
-        await axios.post(
-          `${process.env.VUE_APP_API_BASE_URL}/api/leads/send-agreement`,
-          payload
-        );
+        await axios.post(`${process.env.VUE_APP_API_BASE_URL}/api/leads/send-agreement`, payload);
 
         this.$toast.add({
-          severity: "success",
-          summary: "Agreement Sent",
-          detail: "Agreement/payment link sent successfully!",
+          severity: 'success',
+          summary: 'Agreement Sent',
+          detail: 'Agreement/payment link sent successfully!',
           life: 3500,
         });
       } catch (error) {
-        let detail = "Failed to send agreement email.";
+        let detail = 'Failed to send agreement email.';
         if (error?.response?.data?.error) {
           detail += ` ${error.response.data.error}`;
         } else if (error?.message) {
@@ -298,8 +265,8 @@ export default {
           throw error;
         }
         this.$toast.add({
-          severity: "error",
-          summary: "Send Error",
+          severity: 'error',
+          summary: 'Send Error',
           detail,
           life: 3500,
         });
@@ -309,8 +276,8 @@ export default {
     },
 
     // TinyMCE initialization handler: restore original addEventListener
-    onTinyMCEInit(event, editor) {
-      console.log("TinyMCE initialized:", editor);
+    onTinyMCEInit() {
+      console.debug && console.debug('TinyMCE initialized');
       this.restoreTinyMceShim();
     },
 
@@ -320,8 +287,8 @@ export default {
       const origAdd = EventTarget.prototype.addEventListener;
       const patched = function (type, listener, options) {
         try {
-          if (type === "touchstart" || type === "touchmove") {
-            if (typeof options === "boolean") {
+          if (type === 'touchstart' || type === 'touchmove') {
+            if (typeof options === 'boolean') {
               return origAdd.call(this, type, listener, {
                 passive: true,
                 capture: options,
@@ -330,7 +297,7 @@ export default {
             if (options === undefined) {
               return origAdd.call(this, type, listener, { passive: true });
             }
-            if (typeof options === "object" && options !== null) {
+            if (typeof options === 'object' && options !== null) {
               if (options.passive === true) {
                 return origAdd.call(this, type, listener, options);
               }
@@ -339,7 +306,7 @@ export default {
             }
           }
         } catch (err) {
-          console.warn("Passive event shim error", err);
+          console.debug && console.debug('Passive event shim error', err);
           return origAdd.call(this, type, listener, options);
         }
         return origAdd.call(this, type, listener, options);
@@ -349,7 +316,7 @@ export default {
       EventTarget.prototype.addEventListener = patched;
       try {
         // Load tinyMCE core and plugins from public/tinymce
-        await this.loadScript("/tinymce/tinymce.min.js");
+        await this.loadScript('/tinymce/tinymce.min.js');
         await new Promise((r) => setTimeout(r, 50));
 
         this._origAdd = origAdd;
@@ -357,9 +324,10 @@ export default {
 
         // Safety: restore after 5s if onInit never fires
         this.tinyMceShimRestoreTimer = setTimeout(() => {
-          console.warn(
-            "TinyMCE shim safety timeout reached; restoring original addEventListener"
-          );
+          console.debug &&
+            console.debug(
+              'TinyMCE shim safety timeout reached; restoring original addEventListener'
+            );
           this.restoreTinyMceShim();
         }, 5000);
       } catch (e) {
@@ -375,7 +343,7 @@ export default {
           EventTarget.prototype.addEventListener = this._origAdd;
         }
       } catch (err) {
-        console.warn("Error restoring TinyMCE shim", err);
+        console.debug && console.debug('Error restoring TinyMCE shim', err);
       } finally {
         this.tinyMceShimPatched = false;
         this._origAdd = null;
@@ -389,7 +357,7 @@ export default {
     // Helper: load external JS script
     loadScript(src) {
       return new Promise((resolve, reject) => {
-        const s = document.createElement("script");
+        const s = document.createElement('script');
         s.src = src;
         s.async = true;
         s.onload = () => resolve();

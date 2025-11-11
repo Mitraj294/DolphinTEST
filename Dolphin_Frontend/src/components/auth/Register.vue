@@ -9,54 +9,74 @@
 
       <!-- Step 1: Basic Info -->
       <form v-if="step === 1" @submit.prevent="goToStep2">
-        <div style="margin-bottom: 32px;">
+        <div style="margin-bottom: 32px">
           <FormLabel>First Name</FormLabel>
           <div class="input-group name-group" style="margin-bottom: 0px !important">
             <span class="icon"><i class="fas fa-user"></i></span>
-            <input type="text" v-model="first_name" placeholder="First Name" ref="firstNameInput" required />
-            <FormLabel v-if="errors.first_name" class="error-message1
-              ">{{ errors.first_name[0] }}</FormLabel>
+            <input
+              type="text"
+              v-model="first_name"
+              placeholder="First Name"
+              ref="firstNameInput"
+              required
+            />
+            <FormLabel v-if="errors.first_name" class="error-message1">{{
+              errors.first_name[0]
+            }}</FormLabel>
           </div>
         </div>
         <div style="margin-bottom: 32px">
           <FormLabel>Last Name</FormLabel>
           <div class="input-group name-group" style="margin-bottom: 0px !important">
             <span class="icon"><i class="fas fa-user"></i></span>
-            <input type="text" v-model="last_name" placeholder="Last Name" ref="lastNameInput" required />
+            <input
+              type="text"
+              v-model="last_name"
+              placeholder="Last Name"
+              ref="lastNameInput"
+              required
+            />
             <div>
-              <FormLabel v-if="errors.last_name" class="error-message1
-                ">{{ errors.last_name[0] }}</FormLabel>
+              <FormLabel v-if="errors.last_name" class="error-message1">{{
+                errors.last_name[0]
+              }}</FormLabel>
             </div>
           </div>
         </div>
-        <div style="margin-bottom: 32px;">
+        <div style="margin-bottom: 32px">
           <FormLabel>Email ID</FormLabel>
           <div class="input-group email-group" style="margin-bottom: 0px !important">
             <span class="icon"><i class="fas fa-envelope"></i></span>
-            <input type="email" v-model="email" placeholder="Email ID" ref="emailInput" required aria-required="true" />
-
+            <input
+              type="email"
+              v-model="email"
+              placeholder="Email ID"
+              ref="emailInput"
+              required
+              aria-required="true"
+            />
           </div>
           <div>
-            <FormLabel v-if="errors.email" class="error-message1
-                ">{{ errors.email[0] }}</FormLabel>
+            <FormLabel v-if="errors.email" class="error-message1">{{ errors.email[0] }}</FormLabel>
           </div>
         </div>
-        <div style="margin-bottom: 32px; ">
+        <div style="margin-bottom: 32px">
           <FormLabel>Phone Number</FormLabel>
-          <div class="input-group phone-group " style="margin-bottom: 0px !important">
+          <div class="input-group phone-group" style="margin-bottom: 0px !important">
             <span class="icon"><i class="fas fa-phone"></i></span>
-            <input type="tel" v-model="phone" placeholder="Phone Number" ref="phoneInput" required />
-
+            <input
+              type="tel"
+              v-model="phone"
+              placeholder="Phone Number"
+              ref="phoneInput"
+              required
+            />
           </div>
           <div>
-            <FormLabel v-if="errors.phone" class="error-message1
-              ">{{ errors.phone[0] }}</FormLabel>
+            <FormLabel v-if="errors.phone" class="error-message1">{{ errors.phone[0] }}</FormLabel>
           </div>
-
         </div>
-        <button type="submit" class="login-btn">
-          Next
-        </button>
+        <button type="submit" class="login-btn">Next</button>
       </form>
 
       <!-- Step 2: Organization Info -->
@@ -67,11 +87,17 @@
             <FormLabel>Organization Name</FormLabel>
             <div class="input-group org-name-group">
               <span class="icon"><i class="fas fa-building"></i></span>
-              <input type="text" v-model="organization_name" placeholder="Organization Name" ref="orgNameInput"
-                required />
+              <input
+                type="text"
+                v-model="organization_name"
+                placeholder="Organization Name"
+                ref="orgNameInput"
+                required
+              />
               <div>
-                <FormLabel v-if="errors.organization_name" class="error-message1
-                ">{{ errors.organization_name[0] }}</FormLabel>
+                <FormLabel v-if="errors.organization_name" class="error-message1">{{
+                  errors.organization_name[0]
+                }}</FormLabel>
               </div>
             </div>
           </div>
@@ -82,14 +108,20 @@
           <div class="form-field">
             <FormLabel>Organization Size</FormLabel>
             <div class="input-group org-country-group styled-select">
-              <FormDropdown v-model="organization_size" icon="fas fa-users" ref="orgSizeSelect" :options="[
-                {
-                  value: '',
-                  text: 'Select Organization Size',
-                  disabled: true,
-                },
-                ...orgSizeOptions.map((o) => ({ value: o, text: o })),
-              ]" required />
+              <FormDropdown
+                v-model="organization_size"
+                icon="fas fa-users"
+                ref="orgSizeSelect"
+                :options="[
+                  {
+                    value: '',
+                    text: 'Select Organization Size',
+                    disabled: true,
+                  },
+                  ...orgSizeOptions.map((o) => ({ value: o, text: o })),
+                ]"
+                required
+              />
               <div>
                 <FormLabel v-if="errors.organization_size" class="error-message1">
                   {{ errors.organization_size[0] }}
@@ -101,20 +133,36 @@
           <div class="form-field">
             <FormLabel>How did you find us?</FormLabel>
             <div class="input-group org-findus-group">
-              <FormDropdown v-model="referral_source_id" icon="fas fa-search" ref="findUsSelect" :options="[
-                { value: null, text: 'Select', disabled: true },
-                ...referralSources.map((o) => ({ value: o.id, text: o.name })),
-              ]" required />
-              <FormLabel v-if="errors.referral_source_id" class="error-message1
-                ">{{ errors.referral_source_id[0] }}</FormLabel>
+              <FormDropdown
+                v-model="referral_source_id"
+                icon="fas fa-search"
+                ref="findUsSelect"
+                :options="[
+                  { value: null, text: 'Select', disabled: true },
+                  ...referralSources.map((o) => ({
+                    value: o.id,
+                    text: o.name,
+                  })),
+                ]"
+                required
+              />
+              <FormLabel v-if="errors.referral_source_id" class="error-message1">{{
+                errors.referral_source_id[0]
+              }}</FormLabel>
               <!-- Show custom referral text input when 'Other' (id=10) selected -->
-              <div v-if="referral_source_id === 10" style="margin-top:12px;">
+              <div v-if="referral_source_id === 10" style="margin-top: 12px">
                 <FormLabel>Specify Other Source</FormLabel>
                 <div class="input-group">
                   <span class="icon"><i class="fas fa-comment"></i></span>
-                  <input type="text" v-model="referral_other_text" placeholder="Please specify" required />
+                  <input
+                    type="text"
+                    v-model="referral_other_text"
+                    placeholder="Please specify"
+                    required
+                  />
                 </div>
-                <FormLabel v-if="errors.referral_other_text" class="error-message1">{{ errors.referral_other_text[0] }}
+                <FormLabel v-if="errors.referral_other_text" class="error-message1"
+                  >{{ errors.referral_other_text[0] }}
                 </FormLabel>
               </div>
             </div>
@@ -126,13 +174,21 @@
           <div class="form-field">
             <FormLabel>Country</FormLabel>
             <div class="input-group org-country-group styled-select">
-              <FormDropdown v-model="country" icon="fas fa-globe" ref="countrySelect" :options="[
-                { value: null, text: 'Select', disabled: true },
-                ...countries.map((c) => ({ value: c.id, text: c.name })),
-              ]" @change="onCountryChange" required />
+              <FormDropdown
+                v-model="country"
+                icon="fas fa-globe"
+                ref="countrySelect"
+                :options="[
+                  { value: null, text: 'Select', disabled: true },
+                  ...countries.map((c) => ({ value: c.id, text: c.name })),
+                ]"
+                @change="onCountryChange"
+                required
+              />
               <div>
-                <FormLabel v-if="errors.country" class="error-message1
-                ">{{ errors.country[0] }}</FormLabel>
+                <FormLabel v-if="errors.country" class="error-message1">{{
+                  errors.country[0]
+                }}</FormLabel>
               </div>
             </div>
           </div>
@@ -140,13 +196,21 @@
           <div class="form-field">
             <FormLabel>State</FormLabel>
             <div class="input-group org-state-group styled-select">
-              <FormDropdown v-model="organization_state" icon="fas fa-flag" ref="stateSelect" :options="[
-                { value: null, text: 'Select', disabled: true },
-                ...states.map((s) => ({ value: s.id, text: s.name })),
-              ]" @change="onStateChange" required />
+              <FormDropdown
+                v-model="organization_state"
+                icon="fas fa-flag"
+                ref="stateSelect"
+                :options="[
+                  { value: null, text: 'Select', disabled: true },
+                  ...states.map((s) => ({ value: s.id, text: s.name })),
+                ]"
+                @change="onStateChange"
+                required
+              />
               <div>
-                <FormLabel v-if="errors.state" class="error-message1
-                ">{{ errors.state[0] }}</FormLabel>
+                <FormLabel v-if="errors.state" class="error-message1">{{
+                  errors.state[0]
+                }}</FormLabel>
               </div>
             </div>
           </div>
@@ -154,16 +218,23 @@
           <div class="form-field">
             <FormLabel>City</FormLabel>
             <div class="input-group org-city-group styled-select">
-              <FormDropdown v-model="organization_city" icon="fas fa-city" ref="citySelect" :options="[
-                { value: null, text: 'Select', disabled: true },
-                ...cities.map((city) => ({
-                  value: city.id,
-                  text: city.name,
-                })),
-              ]" required />
+              <FormDropdown
+                v-model="organization_city"
+                icon="fas fa-city"
+                ref="citySelect"
+                :options="[
+                  { value: null, text: 'Select', disabled: true },
+                  ...cities.map((city) => ({
+                    value: city.id,
+                    text: city.name,
+                  })),
+                ]"
+                required
+              />
               <div>
-                <FormLabel v-if="errors.organization_city" class="error-message1
-                ">{{ errors.organization_city[0] }}</FormLabel>
+                <FormLabel v-if="errors.organization_city" class="error-message1">{{
+                  errors.organization_city[0]
+                }}</FormLabel>
               </div>
             </div>
           </div>
@@ -212,66 +283,85 @@
             <FormLabel>Zip Code</FormLabel>
             <div class="input-group org-zip-group">
               <span class="icon"><i class="fas fa-mail-bulk"></i></span>
-              <input type="text" v-model="organization_zip" placeholder="Zip Code" ref="orgZipInput" required />
+              <input
+                type="text"
+                v-model="organization_zip"
+                placeholder="Zip Code"
+                ref="orgZipInput"
+                required
+              />
             </div>
             <div>
-              <FormLabel v-if="errors.organization_zip" class="error-message1
-                ">{{ errors.organization_zip[0] }}</FormLabel>
+              <FormLabel v-if="errors.organization_zip" class="error-message1">{{
+                errors.organization_zip[0]
+              }}</FormLabel>
             </div>
           </div>
         </div>
 
         <!-- Buttons Row -->
         <div class="form-row full-width button-row">
-          <button type="button" class="login-btn back-btn" @click="goToStep1">
-            Back
-          </button>
-          <button type="submit" class="login-btn next-btn">
-            Next
-          </button>
+          <button type="button" class="login-btn back-btn" @click="goToStep1">Back</button>
+          <button type="submit" class="login-btn next-btn">Next</button>
         </div>
       </form>
 
       <!-- Step 3: Password -->
       <form v-else-if="step === 3" @submit.prevent="handleRegister">
-        <div style="margin-bottom: 32px;">
+        <div style="margin-bottom: 32px">
           <FormLabel>Password</FormLabel>
           <div class="input-group password-group" style="margin-bottom: 0px !important">
             <span class="icon"><i class="fas fa-lock"></i></span>
-            <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Password"
-              ref="passwordInput" required />
-            <span class="icon right" @click="showPassword = !showPassword" style="user-select: none">
+            <input
+              :type="showPassword ? 'text' : 'password'"
+              v-model="password"
+              placeholder="Password"
+              ref="passwordInput"
+              required
+            />
+            <span
+              class="icon right"
+              @click="showPassword = !showPassword"
+              style="user-select: none"
+            >
               <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
             </span>
           </div>
           <div>
-            <FormLabel v-if="errors.password" class="error-message1
-            ">{{ errors.password[0] }}</FormLabel>
+            <FormLabel v-if="errors.password" class="error-message1">{{
+              errors.password[0]
+            }}</FormLabel>
           </div>
         </div>
 
-        <div style="margin-bottom: 32px;">
+        <div style="margin-bottom: 32px">
           <FormLabel>Confirm Password</FormLabel>
           <div class="input-group password-group" style="margin-bottom: 0px !important">
             <span class="icon"><i class="fas fa-lock"></i></span>
-            <input :type="showConfirmPassword ? 'text' : 'password'" v-model="confirm_password"
-              placeholder="Confirm Password" ref="confirmPasswordInput" required />
-            <span class="icon right" @click="showConfirmPassword = !showConfirmPassword" style="user-select: none">
+            <input
+              :type="showConfirmPassword ? 'text' : 'password'"
+              v-model="confirm_password"
+              placeholder="Confirm Password"
+              ref="confirmPasswordInput"
+              required
+            />
+            <span
+              class="icon right"
+              @click="showConfirmPassword = !showConfirmPassword"
+              style="user-select: none"
+            >
               <i :class="showConfirmPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
             </span>
           </div>
           <div>
-            <FormLabel v-if="errors.confirm_password" class="error-message1
-            ">{{ errors.confirm_password[0] }}</FormLabel>
+            <FormLabel v-if="errors.confirm_password" class="error-message1">{{
+              errors.confirm_password[0]
+            }}</FormLabel>
           </div>
         </div>
 
-        <button type="button" class="login-btn back-btn" @click="goToStep2">
-          Back
-        </button>
-        <button type="submit" class="login-btn">
-          Register
-        </button>
+        <button type="button" class="login-btn back-btn" @click="goToStep2">Back</button>
+        <button type="submit" class="login-btn">Register</button>
       </form>
       <div class="switch-auth">
         <span>Already have an account?</span>
@@ -279,9 +369,7 @@
       </div>
       <div class="footer">
         <img src="@/assets/images/Logo.svg" alt="Dolphin Logo" class="footer-logo" />
-        <p class="copyright">
-          &copy; {{ currentYear }} All Rights Reserved By Dolphin
-        </p>
+        <p class="copyright">&copy; {{ currentYear }} All Rights Reserved By Dolphin</p>
       </div>
     </div>
   </div>
@@ -289,16 +377,12 @@
 
 <script>
 import { FormDropdown, FormLabel } from '@/components/Common/Common_UI/Form';
-import {
-  normalizeOrgSize,
-  orgSizeOptions,
-} from '@/utils/formUtils';
+import { normalizeOrgSize, orgSizeOptions } from '@/utils/formUtils';
 import axios from 'axios';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 
-const API_BASE_URL =
-  process.env.VUE_APP_API_BASE_URL;
+const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
 
 export default {
   name: 'Register',
@@ -334,7 +418,7 @@ export default {
       orgSizeOptions: orgSizeOptions,
       showPassword: false,
       showConfirmPassword: false,
-  // transient UI state
+      // transient UI state
       errors: {},
     };
   },
@@ -373,7 +457,7 @@ export default {
             return true;
           }
         } catch (e) {
-          console.warn('Error focusing element', e);
+          console.debug && console.debug('Error focusing element', e);
         }
         return false;
       };
@@ -396,18 +480,17 @@ export default {
     normalizeValidationErrors(errs) {
       if (!errs || typeof errs !== 'object') return {};
       const out = { ...errs };
-  // Map backend keys to UI field keys
+      // Map backend keys to UI field keys
       if (errs.organization_name) out.organization_name = errs.organization_name;
       if (errs.organization_size) out.organization_size = errs.organization_size;
       if (errs.address) out.organization_address = errs.address;
       if (errs.address_line_1) out.organization_address = errs.address_line_1;
       if (errs.address_line_2) out.organization_address_line_2 = errs.address_line_2;
-      if (errs.organization_address_line_2) out.organization_address_line_2 = errs.organization_address_line_2;
+      if (errs.organization_address_line_2)
+        out.organization_address_line_2 = errs.organization_address_line_2;
       if (errs.zip) out.organization_zip = errs.zip;
-      if (errs.state && !out.organization_state)
-        out.organization_state = errs.state;
-      if (errs.city && !out.organization_city)
-        out.organization_city = errs.city;
+      if (errs.state && !out.organization_state) out.organization_state = errs.state;
+      if (errs.city && !out.organization_city) out.organization_city = errs.city;
       return out;
     },
     navigateToFirstError(errors) {
@@ -515,7 +598,7 @@ export default {
       };
     },
     processRegistrationError(error) {
-      console.error('Registration failed:', error);
+      console.debug && console.debug('Registration failed:', error);
 
       // default message
       let errorMessage = 'Registration failed. Please try again.';
@@ -523,7 +606,7 @@ export default {
       const data = error?.response?.data;
 
       if (data) {
-        console.error('Registration error response data:', data);
+        console.debug && console.debug('Registration error response data:', data);
 
         // normalize validation errors
         const rawErrors = data.errors || (typeof data === 'object' ? data : null);
@@ -531,7 +614,6 @@ export default {
 
         // extract message
         errorMessage = this.extractErrorMessage(data, errorMessage);
-
       } else if (error?.message) {
         errorMessage = error.message;
       } else {
@@ -572,7 +654,6 @@ export default {
       return defaultMessage;
     },
 
-
     async prefillFromLead() {
       // Try to get lead data from query params or API
       const params = this.$route.query;
@@ -592,7 +673,7 @@ export default {
             prefilled = true;
           }
         } catch (e) {
-          console.warn('Prefill API failed, falling back to params', e);
+          console.debug && console.debug('Prefill API failed, falling back to params', e);
         }
       }
       // Fallback: prefill from query params if backend prefill did not work
@@ -619,8 +700,7 @@ export default {
       set('organization_state');
       set('organization_zip');
       set('referral_source_id');
-      if (this.organization_size)
-        this.organization_size = normalizeOrgSize(this.organization_size);
+      if (this.organization_size) this.organization_size = normalizeOrgSize(this.organization_size);
       return changed;
     },
     setFromLead(lead = {}) {
@@ -631,7 +711,8 @@ export default {
       this.organization_name = lead.organization_name || '';
       this.organization_size = lead.organization_size || '';
       this.organization_address = lead.address_line_1 || lead.organization_address || '';
-      this.organization_address_line_2 = lead.address_line_2 || lead.organization_address_line_2 || '';
+      this.organization_address_line_2 =
+        lead.address_line_2 || lead.organization_address_line_2 || '';
       this.country = lead.country_id || lead.country || this.country;
       this.organization_state =
         lead.organization_state_id ||
@@ -646,8 +727,7 @@ export default {
       this.organization_zip = lead.zip_code || lead.organization_zip || '';
       this.referral_source_id = lead.referral_source_id || null;
       this.referral_other_text = lead.referral_other_text || '';
-      if (this.organization_size)
-        this.organization_size = normalizeOrgSize(this.organization_size);
+      if (this.organization_size) this.organization_size = normalizeOrgSize(this.organization_size);
     },
 
     async fetchReferralSources() {
@@ -655,7 +735,7 @@ export default {
         const res = await axios.get(`${API_BASE_URL}/api/referral-sources`);
         this.referralSources = (res.data || []).sort((a, b) => a.id - b.id);
       } catch (e) {
-        console.warn('Failed to fetch referral sources', e);
+        console.debug && console.debug('Failed to fetch referral sources', e);
       }
     },
     async fetchCountries() {
@@ -688,7 +768,7 @@ export default {
           }
         }
       } catch (e) {
-        console.warn('Failed to fetch countries', e);
+        console.debug && console.debug('Failed to fetch countries', e);
       }
     },
 
@@ -726,7 +806,7 @@ export default {
           }
         }
       } catch (e) {
-        console.warn('Failed to fetch states', e);
+        console.debug && console.debug('Failed to fetch states', e);
         this.states = [];
       }
     },
@@ -735,8 +815,7 @@ export default {
         this.cities = [];
         return;
       }
-      const stateId =
-        Number(this.organization_state) || this.organization_state;
+      const stateId = Number(this.organization_state) || this.organization_state;
       try {
         const res = await axios.get(`${API_BASE_URL}/api/cities`, {
           params: { state_id: stateId },
@@ -764,17 +843,13 @@ export default {
           }
         }
       } catch (e) {
-        console.warn('Failed to fetch cities', e);
+        console.debug && console.debug('Failed to fetch cities', e);
         this.cities = [];
       }
     },
     onCountryChange() {
       // normalize country to number when possible
-      if (
-        this.country !== null &&
-        this.country !== '' &&
-        typeof this.country !== 'number'
-      ) {
+      if (this.country !== null && this.country !== '' && typeof this.country !== 'number') {
         const n = Number(this.country);
         if (!Number.isNaN(n)) this.country = n;
       }
@@ -908,7 +983,6 @@ select {
 .input-group {
   position: relative;
   margin-bottom: 32px;
-
 }
 
 .input-group input {
@@ -1059,7 +1133,6 @@ select {
   justify-content: space-between;
 }
 
-
 .next-btn {
   flex: 1;
   margin-bottom: 16px !important;
@@ -1192,6 +1265,5 @@ select {
   color: red;
   font-size: 0.8em;
   margin-top: 8px;
-
 }
 </style>

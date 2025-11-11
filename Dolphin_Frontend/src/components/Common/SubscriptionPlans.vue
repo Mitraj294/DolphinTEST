@@ -9,23 +9,21 @@
             <div class="subscription-plans-container">
               <div class="subscription-plans-title">Subscription Plans</div>
               <div class="subscription-plans-desc" style="max-width: 600px">
-                Choose the plan that fits your needs. Whether you’re just
-                starting or looking for long-term value, we’ve got flexible
-                options to help you grow without limits.
+                Choose the plan that fits your needs. Whether you’re just starting or looking for
+                long-term value, we’ve got flexible options to help you grow without limits.
               </div>
               <div class="subscription-plans-options">
-                <div
-                  v-for="plan in plans"
-                  :key="plan.id"
-                  class="plan-card"
-                >
+                <div v-for="plan in plans" :key="plan.id" class="plan-card">
                   <div v-if="plan.interval === 'yearly'" class="plan-card-badge">Save 2 Months</div>
                   <div class="plan-card-header">
                     <span class="plan-card-name">{{ plan.name }}</span>
                   </div>
                   <div class="plan-card-price">
-                    {{ plan.currency && plan.currency.toLowerCase() === 'usd' ? '$' : '' }}{{ plan.amount }}
-                    <span class="plan-card-period">/{{ plan.interval === 'monthly' ? 'month' : 'annual' }}</span>
+                    {{ plan.currency && plan.currency.toLowerCase() === 'usd' ? '$' : ''
+                    }}{{ plan.amount }}
+                    <span class="plan-card-period"
+                      >/{{ plan.interval === 'monthly' ? 'month' : 'annual' }}</span
+                    >
                   </div>
                   <button
                     class="plan-card-btn"
@@ -38,8 +36,7 @@
                 </div>
               </div>
               <div class="subscription-plans-footer" style="max-width: 600px">
-                Upgrade anytime, cancel anytime. No hidden fees – just simple,
-                transparent pricing.
+                Upgrade anytime, cancel anytime. No hidden fees – just simple, transparent pricing.
               </div>
             </div>
           </div>
@@ -55,22 +52,21 @@
           <div class="subscription-plans-container">
             <div class="subscription-plans-title">Subscription Plans</div>
             <div class="subscription-plans-desc" style="max-width: 600px">
-              Choose a plan to continue. This page was opened from an invitation
-              and may be pre-filled.
+              Choose a plan to continue. This page was opened from an invitation and may be
+              pre-filled.
             </div>
             <div class="subscription-plans-options">
-              <div
-                v-for="plan in plans"
-                :key="plan.id"
-                class="plan-card"
-              >
+              <div v-for="plan in plans" :key="plan.id" class="plan-card">
                 <div v-if="plan.interval === 'yearly'" class="plan-card-badge">Save 2 Months</div>
                 <div class="plan-card-header">
                   <span class="plan-card-name">{{ plan.name }}</span>
                 </div>
                 <div class="plan-card-price">
-                  {{ plan.currency && plan.currency.toLowerCase() === 'usd' ? '$' : '' }}{{ plan.amount }}
-                  <span class="plan-card-period">/{{ plan.interval === 'monthly' ? 'month' : 'annual' }}</span>
+                  {{ plan.currency && plan.currency.toLowerCase() === 'usd' ? '$' : ''
+                  }}{{ plan.amount }}
+                  <span class="plan-card-period"
+                    >/{{ plan.interval === 'monthly' ? 'month' : 'annual' }}</span
+                  >
                 </div>
                 <button
                   class="plan-card-btn"
@@ -93,11 +89,11 @@
 </template>
 
 <script>
-import MainLayout from "@/components/layout/MainLayout.vue";
-import { getPlans, createCheckoutSession, getActiveSubscription } from "@/services/subscription";
+import MainLayout from '@/components/layout/MainLayout.vue';
+import { getPlans, createCheckoutSession, getActiveSubscription } from '@/services/subscription';
 
 export default {
-  name: "SubscriptionPlans",
+  name: 'SubscriptionPlans',
   components: { MainLayout },
   data() {
     return {
@@ -120,7 +116,7 @@ export default {
         const plans = await getPlans();
         this.plans = Array.isArray(plans) ? plans : [];
       } catch (e) {
-        console.error("Failed to load plans:", e);
+        console.debug && console.debug('Failed to load plans:', e);
         this.plans = [];
       }
     },
@@ -130,7 +126,8 @@ export default {
         this.subscription = sub || null;
       } catch (e) {
         // Log the error to aid debugging (avoid swallowing exceptions silently)
-        console.warn('loadSubscription: failed to load active subscription', e?.message || e);
+        console.debug &&
+          console.debug('loadSubscription: failed to load active subscription', e?.message || e);
         this.subscription = null;
       }
     },
@@ -139,20 +136,26 @@ export default {
       if (this.subscription && this.subscription.plan_id) {
         const currentPlanId = this.subscription.plan_id;
         if (Number(currentPlanId) === Number(plan.id)) {
-          return "Current Plan";
+          return 'Current Plan';
         }
 
         // Determine by amount if present (backend stores amounts as numbers/strings)
-        const currentAmount = Number(this.subscription.plan?.amount || this.subscription.latest_amount_paid || 0);
+        const currentAmount = Number(
+          this.subscription.plan?.amount || this.subscription.latest_amount_paid || 0
+        );
         const planAmount = Number(plan.amount || 0);
-        if (currentAmount === 250 && planAmount === 2500) return "Upgrade Plan";
-        if (currentAmount === 2500 && planAmount === 250) return "Change Plan";
+        if (currentAmount === 250 && planAmount === 2500) return 'Upgrade Plan';
+        if (currentAmount === 2500 && planAmount === 250) return 'Change Plan';
       }
-      return "Choose Plan";
+      return 'Choose Plan';
     },
     planButtonAction(plan) {
       // If this is the user's current plan, go to billing details
-      if (this.subscription && this.subscription.plan_id && Number(this.subscription.plan_id) === Number(plan.id)) {
+      if (
+        this.subscription &&
+        this.subscription.plan_id &&
+        Number(this.subscription.plan_id) === Number(plan.id)
+      ) {
         return this.goToBillingDetails;
       }
       // Otherwise start checkout flow
@@ -172,29 +175,32 @@ export default {
         if (redirectUrl) {
           globalThis.location.href = redirectUrl;
         } else {
-          console.error('No redirect URL returned from createCheckoutSession', res);
+          console.debug &&
+            console.debug('No redirect URL returned from createCheckoutSession', res);
         }
       } catch (e) {
-        console.error("Error creating checkout session:", e);
+        console.debug && console.debug('Error creating checkout session:', e);
       } finally {
         this.isLoading = false;
       }
     },
     goToBillingDetails() {
-      this.$router.push({ name: "BillingDetails" });
+      this.$router.push({ name: 'BillingDetails' });
     },
   },
   mounted() {
-    const qs = new URLSearchParams(globalThis.location.search || "");
-    const hasGuestParams = ["email", "lead_id", "price_id", "guest_code", "guest_token"].some((p) => qs.has(p));
+    const qs = new URLSearchParams(globalThis.location.search || '');
+    const hasGuestParams = ['email', 'lead_id', 'price_id', 'guest_code', 'guest_token'].some((p) =>
+      qs.has(p)
+    );
     if (hasGuestParams) {
       this.isGuestView = true;
       this.guestParams = {
-        email: qs.get("email"),
-        lead_id: qs.get("lead_id"),
-        price_id: qs.get("price_id"),
-        guest_code: qs.get("guest_code"),
-        guest_token: qs.get("guest_token"),
+        email: qs.get('email'),
+        lead_id: qs.get('lead_id'),
+        price_id: qs.get('price_id'),
+        guest_code: qs.get('guest_code'),
+        guest_token: qs.get('guest_token'),
       };
     }
     this.loadPlans();
@@ -205,7 +211,7 @@ export default {
 
 <style scoped>
 /* All original styles are preserved here */
-@import url("https://fonts.googleapis.com/icon?family=Material+Icons");
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 
 .subscription-plans-outer {
   width: 100%;
@@ -298,7 +304,9 @@ export default {
   padding: 0;
   margin: 0;
   overflow: hidden;
-  transition: background 0.18s, border 0.18s;
+  transition:
+    background 0.18s,
+    border 0.18s;
 }
 .plan-card--current {
   background: #f5faff;
@@ -415,7 +423,7 @@ export default {
   text-align: center;
   margin-top: 8px;
 }
-.input-group input[placeholder="0000 0000 0000 0000"] {
+.input-group input[placeholder='0000 0000 0000 0000'] {
   letter-spacing: 2px;
 }
 .input-group:last-child .input-icon {
@@ -463,7 +471,7 @@ export default {
 }
 .switch-slider:before {
   position: absolute;
-  content: "";
+  content: '';
   height: 16px;
   width: 16px;
   left: 3px;

@@ -21,7 +21,7 @@ class AssessmentResultController extends Controller
 
     /**
      * Calculate and store assessment results using C++ algorithm
-     * 
+     *
      * @param Request $request
      * @return JsonResponse
      */
@@ -42,10 +42,10 @@ class AssessmentResultController extends Controller
             ], 422);
         }
 
-    $validated = $validator->validated();
-    $attemptId = $validated['attempt_id'] ?? null;
-    $responseData = [];
-    $status = 200;
+        $validated = $validator->validated();
+        $attemptId = $validated['attempt_id'] ?? null;
+        $responseData = [];
+        $status = 200;
 
         try {
             $userId = Auth::id();
@@ -96,7 +96,7 @@ class AssessmentResultController extends Controller
 
     /**
      * Get user's assessment results
-     * 
+     *
      * @param Request $request
      * @return JsonResponse
      */
@@ -141,7 +141,7 @@ class AssessmentResultController extends Controller
 
     /**
      * Get a specific assessment result by ID
-     * 
+     *
      * @param int $id
      * @return JsonResponse
      */
@@ -180,7 +180,7 @@ class AssessmentResultController extends Controller
 
     /**
      * Get results comparison between original and adjusted assessments
-     * 
+     *
      * @param Request $request
      * @return JsonResponse
      */
@@ -223,7 +223,7 @@ class AssessmentResultController extends Controller
 
     /**
      * Check if calculation system is available
-     * 
+     *
      * @return JsonResponse
      */
     public function checkSystemStatus(): JsonResponse

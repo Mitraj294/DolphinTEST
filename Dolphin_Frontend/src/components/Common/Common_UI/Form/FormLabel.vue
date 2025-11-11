@@ -6,19 +6,20 @@
 
 <script>
 export default {
-  name: "FormLabel",
+  name: 'FormLabel',
   props: {
     forId: { type: String, default: null },
     // When true, the label will be rendered even if `forId` is not provided
     // to support cases where the consumer wraps a control inside the slot.
     wrapsControl: { type: Boolean, default: false },
   },
+  emits: [],
   computed: {
     elementTag() {
-      return this.forId || this.wrapsControl ? "label" : "div";
+      return this.forId || this.wrapsControl ? 'label' : 'div';
     },
     forAttrs() {
-      if (this.elementTag === "label" && this.forId) {
+      if (this.elementTag === 'label' && this.forId) {
         return { for: this.forId };
       }
       return {};

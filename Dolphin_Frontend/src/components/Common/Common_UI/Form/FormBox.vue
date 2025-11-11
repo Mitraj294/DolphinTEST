@@ -6,7 +6,7 @@
 
 <script>
 export default {
-  name: "FormBox",
+  name: 'FormBox',
   props: {
     error: { type: Boolean, default: false },
   },

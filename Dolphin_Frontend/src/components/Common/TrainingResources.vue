@@ -12,9 +12,9 @@
 </template>
 
 <script>
-import MainLayout from "../layout/MainLayout.vue";
+import MainLayout from '../layout/MainLayout.vue';
 export default {
-  name: "TrainingResources",
+  name: 'TrainingResources',
   components: { MainLayout },
 };
 </script>

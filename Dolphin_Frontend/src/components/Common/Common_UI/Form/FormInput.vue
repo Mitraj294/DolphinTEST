@@ -33,34 +33,35 @@
 </template>
 
 <script>
-import FormBox from "./FormBox.vue";
+import FormBox from './FormBox.vue';
 export default {
-  name: "FormInput",
+  name: 'FormInput',
   components: { FormBox },
   props: {
-    modelValue: [String, Number],
-    type: { type: String, default: "text" },
-    placeholder: { type: String, default: "" },
-    icon: { type: String, default: "" },
+    modelValue: { type: [String, Number], default: '' },
+    type: { type: String, default: 'text' },
+    placeholder: { type: String, default: '' },
+    icon: { type: String, default: '' },
     error: { type: Boolean, default: false },
     readonly: { type: Boolean, default: false },
     disabled: { type: Boolean, default: false },
   },
+  emits: ['update:modelValue'],
   computed: {
     inputValue: {
       get() {
         return this.modelValue;
       },
       set(val) {
-        this.$emit("update:modelValue", val);
+        this.$emit('update:modelValue', val);
       },
     },
   },
   methods: {
     focus() {
       this.$nextTick(() => {
-        const el = this.$el && this.$el.querySelector("input");
-        if (el && typeof el.focus === "function") el.focus();
+        const el = this.$el && this.$el.querySelector('input');
+        if (el && typeof el.focus === 'function') el.focus();
       });
     },
   },

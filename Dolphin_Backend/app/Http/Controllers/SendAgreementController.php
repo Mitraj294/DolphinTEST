@@ -17,7 +17,6 @@ use Stripe\Stripe;
 use Stripe\Checkout\Session as StripeSession;
 use Exception;
 
-
 // SendAgreementController
 // Controller for sending Stripe agreement/payment links via email,
 // managing guest token validation for quick access, and preparing
@@ -29,7 +28,6 @@ use Exception;
 
 class SendAgreementController extends Controller
 {
-
     // Send an agreement email containing a Stripe payment link.
     // Handles user creation, guest token generation, and email composition.
     // @param Request $request
@@ -38,7 +36,6 @@ class SendAgreementController extends Controller
     public function send(Request $request)
     {
         try {
-
             // 1. Request Validation
 
             $validated = $request->validate([

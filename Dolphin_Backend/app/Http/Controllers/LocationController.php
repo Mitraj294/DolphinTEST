@@ -10,7 +10,6 @@ use App\Models\ReferralSource;
 use Illuminate\Support\Facades\Log;
 
 class LocationController extends Controller
-
 {
     public function countries()
     {

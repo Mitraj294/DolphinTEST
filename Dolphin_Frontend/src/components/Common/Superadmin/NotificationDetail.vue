@@ -7,18 +7,13 @@
 
       <!-- Header -->
       <div class="modal-title">Notification Detail</div>
-      <div class="modal-desc">
-        Details for the selected notification / announcement.
-      </div>
+      <div class="modal-desc">Details for the selected notification / announcement.</div>
 
       <div>
         <br />
 
         <!-- Title, scheduled time and status -->
-        <div
-          class="modal-title schedule-header"
-          style="font-size: 20px; font-weight: 450"
-        >
+        <div class="modal-title schedule-header" style="font-size: 20px; font-weight: 450">
           <div class="schedule-header-left">
             <div>
               <div
@@ -33,53 +28,31 @@
                 {{ announcementBodyShort }}
               </div>
               -
-                <div
+              <div
                 class="schedule-assessment-name"
-                style="
-                  display: inline-block;
-                  vertical-align: middle;
-                  margin-left: 12px;
-                "
-                >
+                style="display: inline-block; vertical-align: middle; margin-left: 12px"
+              >
                 {{ formatDateTime(announcementScheduledAt) }}
-                </div>
+              </div>
             </div>
           </div>
-
-        
         </div>
 
         <!-- Organization recipients -->
         <div class="NotificationDetailBodyForOrganizations">
-          <div
-            v-if="organizationRecipients.length"
-            class="NotificationDetailBodyForOrganizations"
-          >
-            <div class="modal-titleTABLE">
-              Organization Notification Details
-            </div>
+          <div v-if="organizationRecipients.length" class="NotificationDetailBodyForOrganizations">
+            <div class="modal-titleTABLE">Organization Notification Details</div>
             <div class="detail-row">
               <div
                 class="detail-table"
-                style="
-                  width: 100% !important;
-                  max-width: 800px !important;
-                  margin: 0 !important;
-                "
+                style="width: 100% !important; max-width: 800px !important; margin: 0 !important"
               >
                 <div
                   class="recipient-table-wrap"
-                  style="
-                    overflow-x: auto;
-                    -webkit-overflow-scrolling: touch;
-                    width: 100%;
-                  "
+                  style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%"
                 >
                   <div class="table-scroll">
-                    <table
-                      class="recipient-table compact"
-                      style="width: 100%; min-width: 500px"
-                    >
+                    <table class="recipient-table compact" style="width: 100%; min-width: 500px">
                       <TableHeader
                         :columns="[
                           {
@@ -102,10 +75,7 @@
                       />
                       <tbody>
                         <tr v-if="!organizationRecipients.length">
-                          <td
-                            colspan="4"
-                            style="text-align: center; padding: 20px"
-                          >
+                          <td colspan="4" style="text-align: center; padding: 20px">
                             No recipients found.
                           </td>
                         </tr>
@@ -114,9 +84,7 @@
                           <td>{{ r.name }}</td>
                           <td>{{ r.email }}</td>
                           <td>
-                            <span>{{
-                              r.read_at ? formatDateTime(r.read_at) : " - "
-                            }}</span>
+                            <span>{{ r.read_at ? formatDateTime(r.read_at) : ' - ' }}</span>
                           </td>
                         </tr>
                       </tbody>
@@ -130,33 +98,19 @@
 
         <!-- Admin recipients -->
         <div class="NotificationDetailBodyForAdmins">
-          <div
-            v-if="adminRecipients.length"
-            class="NotificationDetailBodyForAdmins"
-          >
+          <div v-if="adminRecipients.length" class="NotificationDetailBodyForAdmins">
             <div class="modal-titleTABLE">Admin Notification Details</div>
             <div class="detail-row">
               <div
                 class="detail-table"
-                style="
-                  width: 100% !important;
-                  max-width: 800px !important;
-                  margin: 0 !important;
-                "
+                style="width: 100% !important; max-width: 800px !important; margin: 0 !important"
               >
                 <div
                   class="recipient-table-wrap"
-                  style="
-                    overflow-x: auto;
-                    -webkit-overflow-scrolling: touch;
-                    width: 100%;
-                  "
+                  style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%"
                 >
                   <div class="table-scroll">
-                    <table
-                      class="recipient-table compact"
-                      style="width: 100%; min-width: 500px"
-                    >
+                    <table class="recipient-table compact" style="width: 100%; min-width: 500px">
                       <TableHeader
                         :columns="[
                           {
@@ -174,10 +128,7 @@
                       />
                       <tbody>
                         <tr v-if="!adminRecipients.length">
-                          <td
-                            colspan="3"
-                            style="text-align: center; padding: 20px"
-                          >
+                          <td colspan="3" style="text-align: center; padding: 20px">
                             No admins targeted.
                           </td>
                         </tr>
@@ -185,9 +136,7 @@
                           <td>{{ a.name }}</td>
                           <td>{{ a.email }}</td>
                           <td>
-                            <span>{{
-                              a.read_at ? formatDateTime(a.read_at) : " - "
-                            }}</span>
+                            <span>{{ a.read_at ? formatDateTime(a.read_at) : ' - ' }}</span>
                           </td>
                         </tr>
                       </tbody>
@@ -206,25 +155,14 @@
             <div class="detail-row">
               <div
                 class="detail-table"
-                style="
-                  width: 100% !important;
-                  max-width: 800px !important;
-                  margin: 0 !important;
-                "
+                style="width: 100% !important; max-width: 800px !important; margin: 0 !important"
               >
                 <div
                   class="recipient-table-wrap"
-                  style="
-                    overflow-x: auto;
-                    -webkit-overflow-scrolling: touch;
-                    width: 100%;
-                  "
+                  style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%"
                 >
                   <div class="table-scroll">
-                    <table
-                      class="recipient-table compact"
-                      style="width: 100%; min-width: 500px"
-                    >
+                    <table class="recipient-table compact" style="width: 100%; min-width: 500px">
                       <TableHeader
                         :columns="[
                           {
@@ -246,10 +184,7 @@
                       />
                       <tbody>
                         <tr v-if="!groupRows.length">
-                          <td
-                            colspan="3"
-                            style="text-align: center; padding: 20px"
-                          >
+                          <td colspan="3" style="text-align: center; padding: 20px">
                             No groups targeted.
                           </td>
                         </tr>
@@ -279,10 +214,10 @@
 // - `notifications` prop (array) may contain per-user read timestamps keyed by notifiable_id.
 // - Computed properties normalize orgs, admins, and groups for display.
 
-import TableHeader from "@/components/Common/Common_UI/TableHeader.vue";
+import TableHeader from '@/components/Common/Common_UI/TableHeader.vue';
 
 export default {
-  name: "NotificationDetail",
+  name: 'NotificationDetail',
   components: { TableHeader },
 
   props: {
@@ -294,7 +229,7 @@ export default {
     notifications: { type: Array, default: () => [] },
   },
 
-  emits: ["close"],
+  emits: ['close'],
 
   data() {
     return {};
@@ -308,18 +243,16 @@ export default {
 
     // short preview of the announcement body for the header
     announcementBodyShort() {
-      const raw =
-        this.announcementEffective && (this.announcementEffective.body || "");
-      return String(raw || "").slice(0, 120);
+      const raw = this.announcementEffective && (this.announcementEffective.body || '');
+      return String(raw || '').slice(0, 120);
     },
 
     // scheduled time (or sent time) to show in the header
     announcementScheduledAt() {
       return (
         (this.announcementEffective &&
-          (this.announcementEffective.scheduled_at ||
-            this.announcementEffective.sent_at)) ||
-        ""
+          (this.announcementEffective.scheduled_at || this.announcementEffective.sent_at)) ||
+        ''
       );
     },
 
@@ -328,9 +261,9 @@ export default {
       const a = this.announcementEffective || {};
       const hasSent = !!(a.sent_at || a.sent_at === 0);
       const hasScheduled = !!(a.scheduled_at || a.scheduled_at === 0);
-      if (hasSent) return "sent";
-      if (hasScheduled) return "scheduled";
-      return "failed";
+      if (hasSent) return 'sent';
+      if (hasScheduled) return 'scheduled';
+      return 'failed';
     },
 
     // map notifications by notifiable_id for quick lookup of read_at
@@ -343,7 +276,7 @@ export default {
       } catch (err) {
         // Defensive: do not throw if the prop is malformed; return empty map instead
 
-        console.warn("notificationsMap parse error", err);
+        console.debug && console.debug('notificationsMap parse error', err);
       }
       return map;
     },
@@ -377,20 +310,20 @@ export default {
 
       for (const org of announcement.organizations || []) {
         const userId = org.user_id ?? org.user?.id ?? null;
-        const orgName = org.name ?? org.organization_name ?? "";
+        const orgName = org.name ?? org.organization_name ?? '';
         const email = org.contact_email ?? org.admin_email ?? null;
-        const first = org.user_first_name ?? org.user?.first_name ?? "";
-        const last = org.user_last_name ?? org.user?.last_name ?? "";
+        const first = org.user_first_name ?? org.user?.first_name ?? '';
+        const last = org.user_last_name ?? org.user?.last_name ?? '';
 
         // prefer read_at embedded in notifications array when available
         const notif = this.notificationsMap.get(Number(userId));
-        const read_at = notif ? notif.read_at : org.read_at ?? null;
+        const read_at = notif ? notif.read_at : (org.read_at ?? null);
 
         if (userId && !recipients.has(Number(userId))) {
           recipients.set(Number(userId), {
             id: Number(userId),
             organization_name: orgName,
-            name: `${first || ""} ${last || ""}`.trim(),
+            name: `${first || ''} ${last || ''}`.trim(),
             email: email,
             read_at: read_at,
           });
@@ -411,9 +344,7 @@ export default {
           const notif = this.notificationsMap.get(Number(admin.id));
           recipients.set(admin.id, {
             id: admin.id,
-            name:
-              admin.name ||
-              `${admin.first_name || ""} ${admin.last_name || ""}`.trim(),
+            name: admin.name || `${admin.first_name || ''} ${admin.last_name || ''}`.trim(),
             email: admin.email,
             read_at: notif ? notif.read_at : null,
           });
@@ -430,7 +361,7 @@ export default {
           id: g.id,
           name: g.name || `Group ${g.id}`,
           organization_id: g.organization_id || null,
-          organization_name: g.organization_name || "",
+          organization_name: g.organization_name || '',
           org_contact_email: g.org_contact_email || null,
         }));
       }
@@ -451,17 +382,17 @@ export default {
   methods: {
     // Format dates into a readable local-time string. If formatting fails, return the raw input.
     formatDateTime(dt) {
-      if (!dt) return "—";
+      if (!dt) return '—';
       try {
         // Helper: produce a Date object in the user's local timezone.
         const toLocalDate = (input) => {
           // Numbers: treat as ms (or sec if 10-digit)
-          if (typeof input === "number") {
+          if (typeof input === 'number') {
             const n = String(input).length === 10 ? input * 1000 : input;
             return new Date(Number(n));
           }
 
-          if (typeof input !== "string") return new Date(input);
+          if (typeof input !== 'string') return new Date(input);
 
           const s = input.trim();
 
@@ -480,9 +411,7 @@ export default {
             const hh = Number(sqlMatch[4] || 0);
             const mm = Number(sqlMatch[5] || 0);
             const ss = Number(sqlMatch[6] || 0);
-            const ms = sqlMatch[7]
-              ? Math.floor(Number("0." + sqlMatch[7]) * 1000)
-              : 0;
+            const ms = sqlMatch[7] ? Math.floor(Number('0.' + sqlMatch[7]) * 1000) : 0;
             // Construct a UTC timestamp then convert to local Date
             return new Date(Date.UTC(y, mo, dayNum, hh, mm, ss, ms));
           }
@@ -496,31 +425,31 @@ export default {
           return dt;
         }
 
-        const day = String(d.getDate()).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, '0');
         const months = [
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec",
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
         ];
         const mon = months[d.getMonth()];
         const yr = d.getFullYear();
         let hr = d.getHours();
-        const min = String(d.getMinutes()).padStart(2, "0");
-        const ampm = hr >= 12 ? "PM" : "AM";
+        const min = String(d.getMinutes()).padStart(2, '0');
+        const ampm = hr >= 12 ? 'PM' : 'AM';
         hr = hr % 12;
         hr = hr || 12;
         return `${day} ${mon},${yr} ${hr}:${min} ${ampm}`;
       } catch (err) {
-        console.warn("formatDateTime failed", err);
+        console.debug && console.debug('formatDateTime failed', err);
         return dt;
       }
     },
@@ -529,7 +458,7 @@ export default {
 </script>
 
 <style scoped>
-@import "@/assets/modelcssnotificationandassesment.css";
+@import '@/assets/modelcssnotificationandassesment.css';
 
 /* status badges */
 .schedule-header-right {

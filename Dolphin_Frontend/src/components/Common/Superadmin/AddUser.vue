@@ -42,11 +42,7 @@
                 />
                 <div>
                   <FormLabel v-if="errors.email" class="error-message1">
-                    {{
-                      Array.isArray(errors.email)
-                        ? errors.email[0]
-                        : errors.email
-                    }}
+                    {{ Array.isArray(errors.email) ? errors.email[0] : errors.email }}
                   </FormLabel>
                 </div>
               </div>
@@ -69,10 +65,7 @@
                 <FormDropdown
                   v-model="form.role"
                   icon="fas fa-user-tag"
-                  :options="[
-                    { value: null, text: 'Select Role', disabled: true },
-                    ...roleOptions,
-                  ]"
+                  :options="[{ value: null, text: 'Select Role', disabled: true }, ...roleOptions]"
                   required
                 /><FormLabel v-if="errors.role" class="error-message1">{{
                   errors.role[0]
@@ -89,10 +82,7 @@
                     placeholder="Organization Name"
                     required
                   />
-                  <FormLabel
-                    v-if="errors.organization_name"
-                    class="error-message1"
-                  >
+                  <FormLabel v-if="errors.organization_name" class="error-message1">
                     {{ errors.organization_name[0] }}
                   </FormLabel>
                 </div>
@@ -112,10 +102,7 @@
                     ]"
                     required
                   />
-                  <FormLabel
-                    v-if="errors.organization_size"
-                    class="error-message1"
-                  >
+                  <FormLabel v-if="errors.organization_size" class="error-message1">
                     {{ errors.organization_size[0] }}
                   </FormLabel>
                 </div>
@@ -132,7 +119,7 @@
                 Cancel
               </button>
               <button type="submit" class="org-edit-update" :disabled="loading">
-                {{ loading ? "Adding..." : "Add User" }}
+                {{ loading ? 'Adding...' : 'Add User' }}
               </button>
             </div>
           </form>
@@ -149,14 +136,14 @@ import {
   FormInput,
   FormLabel,
   FormRow,
-} from "@/components/Common/Common_UI/Form";
-import MainLayout from "@/components/layout/MainLayout.vue";
-import { orgSizeOptions } from "@/utils/formUtils";
-import axios from "axios";
-import Toast from "primevue/toast";
-import { useToast } from "primevue/usetoast";
+} from '@/components/Common/Common_UI/Form';
+import MainLayout from '@/components/layout/MainLayout.vue';
+import { orgSizeOptions } from '@/utils/formUtils';
+import axios from 'axios';
+import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
 export default {
-  name: "AddUser",
+  name: 'AddUser',
   components: {
     MainLayout,
     FormRow,
@@ -175,24 +162,24 @@ export default {
     return {
       loading: false,
       form: {
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone_number: "",
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone_number: '',
         role: null,
-        organization_name: "",
-        organization_size: "",
+        organization_name: '',
+        organization_size: '',
       },
       roleOptions: [
-        { value: "organizationadmin", text: "Organization Admin" },
-        { value: "dolphinadmin", text: "Dolphin Admin" },
-        { value: "salesperson", text: "Sales Person" },
-        { value: "user", text: "User" },
+        { value: 'organizationadmin', text: 'Organization Admin' },
+        { value: 'dolphinadmin', text: 'Dolphin Admin' },
+        { value: 'salesperson', text: 'Sales Person' },
+        { value: 'user', text: 'User' },
       ],
       orgSizeOptions: orgSizeOptions,
 
-      successMessage: "",
-      errorMessage: "",
+      successMessage: '',
+      errorMessage: '',
       errors: {},
     };
   },
@@ -208,8 +195,8 @@ export default {
       this.errors = {};
 
       try {
-        const storage = require("@/services/storage").default;
-        const token = storage.get("authToken");
+        const storage = require('@/services/storage').default;
+        const token = storage.get('authToken');
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
 
         const payload = {
@@ -223,42 +210,38 @@ export default {
           size: this.form.organization_size,
         };
 
-        const response = await axios.post(
-          `${API_BASE_URL}/api/users`,
-          payload,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const response = await axios.post(`${API_BASE_URL}/api/users`, payload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
         // Show success message
         this.toast.add({
-          severity: "success",
-          summary: "User Added",
+          severity: 'success',
+          summary: 'User Added',
           detail: `New user has been created successfully. Password: ${response.data.password}`,
           life: 8000,
         });
 
         // Reset form
         this.form = {
-          firstName: "",
-          lastName: "",
-          email: "",
-          phone_number: "",
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone_number: '',
           role: null,
-          organization_name: "",
-          organization_size: "",
+          organization_name: '',
+          organization_size: '',
         };
 
         // Navigate back to user list
-        this.$router.push("/user-permission");
+        this.$router.push('/user-permission');
       } catch (error) {
-        console.error("Error adding user:", error);
+        console.debug && console.debug('Error adding user:', error);
 
-        let errorMessage = "Failed to add user.";
+        let errorMessage = 'Failed to add user.';
         if (error.response && error.response.data) {
           if (error.response.data.message) {
             errorMessage = error.response.data.message;
@@ -269,16 +252,15 @@ export default {
           } else {
             this.errors = {};
           }
-        } else if (error.code === "ERR_NETWORK") {
-          errorMessage =
-            "Network error - check if backend server is running and accessible";
+        } else if (error.code === 'ERR_NETWORK') {
+          errorMessage = 'Network error - check if backend server is running and accessible';
         } else {
           errorMessage = error.message;
         }
 
         this.toast.add({
-          severity: "error",
-          summary: "Error",
+          severity: 'error',
+          summary: 'Error',
           detail: errorMessage,
           life: 5000,
         });

@@ -9,10 +9,7 @@
       <img src="@/assets/images/Logo.svg" alt="Logo" />
       <span v-if="expanded" class="sidebar-logo-label">DOLPHIN</span>
     </div>
-    <ul
-      class="sidebar-menu isSubscriptionActiveu"
-      v-if="isSubscriptionActive && !hideMenu"
-    >
+    <ul class="sidebar-menu isSubscriptionActiveu" v-if="isSubscriptionActive && !hideMenu">
       <li
         v-for="(item, idx) in menuOptions"
         :key="idx"
@@ -149,11 +146,11 @@
   </nav>
 </template>
 <script>
-import "@/assets/global.css";
-import { canAccess } from "@/permissions.js";
+import '@/assets/global.css';
+import { canAccess } from '@/permissions.js';
 
 export default {
-  name: "Sidebar",
+  name: 'Sidebar',
   props: {
     hideMenu: {
       type: Boolean,
@@ -171,17 +168,17 @@ export default {
   computed: {
     role() {
       // Get role from encrypted storage for consistency
-      const storage = require("@/services/storage").default;
-      return storage.get("role") || "";
+      const storage = require('@/services/storage').default;
+      return storage.get('role') || '';
     },
     isSubscriptionActive() {
-      const storage = require("@/services/storage").default;
-      if (!storage || typeof storage.get !== "function") return false;
-      const role = storage.get("role") || "";
-      const status = storage.get("subscription_status");
+      const storage = require('@/services/storage').default;
+      if (!storage || typeof storage.get !== 'function') return false;
+      const role = storage.get('role') || '';
+      const status = storage.get('subscription_status');
       // Only hide UI for organization admins when subscription is not active
-      if (role === "organizationadmin") {
-        return status === "active";
+      if (role === 'organizationadmin') {
+        return status === 'active';
       }
       // For other roles, always show the sidebar
       return true;
@@ -189,67 +186,65 @@ export default {
     menuOptions() {
       if (this.hideMenu) return [];
       const allMenus = [
-        { route: "/dashboard", label: "Dashboard" },
-        { route: "/organizations", label: "Organizations" },
-        { route: "/notifications", label: "Notification" },
-        { route: "/user-permission", label: "User + Permission" },
-        { route: "/leads", label: "Leads" },
-        { route: "/my-organization", label: "My Organization" },
+        { route: '/dashboard', label: 'Dashboard' },
+        { route: '/organizations', label: 'Organizations' },
+        { route: '/notifications', label: 'Notification' },
+        { route: '/user-permission', label: 'User + Permission' },
+        { route: '/leads', label: 'Leads' },
+        { route: '/my-organization', label: 'My Organization' },
         {
-          route: "/training-resources",
-          label: "Training & Resources",
-          style: { fontSize: "0.8rem !important" },
+          route: '/training-resources',
+          label: 'Training & Resources',
+          style: { fontSize: '0.8rem !important' },
         },
-        { route: "/assessments", label: "Assessments" },
+        { route: '/assessments', label: 'Assessments' },
       ];
       // Filter menus based on permissions
-      return allMenus.filter((menu) =>
-        canAccess(this.role, "routes", menu.route)
-      );
+      return allMenus.filter((menu) => canAccess(this.role, 'routes', menu.route));
     },
   },
   methods: {
     handleLinkClick() {
-      this.$emit("menu-item-clicked");
+      this.$emit('menu-item-clicked');
     },
     getCircleStyle(idx) {
       const top = idx === 0 ? 24 : 54 * idx + 24;
       return {
-        position: "absolute",
-        left: "calc(50% - 22.5px)",
+        position: 'absolute',
+        left: 'calc(50% - 22.5px)',
         top: `${top}px`,
-        width: "45px",
-        height: "45px",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
+        width: '45px',
+        height: '45px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         padding: 0,
         margin: 0,
-        listStyle: "none",
+        listStyle: 'none',
       };
     },
     isActive(route) {
       // Highlight for /organizations and all subroutes
-      if (route === "/organizations") {
-        return this.$route.path.startsWith("/organizations");
+      if (route === '/organizations') {
+        return this.$route.path.startsWith('/organizations');
       }
-      if (route === "/leads") {
-        return this.$route.path.startsWith("/leads");
+      if (route === '/leads') {
+        return this.$route.path.startsWith('/leads');
       }
-      if (route === "/my-organization") {
-        return this.$route.path.startsWith("/my-organization");
+      if (route === '/my-organization') {
+        return this.$route.path.startsWith('/my-organization');
       }
-      if (route === "/dashboard") {
-        return this.$route.path.startsWith("/dashboard");
+      if (route === '/dashboard') {
+        return this.$route.path.startsWith('/dashboard');
       }
-      if (route === "/notifications") {
-        return this.$route.path.startsWith("/notifications");
+      if (route === '/notifications') {
+        return this.$route.path.startsWith('/notifications');
       }
-      if (route === "/assessments") {
-        return this.$route.path.startsWith("/assessments");
+      if (route === '/assessments') {
+        return this.$route.path.startsWith('/assessments');
       }
-      if (route === "/training-resources") {
-        return this.$route.path.startsWith("/training-resources");
+      if (route === '/training-resources') {
+        return this.$route.path.startsWith('/training-resources');
       }
       return this.$route.path === route;
     },
@@ -335,7 +330,7 @@ export default {
   letter-spacing: 2px;
   text-align: left;
   margin-left: 12px;
-  font-family: "Avenir", Helvetica, Arial, sans-serif;
+  font-family: 'Avenir', Helvetica, Arial, sans-serif;
   white-space: nowrap;
 }
 

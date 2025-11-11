@@ -11,6 +11,11 @@ class StoreAssessmentRequest extends FormRequest
         return true;
     }
 
+    /**
+     * Validation rules for storing an assessment.
+     *
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [

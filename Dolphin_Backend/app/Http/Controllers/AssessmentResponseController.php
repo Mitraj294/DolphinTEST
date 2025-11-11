@@ -17,7 +17,7 @@ class AssessmentResponseController extends Controller
 {
     /**
      * Get all assessments
-     * 
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function getAssessments(): JsonResponse
@@ -34,7 +34,7 @@ class AssessmentResponseController extends Controller
 
     /**
      * Store user's assessment responses
-     * 
+     *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -152,7 +152,7 @@ class AssessmentResponseController extends Controller
 
     /**
      * Get user's assessment responses
-     * 
+     *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -197,7 +197,7 @@ class AssessmentResponseController extends Controller
 
     /**
      * Get all attempts for the current user
-     * 
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function getUserAttempts(): JsonResponse
@@ -226,7 +226,7 @@ class AssessmentResponseController extends Controller
 
     /**
      * Get assessment timing data for a specific attempt
-     * 
+     *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */

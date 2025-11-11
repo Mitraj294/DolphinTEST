@@ -3,26 +3,17 @@
     <div class="modal-card" style="max-width: 900px">
       <button class="modal-close-btn" @click="$emit('close')">&times;</button>
       <div class="modal-title">Schedule an Assessment</div>
-      <div
-        class="modal-desc"
-        style="font-size: 1.2rem !important; margin-bottom: 32px !important"
-      >
+      <div class="modal-desc" style="font-size: 1.2rem !important; margin-bottom: 32px !important">
         Schedule this assessment to be sent to members of your organization.
       </div>
 
       <!-- Loading State -->
-      <div
-        v-if="scheduledLoading || loadingGroups || loadingMembers"
-        class="loading-container"
-      >
+      <div v-if="scheduledLoading || loadingGroups || loadingMembers" class="loading-container">
         Loading...
       </div>
 
       <!-- Existing Schedule Display -->
-      <div
-        v-else-if="scheduledStatus === 'scheduled' && scheduledDetails"
-        class="scheduled-info"
-      >
+      <div v-else-if="scheduledStatus === 'scheduled' && scheduledDetails" class="scheduled-info">
         <h3>Assessment Already Scheduled</h3>
         <p>This assessment is scheduled to be sent on:</p>
         <p>
@@ -32,7 +23,7 @@
               ? new Date(
                   `${scheduledDetails.schedule.date}T${scheduledDetails.schedule.time}`
                 ).toLocaleDateString()
-              : ""
+              : ''
           }}
         </p>
         <p>
@@ -42,7 +33,7 @@
               ? new Date(
                   `${scheduledDetails.schedule.date}T${scheduledDetails.schedule.time}`
                 ).toLocaleTimeString()
-              : ""
+              : ''
           }}
         </p>
         <p>
@@ -50,15 +41,12 @@
           {{
             (scheduledDetails.emails &&
               scheduledDetails.emails[0] &&
-              (scheduledDetails.emails[0].recipient_email ||
-                scheduledDetails.emails[0].email)) ||
-            "Selected members/groups"
+              (scheduledDetails.emails[0].recipient_email || scheduledDetails.emails[0].email)) ||
+            'Selected members/groups'
           }}
         </p>
         <div class="modal-form-actions">
-          <button type="button" class="org-edit-cancel" @click="$emit('close')">
-            Close
-          </button>
+          <button type="button" class="org-edit-cancel" @click="$emit('close')">Close</button>
         </div>
       </div>
 
@@ -75,15 +63,13 @@
           "
         >
           <div class="modal-form-row-div" style="flex: 1; min-width: 0">
-            <FormLabel
-              style="font-size: 1rem !important; margin: 0 0 6px 0 !important"
+            <FormLabel style="font-size: 1rem !important; margin: 0 0 6px 0 !important"
               >Select Date</FormLabel
             >
             <FormInput v-model="scheduleDate" type="date" required />
           </div>
           <div class="modal-form-row-div" style="flex: 1; min-width: 0">
-            <FormLabel
-              style="font-size: 1rem !important; margin: 0 0 6px 0 !important"
+            <FormLabel style="font-size: 1rem !important; margin: 0 0 6px 0 !important"
               >Select Time</FormLabel
             >
             <FormInput v-model="scheduleTime" type="time" required />
@@ -100,30 +86,24 @@
           "
         >
           <div class="modal-form-row-div" style="flex: 1; min-width: 0">
-            <FormLabel
-              style="font-size: 1rem !important; margin: 0 0 6px 0 !important"
+            <FormLabel style="font-size: 1rem !important; margin: 0 0 6px 0 !important"
               >Select Group</FormLabel
             >
             <MultiSelectDropdown
               :options="groups"
-              :selectedItems="
-                Array.isArray(selectedGroupIds) ? selectedGroupIds : []
-              "
+              :selectedItems="Array.isArray(selectedGroupIds) ? selectedGroupIds : []"
               @update:selectedItems="onGroupSelection"
               placeholder="Select one or more groups"
               :enableSelectAll="true"
             />
           </div>
           <div class="modal-form-row-div" style="flex: 1; min-width: 0">
-            <FormLabel
-              style="font-size: 1rem !important; margin: 0 0 6px 0 !important"
+            <FormLabel style="font-size: 1rem !important; margin: 0 0 6px 0 !important"
               >Select Member</FormLabel
             >
             <MultiSelectDropdown
               :options="filteredMembers"
-              :selectedItems="
-                Array.isArray(selectedMemberIds) ? selectedMemberIds : []
-              "
+              :selectedItems="Array.isArray(selectedMemberIds) ? selectedMemberIds : []"
               @update:selectedItems="onMemberSelection"
               placeholder="Select one or more members"
               :enableSelectAll="true"
@@ -132,17 +112,11 @@
         </FormRow>
 
         <div class="modal-form-actions">
-          <button
-            type="submit"
-            class="btn btn-primary"
-            :disabled="isSubmitting"
-          >
+          <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
             <i class="fas fa-calendar-check"></i>
-            {{ isSubmitting ? "Scheduling..." : "Schedule" }}
+            {{ isSubmitting ? 'Scheduling...' : 'Schedule' }}
           </button>
-          <button type="button" class="org-edit-cancel" @click="$emit('close')">
-            Cancel
-          </button>
+          <button type="button" class="org-edit-cancel" @click="$emit('close')">Cancel</button>
         </div>
       </form>
     </div>
@@ -150,22 +124,23 @@
 </template>
 
 <script>
-import FormInput from "@/components/Common/Common_UI/Form/FormInput.vue";
-import FormLabel from "@/components/Common/Common_UI/Form/FormLabel.vue";
-import FormRow from "@/components/Common/Common_UI/Form/FormRow.vue";
-import MultiSelectDropdown from "@/components/Common/Common_UI/Form/MultiSelectDropdown.vue";
-import storage from "@/services/storage";
-import axios from "axios";
-import { useToast } from "primevue/usetoast";
+import FormInput from '@/components/Common/Common_UI/Form/FormInput.vue';
+import FormLabel from '@/components/Common/Common_UI/Form/FormLabel.vue';
+import FormRow from '@/components/Common/Common_UI/Form/FormRow.vue';
+import MultiSelectDropdown from '@/components/Common/Common_UI/Form/MultiSelectDropdown.vue';
+import storage from '@/services/storage';
+import axios from 'axios';
+import { useToast } from 'primevue/usetoast';
 
 export default {
-  name: "ScheduleAssessmentModal",
+  name: 'ScheduleAssessmentModal',
   components: {
     FormInput,
     FormLabel,
     MultiSelectDropdown,
     FormRow,
   },
+  emits: ['close', 'schedule'],
   props: {
     assessment_id: {
       type: [Number, String],
@@ -188,8 +163,8 @@ export default {
       members: [],
       selectedGroupIds: [],
       selectedMemberIds: [],
-      scheduleDate: "",
-      scheduleTime: "",
+      scheduleDate: '',
+      scheduleTime: '',
     };
   },
   computed: {
@@ -206,23 +181,24 @@ export default {
     // --- Helpers ---------------------------------------------------------
     // Return an array of member objects who belong to the supplied group id
     groupMembersFor(groupId) {
+      const gid = typeof groupId === 'object' && groupId ? groupId.id : groupId;
       return this.members.filter(
         (member) =>
-          Array.isArray(member.group_ids) && member.group_ids.includes(groupId)
+          Array.isArray(member.group_ids) && member.group_ids.some((g) => Number(g) === Number(gid))
       );
     },
 
     // Merge two arrays of member objects (existing + toAdd) deduped by id.
     // The resulting array preserves the ordering of `this.members`.
     mergeMembersById(existing = [], toAdd = []) {
-      const mergedById = {};
-      for (const m of existing) {
-        if (m && m.id !== undefined) mergedById[m.id] = m;
-      }
-      for (const m of toAdd) {
-        if (m && m.id !== undefined) mergedById[m.id] = m;
-      }
-      return this.members.filter((m) => mergedById[m.id]);
+      const mergedById = new Map();
+      const pushIfValid = (m) => {
+        if (m && m.id !== undefined && m.id !== null) mergedById.set(Number(m.id), m);
+      };
+      (existing || []).forEach(pushIfValid);
+      (toAdd || []).forEach(pushIfValid);
+      // preserve ordering from this.members for predictable UI
+      return (this.members || []).filter((m) => mergedById.has(Number(m.id)));
     },
 
     // Return true if all members of a group are present in the selectedIdSet
@@ -255,22 +231,16 @@ export default {
       );
 
       // Merge manual selections with group members (deduped)
-      const existing = Array.isArray(this.selectedMemberIds)
-        ? this.selectedMemberIds
-        : [];
+      const existing = Array.isArray(this.selectedMemberIds) ? this.selectedMemberIds : [];
       this.selectedMemberIds = this.mergeMembersById(existing, groupMembers);
     },
 
     onMemberSelection(selectedMembers) {
       // selectedMembers is an array of member objects from MultiSelectDropdown
-      this.selectedMemberIds = Array.isArray(selectedMembers)
-        ? selectedMembers
-        : [];
+      this.selectedMemberIds = Array.isArray(selectedMembers) ? selectedMembers : [];
 
       // Build a set of selected member ids for quick lookup
-      const selectedIds = new Set(
-        this.selectedMemberIds.map((m) => Number(m.id))
-      );
+      const selectedIds = new Set(this.selectedMemberIds.map((m) => Number(m.id)));
 
       // Determine which groups should be auto-selected: those where ALL members
       // of the group are present in selectedMemberIds
@@ -278,17 +248,13 @@ export default {
       for (const group of this.groups) {
         // find members belonging to this group
         const groupMembers = this.members.filter(
-          (member) =>
-            Array.isArray(member.group_ids) &&
-            member.group_ids.includes(group.id)
+          (member) => Array.isArray(member.group_ids) && member.group_ids.includes(group.id)
         );
 
         if (groupMembers.length === 0) {
           // no members in this group, skip
         } else {
-          const allSelected = groupMembers.every((gm) =>
-            selectedIds.has(Number(gm.id))
-          );
+          const allSelected = groupMembers.every((gm) => selectedIds.has(Number(gm.id)));
 
           if (allSelected) {
             autoSelectedGroups.push(group);
@@ -302,6 +268,16 @@ export default {
     async schedule() {
       this.isSubmitting = true;
       try {
+        // Basic validation
+        if (!this.scheduleDate || !this.scheduleTime) {
+          this.toast.add({
+            severity: 'warn',
+            summary: 'Missing',
+            detail: 'Please select date and time.',
+          });
+          this.isSubmitting = false;
+          return;
+        }
         // Emit schedule payload to parent so parent can perform both
         // assessment schedule creation and scheduling individual emails.
         const payload = {
@@ -319,20 +295,20 @@ export default {
           })),
         };
 
-        this.$emit("schedule", payload);
+        this.$emit('schedule', payload);
         this.toast.add({
-          severity: "success",
-          summary: "Success",
-          detail: "Assessment scheduled (sending)...",
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Assessment scheduled (sending)...',
           life: 3000,
         });
-        this.$emit("close");
+        this.$emit('close');
       } catch (error) {
-        console.error("Failed to schedule assessment:", error);
-        const errorDetail = error.response?.data?.message || "";
+        console.debug && console.debug('Failed to schedule assessment:', error);
+        const errorDetail = error.response?.data?.message || '';
         this.toast.add({
-          severity: "error",
-          summary: "Error",
+          severity: 'error',
+          summary: 'Error',
           detail: errorDetail,
           life: 4000,
         });
@@ -343,18 +319,15 @@ export default {
 
     async checkExistingSchedule() {
       if (!this.assessment_id) {
-        console.warn("[ScheduleAssessmentModal] assessment_id is missing.");
+        // assessment_id missing — nothing to check
         this.scheduledLoading = false;
         return;
       }
 
       this.scheduledLoading = true;
       try {
-        // NOTE: /api/scheduled-email/show endpoint was removed during cleanup
-        // Schedule functionality needs to be reimplemented
-        console.warn(
-          "Schedule checking disabled - endpoint removed during cleanup"
-        );
+        // If backend provides schedule-checking endpoint, implement here.
+        // For now assume none; leave scheduledDetails null (non-fatal).
         this.scheduledStatus = null;
         this.scheduledDetails = null;
 
@@ -379,56 +352,64 @@ export default {
         */
       } catch (error) {
         this.scheduledStatus = null;
-        console.error("Error checking schedule status:", error);
+        console.debug && console.debug('Error checking schedule status:', error);
       } finally {
         this.scheduledLoading = false;
       }
     },
 
     async fetchGroups() {
-      const authToken = storage.get("authToken");
-      const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-      const response = await axios.get(`${API_BASE_URL}/api/groups`, {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
-      const groupsData = response.data?.data || response.data || [];
-      return groupsData.map((g) => ({ id: g.id, name: g.name }));
+      try {
+        const authToken = storage.get('authToken');
+        const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
+        const response = await axios.get(`${API_BASE_URL}/api/groups`, {
+          headers: { ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
+        });
+        const groupsData = response.data?.data || response.data || [];
+        return groupsData.map((g) => ({ id: g.id, name: g.name }));
+      } catch (err) {
+        console.debug && console.debug('fetchGroups failed', err);
+        return [];
+      }
     },
 
     async fetchMembers() {
-      const authToken = storage.get("authToken");
-      const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-      const response = await axios.get(
-        `${API_BASE_URL}/api/organization/members`,
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }
-      );
-      const membersData = response.data?.data || response.data || [];
-      return membersData.map((m) => ({
-        id: m.id,
-        name: `${m.first_name} ${m.last_name}`.trim(),
-        email: m.email,
-        group_ids: m.groups ? m.groups.map((g) => g.id) : [],
-      }));
+      try {
+        const authToken = storage.get('authToken');
+        const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
+        const response = await axios.get(`${API_BASE_URL}/api/organization/members`, {
+          headers: { ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
+        });
+        const membersData = response.data?.data || response.data || [];
+        return membersData.map((m) => ({
+          id: m.id,
+          name: `${m.first_name || ''} ${m.last_name || ''}`.trim(),
+          email: m.email,
+          group_ids: Array.isArray(m.groups)
+            ? m.groups.map((g) => g.id)
+            : Array.isArray(m.group_ids)
+              ? m.group_ids.map(Number)
+              : [],
+        }));
+      } catch (err) {
+        console.debug && console.debug('fetchMembers failed', err);
+        return [];
+      }
     },
 
     async fetchModalData() {
       this.loadingGroups = true;
       this.loadingMembers = true;
       try {
-        const [groups, members] = await Promise.all([
-          this.fetchGroups(),
-          this.fetchMembers(),
-        ]);
+        const [groups, members] = await Promise.all([this.fetchGroups(), this.fetchMembers()]);
         this.groups = groups;
         this.members = members;
       } catch (error) {
-        console.error("Error fetching modal data:", error);
+        console.debug && console.debug('Error fetching modal data:', error);
         this.toast.add({
-          severity: "error",
-          summary: "Error",
-          detail: "Could not load groups or members.",
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Could not load groups or members.',
           life: 4000,
         });
       } finally {

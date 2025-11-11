@@ -10,26 +10,20 @@
         <div class="user-assessment-table-container">
           <div class="user-assessment-words-grid">
             <label
-                v-for="(option, idx) in currentQuestion.options"
-                :key="`${option}-${idx}`"
-                class="user-assessment-checkbox-label"
-                :class="{ checked: currentSelectedWords.includes(option) }"
-              >
+              v-for="(option, idx) in currentQuestion.options"
+              :key="`${option}-${idx}`"
+              class="user-assessment-checkbox-label"
+              :class="{ checked: currentSelectedWords.includes(option) }"
+            >
               <span class="user-assessment-checkbox-custom"></span>
-              <input
-                type="checkbox"
-                :value="option"
-                v-model="selectedWords[step - 1]"
-              />
+              <input type="checkbox" :value="option" v-model="selectedWords[step - 1]" />
               {{ option }}
             </label>
           </div>
         </div>
         <div class="user-assessment-footer">
           <div style="flex: 1; display: flex; align-items: center">
-            <span class="user-assessment-step-btn">
-              Question {{ step }} of {{ totalSteps }}
-            </span>
+            <span class="user-assessment-step-btn"> Question {{ step }} of {{ totalSteps }} </span>
           </div>
           <div
             style="
@@ -40,13 +34,7 @@
               gap: 12px;
             "
           >
-            <button
-              v-if="step > 1"
-              class="user-assessment-back-btn"
-              @click="goToBack"
-            >
-              Back
-            </button>
+            <button v-if="step > 1" class="user-assessment-back-btn" @click="goToBack">Back</button>
             <button
               v-if="step < totalSteps"
               class="user-assessment-next-btn"
@@ -84,11 +72,10 @@
             Assessment submitted successfully and processed!
           </div>
           <div class="user-assessment-success-desc">
-            Lorem Ipsum is simply dummy text of the printing and typesetting
-            industry. Lorem Ipsum has been the industry's standard dummy text
-            ever since the 1500s, when an unknown printer took a galley of type
-            and scrambled it to make a type specimen book. It has survived not
-            only five centuries, but also the leap into electronic typesetting,
+            Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum
+            has been the industry's standard dummy text ever since the 1500s, when an unknown
+            printer took a galley of type and scrambled it to make a type specimen book. It has
+            survived not only five centuries, but also the leap into electronic typesetting,
             remaining essentially unchanged
           </div>
           <button
@@ -98,11 +85,7 @@
           >
             Manage Subscription
           </button>
-          <button
-            v-else
-            class="user-assessment-success-btn"
-            @click="explorePlans"
-          >
+          <button v-else class="user-assessment-success-btn" @click="explorePlans">
             Explore Subscriptions
           </button>
           <div style="margin-top: 16px"></div>
@@ -113,17 +96,17 @@
 </template>
 
 <script>
-import axios from "axios";
-import Toast from "primevue/toast";
-import { useToast } from "primevue/usetoast";
-import { computed, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
-import { fetchSubscriptionStatus } from "@/services/subscription";
+import axios from 'axios';
+import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
+import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { fetchSubscriptionStatus } from '@/services/subscription';
 
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || "";
+const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || '';
 
 export default {
-  name: "UserAssessment",
+  name: 'UserAssessment',
   components: { Toast },
   setup() {
     const router = useRouter();
@@ -142,17 +125,12 @@ export default {
 
     const totalSteps = computed(() => questions.value.length);
     const currentQuestion = computed(
-      () => questions.value[step.value - 1] || { question: "", options: [] }
+      () => questions.value[step.value - 1] || { question: '', options: [] }
     );
-    const currentSelectedWords = computed(
-      () => selectedWords.value[step.value - 1] || []
-    );
+    const currentSelectedWords = computed(() => selectedWords.value[step.value - 1] || []);
     const canProceed = computed(() => {
       // Require at least one word selected for the current question
-      return (
-        selectedWords.value[step.value - 1] &&
-        selectedWords.value[step.value - 1].length > 0
-      );
+      return selectedWords.value[step.value - 1] && selectedWords.value[step.value - 1].length > 0;
     });
 
     // Fetch assessments and previous responses from backend
@@ -163,7 +141,7 @@ export default {
           headers,
           params,
         });
-          if (Array.isArray(resQ.data)) {
+        if (Array.isArray(resQ.data)) {
           // Transform assessment data to match old question format for compatibility
           const normalizeFormDefinition = (def) => {
             // Try to robustly parse strings which might be double-encoded JSON
@@ -171,10 +149,10 @@ export default {
             try {
               // If it's a string that looks like JSON, repeatedly parse up to a few times
               let attempts = 0;
-              while (typeof parsed === "string" && attempts < 5) {
+              while (typeof parsed === 'string' && attempts < 5) {
                 const trimmed = parsed.trim();
                 // If it starts with [ or { or " then attempt parse
-                if (trimmed.startsWith("[") || trimmed.startsWith("{") || trimmed.startsWith('"')) {
+                if (trimmed.startsWith('[') || trimmed.startsWith('{') || trimmed.startsWith('"')) {
                   parsed = JSON.parse(parsed);
                   attempts++;
                 } else {
@@ -184,15 +162,15 @@ export default {
             } catch (e) {
               // If parsing fails, fallback to using the original value
               // eslint-disable-next-line no-console
-              console.warn("normalizeFormDefinition: failed to parse", e);
+              console.debug && console.debug('normalizeFormDefinition: failed to parse', e);
               parsed = def;
             }
 
             // Now normalize into an array of strings
             if (Array.isArray(parsed)) {
               // If items are objects, try to extract a label/text property
-              if (parsed.every((it) => typeof it === "string")) return parsed;
-              if (parsed.every((it) => it && typeof it === "object")) {
+              if (parsed.every((it) => typeof it === 'string')) return parsed;
+              if (parsed.every((it) => it && typeof it === 'object')) {
                 return parsed.map((it) => it.label || it.text || String(it));
               }
               // Mixed types - coerce to strings
@@ -200,9 +178,15 @@ export default {
             }
 
             // If parsed is an object containing an options/choices field
-            if (parsed && typeof parsed === "object") {
-              if (Array.isArray(parsed.options)) return parsed.options.map((it) => (typeof it === 'string' ? it : it.label || it.text || String(it)));
-              if (Array.isArray(parsed.choices)) return parsed.choices.map((it) => (typeof it === 'string' ? it : it.label || it.text || String(it)));
+            if (parsed && typeof parsed === 'object') {
+              if (Array.isArray(parsed.options))
+                return parsed.options.map((it) =>
+                  typeof it === 'string' ? it : it.label || it.text || String(it)
+                );
+              if (Array.isArray(parsed.choices))
+                return parsed.choices.map((it) =>
+                  typeof it === 'string' ? it : it.label || it.text || String(it)
+                );
             }
 
             // Not parseable into an array - return empty array
@@ -231,13 +215,10 @@ export default {
 
       // Helper to fetch previous responses (replacing answers)
       const loadAnswers = async (headers, params) => {
-        const resA = await axios.get(
-          `${API_BASE_URL}/api/assessment-responses`,
-          {
-            headers,
-            params,
-          }
-        );
+        const resA = await axios.get(`${API_BASE_URL}/api/assessment-responses`, {
+          headers,
+          params,
+        });
         if (Array.isArray(resA.data)) {
           for (const response of resA.data) {
             const idx = questions.value.findIndex(
@@ -251,16 +232,16 @@ export default {
       };
 
       try {
-        const storage = require("@/services/storage").default;
-        const authToken = storage.get("authToken");
-        const userId = storage.get("user_id");
+        const storage = require('@/services/storage').default;
+        const authToken = storage.get('authToken');
+        const userId = storage.get('user_id');
         const headers = {};
         if (authToken) {
-          headers["Authorization"] = `Bearer ${authToken}`;
+          headers['Authorization'] = `Bearer ${authToken}`;
         }
         const params = {};
         if (userId) {
-          params["user_id"] = userId;
+          params['user_id'] = userId;
         }
 
         await loadQuestions(headers, params);
@@ -270,23 +251,21 @@ export default {
         // network call for non-organization-admin roles to avoid 403s.
         try {
           const s = await fetchSubscriptionStatus();
-          isSubscribed.value = !!(
-            s && (s.active || s.status === "active" || s.subscribed)
-          );
+          isSubscribed.value = !!(s && (s.active || s.status === 'active' || s.subscribed));
         } catch (err) {
-          console.warn("Failed to fetch subscription status (via service):", err);
-          isSubscribed.value = "expired";
+          console.debug && console.debug('Failed to fetch subscription status (via service):', err);
+          isSubscribed.value = 'expired';
         }
       } catch (error) {
         if (error.response?.status === 401) {
-          router.push("/login");
+          router.push('/login');
           return;
         }
-        if (toast && typeof toast.add === "function") {
+        if (toast && typeof toast.add === 'function') {
           toast.add({
-            severity: "error",
-            summary: "Load failed",
-            detail: "Failed to load assessment questions or answers.",
+            severity: 'error',
+            summary: 'Load failed',
+            detail: 'Failed to load assessment questions or answers.',
             sticky: true,
           });
         }
@@ -318,18 +297,18 @@ export default {
     // Submit
     const handleSubmit = async () => {
       if (!canProceed.value) return;
-      const storage = require("@/services/storage").default;
-      const authToken = storage.get("authToken");
+      const storage = require('@/services/storage').default;
+      const authToken = storage.get('authToken');
       if (!authToken) {
-        if (toast && typeof toast.add === "function") {
+        if (toast && typeof toast.add === 'function') {
           toast.add({
-            severity: "warn",
-            summary: "Not logged in",
-            detail: "You must be logged in to submit an assessment.",
+            severity: 'warn',
+            summary: 'Not logged in',
+            detail: 'You must be logged in to submit an assessment.',
             sticky: true,
           });
         }
-        router.push("/login");
+        router.push('/login');
         return;
       }
 
@@ -354,7 +333,7 @@ export default {
             { responses: payload },
             {
               headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
                 Authorization: `Bearer ${token}`,
               },
             }
@@ -363,14 +342,14 @@ export default {
         } catch (error) {
           const isAuthError = error.response?.status === 401;
           const errorMessage = isAuthError
-            ? "Your session has expired. Please log in again."
-            : "Failed to submit assessment. Please try again.";
-          if (isAuthError) router.push("/login");
+            ? 'Your session has expired. Please log in again.'
+            : 'Failed to submit assessment. Please try again.';
+          if (isAuthError) router.push('/login');
 
-          if (toast && typeof toast.add === "function") {
+          if (toast && typeof toast.add === 'function') {
             toast.add({
-              severity: isAuthError ? "warn" : "error",
-              summary: "Submission failed",
+              severity: isAuthError ? 'warn' : 'error',
+              summary: 'Submission failed',
               detail: errorMessage,
               sticky: true,
             });
@@ -385,11 +364,11 @@ export default {
 
     // Success page navigation handlers
     const goToManageSubscription = () => {
-      router.push({ name: "ManageSubscription" });
+      router.push({ name: 'ManageSubscription' });
     };
 
     const explorePlans = () => {
-      router.push({ name: "SubscriptionPlans" });
+      router.push({ name: 'SubscriptionPlans' });
     };
 
     return {
@@ -577,7 +556,9 @@ export default {
   font-weight: 500;
   cursor: pointer;
 
-  transition: background 0.18s, border 0.18s;
+  transition:
+    background 0.18s,
+    border 0.18s;
 }
 .user-assessment-back-btn:hover {
   background: #f5f5f5;

@@ -253,7 +253,7 @@ class OrganizationController extends Controller
     private function formatOrganizationPayload(Organization $org, ?Subscription $providedLatestSubscription = null): array
     {
         $user = $org->user;
-        
+
         // Use the provided latest subscription (prefetched) if available to avoid extra queries
         $latestSubscription = $providedLatestSubscription;
         if (!$latestSubscription && $org->user_id) {
@@ -262,13 +262,13 @@ class OrganizationController extends Controller
                 ->first();
         }
 
-        $salesPersonName = $org->salesPerson 
-            ? trim($org->salesPerson->first_name . ' ' . $org->salesPerson->last_name) 
+        $salesPersonName = $org->salesPerson
+            ? trim($org->salesPerson->first_name . ' ' . $org->salesPerson->last_name)
             : null;
 
         // Determine primary role for the organization's user
-        $userRole = $user && $user->roles->count() > 0 
-            ? $user->roles->first()->name ?? null 
+        $userRole = $user && $user->roles->count() > 0
+            ? $user->roles->first()->name ?? null
             : null;
 
         $address = $org->address;

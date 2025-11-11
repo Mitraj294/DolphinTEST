@@ -6,11 +6,10 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class SendAssessmentLinkRequest extends FormRequest
 {
-
     // Determine if the user is authorized to make this request.
     // @return bool
 
-    public function authorize()
+    public function authorize(): bool
     {
         // For now, allow any authenticated user to send a link.
         // You can add more specific authorization logic here if needed.
@@ -21,13 +20,16 @@ class SendAssessmentLinkRequest extends FormRequest
     // Get the validation rules that apply to the request.
     // @return array
 
-    public function rules()
+    /**
+     * Validation rules for sending assessment link.
+     *
+     * @return array<string, mixed>
+     */
+    public function rules(): array
     {
         return [
-            'assessment_id' => 'required|exists:organization_assessments,id',
-            'member_id' => 'required|exists:members,id',
-            'email' => 'required|email',
-            'group_id' => 'nullable|exists:groups,id',
+            'lead_id' => 'required|integer',
+            'assessment_id' => 'required|integer',
         ];
     }
 }

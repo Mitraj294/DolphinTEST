@@ -24,10 +24,7 @@
                   icon="fas fa-cog"
                   placeholder="Organization Name"
                 />
-                <FormLabel
-                  v-if="errors.organization_name"
-                  class="error-message"
-                >
+                <FormLabel v-if="errors.organization_name" class="error-message">
                   {{ errors.organization_name[0] }}
                 </FormLabel>
               </div>
@@ -46,10 +43,7 @@
                   ]"
                   required
                 />
-                <FormLabel
-                  v-if="errors.organization_size"
-                  class="error-message"
-                >
+                <FormLabel v-if="errors.organization_size" class="error-message">
                   {{ errors.organization_size[0] }}
                 </FormLabel>
               </div>
@@ -73,7 +67,7 @@
                 </FormLabel>
 
                 <!-- If source is 'Other' or a free-text was provided, allow editing reference text -->
-                <div v-if="showReferralReference" style="margin-top:8px;">
+                <div v-if="showReferralReference" style="margin-top: 8px">
                   <FormLabel>Reference (details)</FormLabel>
                   <FormInput
                     v-model="form.source"
@@ -160,11 +154,7 @@
               </div>
               <div>
                 <FormLabel>PIN</FormLabel>
-                <FormInput
-                  v-model="form.zip"
-                  icon="fas fa-map-pin"
-                  placeholder="Enter PIN code"
-                />
+                <FormInput v-model="form.zip" icon="fas fa-map-pin" placeholder="Enter PIN code" />
                 <FormLabel v-if="errors.zip" class="error-message">
                   {{ errors.zip[0] }}
                 </FormLabel>
@@ -176,21 +166,13 @@
               <div>
                 <FormLabel>Contract Start</FormLabel>
                 <div class="disabled-clickable" @click="onDisabledClick">
-                  <FormInput
-                    v-model="form.contractStart"
-                    icon="fas fa-calendar-alt"
-                    disabled
-                  />
+                  <FormInput v-model="form.contractStart" icon="fas fa-calendar-alt" disabled />
                 </div>
               </div>
               <div>
                 <FormLabel>Contract End</FormLabel>
                 <div class="disabled-clickable" @click="onDisabledClick">
-                  <FormInput
-                    v-model="form.contractEnd"
-                    icon="fas fa-calendar-alt"
-                    disabled
-                  />
+                  <FormInput v-model="form.contractEnd" icon="fas fa-calendar-alt" disabled />
                 </div>
               </div>
               <div>
@@ -288,16 +270,8 @@
               </div>
             </FormRow>
             <div class="org-edit-actions">
-              <button
-                type="button"
-                class="org-edit-cancel"
-                @click="$router.back()"
-              >
-                Cancel
-              </button>
-              <button type="submit" class="org-edit-update">
-                Update Details
-              </button>
+              <button type="button" class="org-edit-cancel" @click="$router.back()">Cancel</button>
+              <button type="submit" class="org-edit-update">Update Details</button>
             </div>
           </form>
         </div>
@@ -307,24 +281,19 @@
 </template>
 
 <script>
-import {
-  FormDropdown,
-  FormInput,
-  FormLabel,
-  FormRow,
-} from "@/components/Common/Common_UI/Form";
-import MainLayout from "@/components/layout/MainLayout.vue";
-import storage from "@/services/storage.js";
-import { orgSizeOptions } from "@/utils/formUtils";
-import axios from "axios";
+import { FormDropdown, FormInput, FormLabel, FormRow } from '@/components/Common/Common_UI/Form';
+import MainLayout from '@/components/layout/MainLayout.vue';
+import storage from '@/services/storage.js';
+import { orgSizeOptions } from '@/utils/formUtils';
+import axios from 'axios';
 
 // Fallback to local dev URL when env var is not set
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || "http://127.0.0.1:8000";
+const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || 'http://127.0.0.1:8000';
 
 //  Utility: API Helpers
 
 function getAuthHeaders() {
-  const authToken = storage.get("authToken");
+  const authToken = storage.get('authToken');
   return authToken ? { Authorization: `Bearer ${authToken}` } : {};
 }
 
@@ -336,10 +305,8 @@ function formatContractDate(input) {
     const d = new Date(input);
     if (Number.isNaN(d.getTime())) return input;
 
-    const day = String(d.getDate()).padStart(2, "0");
-    const monthShort = d
-      .toLocaleString("en-GB", { month: "short" })
-      .toUpperCase();
+    const day = String(d.getDate()).padStart(2, '0');
+    const monthShort = d.toLocaleString('en-GB', { month: 'short' }).toUpperCase();
     const year = d.getFullYear();
     return `${day} ${monthShort},${year}`;
   } catch {
@@ -352,14 +319,12 @@ function formatLastContacted(input) {
     const d = new Date(input);
     if (Number.isNaN(d.getTime())) return input;
 
-    const day = String(d.getDate()).padStart(2, "0");
-    const monthShort = d
-      .toLocaleString("en-GB", { month: "short" })
-      .toUpperCase();
+    const day = String(d.getDate()).padStart(2, '0');
+    const monthShort = d.toLocaleString('en-GB', { month: 'short' }).toUpperCase();
     const year = d.getFullYear();
     let hours = d.getHours();
-    const minutes = String(d.getMinutes()).padStart(2, "0");
-    const ampm = hours >= 12 ? "PM" : "AM";
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12 || 12;
     return `${day} ${monthShort},${year} ${hours}:${minutes} ${ampm}`;
   } catch {
@@ -372,7 +337,7 @@ function parseContractInput(input) {
   try {
     const d = new Date(input);
     if (Number.isNaN(d.getTime())) return null;
-    return d.toISOString().slice(0, 19).replace("T", " ");
+    return d.toISOString().slice(0, 19).replace('T', ' ');
   } catch {
     return null;
   }
@@ -386,11 +351,11 @@ function parseLastContactedInput(input) {
     if (Number.isNaN(d.getTime())) return null;
     // Build YYYY-MM-DD HH:MM:SS in UTC
     const y = d.getUTCFullYear();
-    const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-    const day = String(d.getUTCDate()).padStart(2, "0");
-    const hh = String(d.getUTCHours()).padStart(2, "0");
-    const mm = String(d.getUTCMinutes()).padStart(2, "0");
-    const ss = String(d.getUTCSeconds()).padStart(2, "0");
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    const hh = String(d.getUTCHours()).padStart(2, '0');
+    const mm = String(d.getUTCMinutes()).padStart(2, '0');
+    const ss = String(d.getUTCSeconds()).padStart(2, '0');
     return `${y}-${m}-${day} ${hh}:${mm}:${ss}`;
   } catch {
     return null;
@@ -406,13 +371,11 @@ function mapOrganizationToForm(found) {
 
   return {
     // backend sometimes uses `name`/`size` instead of `organization_name`/`organization_size`
-    organization_name: found.organization_name || found.name || "",
-    organization_size: found.organization_size || found.size || "",
+    organization_name: found.organization_name || found.name || '',
+    organization_size: found.organization_size || found.size || '',
     // include referral_other_text and other possible fields the backend may use
-    source:
-      found.source || found.referral_other_text || found.find_us || userDetails.find_us || "",
-    referral_source_id:
-      found.referral_source_id || userDetails.referral_source_id || null,
+    source: found.source || found.referral_other_text || found.find_us || userDetails.find_us || '',
+    referral_source_id: found.referral_source_id || userDetails.referral_source_id || null,
     // prefer explicit address_line_1/2 if available, fall back to generic address
     // The API might return addresses in multiple shapes. Support common variants.
     address_line_1:
@@ -421,19 +384,19 @@ function mapOrganizationToForm(found) {
       userDetails.address_line_1 ||
       found.address ||
       userDetails.address ||
-      "",
+      '',
     address_line_2:
       found.address_line_2 ||
       (found.addresses && found.addresses[0] && found.addresses[0].address_line_2) ||
       userDetails.address_line_2 ||
-      "",
+      '',
     zip:
       found.zip ||
       found.zip_code ||
       (found.addresses && found.addresses[0] && found.addresses[0].zip_code) ||
       userDetails.zip ||
       userDetails.zip_code ||
-      "",
+      '',
     country_id:
       found.country_id ||
       (found.addresses && found.addresses[0] && found.addresses[0].country_id) ||
@@ -449,20 +412,17 @@ function mapOrganizationToForm(found) {
       (found.addresses && found.addresses[0] && found.addresses[0].city_id) ||
       userDetails.city_id ||
       null,
-    contractStart: found.contract_start ? formatContractDate(found.contract_start) : "",
-    contractEnd: found.contract_end ? formatContractDate(found.contract_end) : "",
+    contractStart: found.contract_start ? formatContractDate(found.contract_start) : '',
+    contractEnd: found.contract_end ? formatContractDate(found.contract_end) : '',
     firstName:
-      user.first_name ||
-      found.first_name ||
-      (found.main_contact || "").split(" ")[0] ||
-      "",
+      user.first_name || found.first_name || (found.main_contact || '').split(' ')[0] || '',
     lastName:
       user.last_name ||
       found.last_name ||
-      (found.main_contact || "").split(" ").slice(1).join(" ") ||
-      "",
+      (found.main_contact || '').split(' ').slice(1).join(' ') ||
+      '',
     // prefer email from linked user if present
-    adminEmail: user.email || found.admin_email || "",
+    adminEmail: user.email || found.admin_email || '',
     // prefer phone from linked user details first, then organization-level phone fields, then user.phone
     adminPhone:
       userDetails.phone ||
@@ -471,13 +431,16 @@ function mapOrganizationToForm(found) {
       found.phone ||
       user.phone ||
       (user.user_details && user.user_details.phone) ||
-      "",
+      '',
     sales_person_id: found.sales_person_id || null,
     // Use org.last_contacted or user's last login fields if available
-    lastContacted: (found.last_contacted || user.last_login || user.last_logged_in || user.last_login_at)
-      ? formatLastContacted(found.last_contacted || user.last_login || user.last_logged_in || user.last_login_at)
-      : "",
-    certifiedStaff: found.certified_staff || userDetails.certified_staff || "0",
+    lastContacted:
+      found.last_contacted || user.last_login || user.last_logged_in || user.last_login_at
+        ? formatLastContacted(
+            found.last_contacted || user.last_login || user.last_logged_in || user.last_login_at
+          )
+        : '',
+    certifiedStaff: found.certified_staff || userDetails.certified_staff || '0',
   };
 }
 
@@ -510,30 +473,30 @@ function mapFormToPayload(form) {
 }
 
 export default {
-  name: "OrganizationEdit",
+  name: 'OrganizationEdit',
   components: { MainLayout, FormRow, FormLabel, FormInput, FormDropdown },
 
   data() {
     return {
       form: {
-        organization_name: "",
-        organization_size: "",
-        source: "",
-        address_line_1: "",
-        address_line_2: "",
-        zip: "",
+        organization_name: '',
+        organization_size: '',
+        source: '',
+        address_line_1: '',
+        address_line_2: '',
+        zip: '',
         country_id: null,
         state_id: null,
         city_id: null,
-        contractStart: "",
-        contractEnd: "",
-        firstName: "",
-        lastName: "",
-        adminEmail: "",
-        adminPhone: "",
+        contractStart: '',
+        contractEnd: '',
+        firstName: '',
+        lastName: '',
+        adminEmail: '',
+        adminPhone: '',
         sales_person_id: null,
-        lastContacted: "",
-        certifiedStaff: "",
+        lastContacted: '',
+        certifiedStaff: '',
         referral_source_id: null,
       },
       errors: {},
@@ -554,11 +517,12 @@ export default {
         const sel =
           this.referralSources &&
           this.referralSources.find(
-            (o) => (o.id ?? o.value ?? o).toString() === (this.form.referral_source_id ?? "").toString()
+            (o) =>
+              (o.id ?? o.value ?? o).toString() === (this.form.referral_source_id ?? '').toString()
           );
         if (sel) {
           const txt = (sel.name ?? sel.text ?? sel).toString().toLowerCase();
-          if (txt === "other") return true;
+          if (txt === 'other') return true;
         }
         // if no exact selection but there is already free-text source, show it so user can edit
         return !!(this.form.source && this.form.source.toString().trim());
@@ -575,14 +539,11 @@ export default {
 
     // page title
     this.$nextTick(() => {
-      const name =
-        this.form.organization_name ||
-        this.$route.params.organization_name ||
-        "";
+      const name = this.form.organization_name || this.$route.params.organization_name || '';
       if (this.$root && this.$root.$emit) {
         this.$root.$emit(
-          "page-title-override",
-          name ? `Edit organization : ${name}` : "Edit organization"
+          'page-title-override',
+          name ? `Edit organization : ${name}` : 'Edit organization'
         );
       }
     });
@@ -594,10 +555,9 @@ export default {
         const orgId = this.$route.params.id;
         if (!orgId) return;
 
-        const res = await axios.get(
-          `${API_BASE_URL}/api/organizations/${orgId}`,
-          { headers: getAuthHeaders() }
-        );
+        const res = await axios.get(`${API_BASE_URL}/api/organizations/${orgId}`, {
+          headers: getAuthHeaders(),
+        });
 
         if (!res.data) return;
 
@@ -643,7 +603,7 @@ export default {
           await this.fetchSalesPersons();
         }
       } catch (e) {
-        console.error("Failed to fetch organization details", e);
+        console.debug && console.debug('Failed to fetch organization details', e);
       }
     },
 
@@ -662,9 +622,9 @@ export default {
         this.errors = {};
         if (!this.orgId) {
           this.$toast?.add({
-            severity: "error",
-            summary: "Update Failed",
-            detail: "Organization not found.",
+            severity: 'error',
+            summary: 'Update Failed',
+            detail: 'Organization not found.',
             life: 3500,
           });
           return;
@@ -672,25 +632,21 @@ export default {
 
         const payload = mapFormToPayload(this.form);
 
-        await axios.patch(
-          `${API_BASE_URL}/api/organizations/${this.orgId}`,
-          payload,
-          {
-            headers: getAuthHeaders(),
-          }
-        );
+        await axios.patch(`${API_BASE_URL}/api/organizations/${this.orgId}`, payload, {
+          headers: getAuthHeaders(),
+        });
 
         this.$toast?.add({
-          severity: "success",
-          summary: "Updated",
-          detail: "Organization updated successfully.",
+          severity: 'success',
+          summary: 'Updated',
+          detail: 'Organization updated successfully.',
           life: 3500,
         });
 
-        this.$root?.$emit("page-title-override", null);
+        this.$root?.$emit('page-title-override', null);
         this.$router.push(`/organizations/${this.orgId}`);
       } catch (e) {
-        console.error("Failed to update organization", e);
+        console.debug && console.debug('Failed to update organization', e);
         // If validation errors from backend (Laravel returns 422 with errors object)
         if (e.response && e.response.status === 422 && e.response.data) {
           this.errors = e.response.data.errors || {};
@@ -698,10 +654,10 @@ export default {
           const firstField = Object.keys(this.errors)[0];
           const firstMsg = this.errors[firstField]
             ? this.errors[firstField][0]
-            : "Validation failed";
+            : 'Validation failed';
           this.$toast?.add({
-            severity: "error",
-            summary: "Validation Error",
+            severity: 'error',
+            summary: 'Validation Error',
             detail: firstMsg,
             life: 6000,
           });
@@ -709,9 +665,9 @@ export default {
         }
 
         this.$toast?.add({
-          severity: "error",
-          summary: "Update Failed",
-          detail: "Failed to update organization.",
+          severity: 'error',
+          summary: 'Update Failed',
+          detail: 'Failed to update organization.',
           life: 4500,
         });
       }
@@ -722,10 +678,8 @@ export default {
       if (!this.errors) return null;
       // try snake_case
       const snake = field.replaceAll(/[A-Z]/g, (m) => `_${m.toLowerCase()}`);
-      if (this.errors[snake] && this.errors[snake].length)
-        return this.errors[snake][0];
-      if (this.errors[field] && this.errors[field].length)
-        return this.errors[field][0];
+      if (this.errors[snake] && this.errors[snake].length) return this.errors[snake][0];
+      if (this.errors[field] && this.errors[field].length) return this.errors[field][0];
       return null;
     },
 
@@ -739,9 +693,7 @@ export default {
         this.states = [];
         return;
       }
-      const res = await axios.get(
-        `${API_BASE_URL}/api/states?country_id=${this.form.country_id}`
-      );
+      const res = await axios.get(`${API_BASE_URL}/api/states?country_id=${this.form.country_id}`);
       this.states = res.data;
     },
 
@@ -750,9 +702,7 @@ export default {
         this.cities = [];
         return;
       }
-      const res = await axios.get(
-        `${API_BASE_URL}/api/cities?state_id=${this.form.state_id}`
-      );
+      const res = await axios.get(`${API_BASE_URL}/api/cities?state_id=${this.form.state_id}`);
       this.cities = res.data;
     },
 
@@ -763,10 +713,10 @@ export default {
         });
         const users = (res.data && res.data.users) || [];
         this.salesPersons = users.filter((u) =>
-          (u.roles || []).some((r) => r.name === "salesperson")
+          (u.roles || []).some((r) => r.name === 'salesperson')
         );
       } catch (e) {
-        console.warn("Failed to fetch sales persons", e);
+        console.debug && console.debug('Failed to fetch sales persons', e);
         this.salesPersons = [];
       }
     },
@@ -778,7 +728,7 @@ export default {
         });
         this.referralSources = res.data || res.data?.options || [];
       } catch (e) {
-        console.warn("Failed to fetch referral sources", e);
+        console.debug && console.debug('Failed to fetch referral sources', e);
         this.referralSources = [];
       }
     },

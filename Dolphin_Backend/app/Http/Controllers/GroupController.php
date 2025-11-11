@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Log;
 
 class GroupController extends Controller
 {
-
     /**
      * Message constant used when the user's organization cannot be resolved.
      */

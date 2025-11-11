@@ -2,11 +2,7 @@
   <div class="login-bg">
     <Toast />
     <img src="@/assets/images/Lines.svg" alt="Lines" class="bg-lines" />
-    <img
-      src="@/assets/images/Image.svg"
-      alt="Illustration"
-      class="bg-illustration"
-    />
+    <img src="@/assets/images/Image.svg" alt="Illustration" class="bg-illustration" />
     <div class="login-card">
       <h2 class="login-title">Welcome Back</h2>
       <p class="login-subtitle">Please login to your account</p>
@@ -64,47 +60,37 @@
             <input type="checkbox" v-model="rememberMe" />
             Remember me
           </label>
-          <router-link to="/forgot-password" class="forgot-password"
-            >Forgot Password?</router-link
-          >
+          <router-link to="/forgot-password" class="forgot-password">Forgot Password?</router-link>
         </div>
         <button type="submit" class="login-btn">Login</button>
       </form>
       <div class="switch-auth">
         <span>Don't have an account?</span>
-        <router-link to="/register-simple" class="switch-link"
-          >Register here</router-link
-        >
+        <router-link to="/register-simple" class="switch-link">Register here</router-link>
       </div>
       <div class="footer">
-        <img
-          src="@/assets/images/Logo.svg"
-          alt="Dolphin Logo"
-          class="footer-logo"
-        />
-        <p class="copyright">
-          &copy; {{ currentYear }} All Rights Reserved By Dolphin
-        </p>
+        <img src="@/assets/images/Logo.svg" alt="Dolphin Logo" class="footer-logo" />
+        <p class="copyright">&copy; {{ currentYear }} All Rights Reserved By Dolphin</p>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import axios from "axios";
+import axios from 'axios';
 
-import { FormLabel } from "@/components/Common/Common_UI/Form";
-import storage from "@/services/storage";
-import { fetchCurrentUser } from "@/services/user";
-import { fetchSubscriptionStatus } from "@/services/subscription";
-import Toast from "primevue/toast";
-import { useToast } from "primevue/usetoast";
+import { FormLabel } from '@/components/Common/Common_UI/Form';
+import storage from '@/services/storage';
+import { fetchCurrentUser } from '@/services/user';
+import { fetchSubscriptionStatus } from '@/services/subscription';
+import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
 // NOTE: resolve runtime env values at call-time (when the methods run)
 // because module import happens before `loadRuntimeEnv()` and would
 // capture empty values otherwise.
 
 export default {
-  name: "Login",
+  name: 'Login',
   components: { Toast, FormLabel },
   setup() {
     const toast = useToast();
@@ -112,18 +98,18 @@ export default {
   },
   data() {
     return {
-      email: "",
-      password: "",
+      email: '',
+      password: '',
       rememberMe: false,
       showPassword: false,
       currentYear: new Date().getFullYear(),
       loading: false,
-      successMessage: "",
-      errorMessage: "",
+      successMessage: '',
+      errorMessage: '',
       errors: {},
-      error: "",
-      role: "",
-      status: "",
+      error: '',
+      role: '',
+      status: '',
     };
   },
   mounted() {
@@ -133,9 +119,9 @@ export default {
 
     if (this.$route.query.registrationSuccess) {
       this.toast.add({
-        severity: "success",
-        summary: "Registration Successful",
-        detail: "Please log in with your new account.",
+        severity: 'success',
+        summary: 'Registration Successful',
+        detail: 'Please log in with your new account.',
         life: 3000,
       });
     }
@@ -147,23 +133,23 @@ export default {
 
     // If auth token exists in storage (shared across tabs via localStorage),
     // validate it by fetching the current user and redirect to dashboard.
-    const token = storage.get("authToken");
+    const token = storage.get('authToken');
     if (token) {
       fetchCurrentUser()
         .then((user) => {
           if (user) {
-            if (user.role) storage.set("role", user.role);
+            if (user.role) storage.set('role', user.role);
             // navigate to dashboard
-            this.$router.push("/dashboard").catch(() => {});
+            this.$router.push('/dashboard').catch(() => {});
           } else {
             // token invalid — remove it so user can login normally
-            storage.remove("authToken");
+            storage.remove('authToken');
           }
         })
         .catch((e) => {
-          console.error("Error fetching current user:", e);
+          console.debug && console.debug('Error fetching current user:', e);
           // token invalid — remove it so user can login normally
-          storage.remove("authToken");
+          storage.remove('authToken');
         });
     }
   },
@@ -173,7 +159,11 @@ export default {
     },
     async handleLogin() {
       try {
-        const API_BASE_URL = (globalThis.__env && globalThis.__env.VUE_APP_API_BASE_URL) || globalThis.VUE_APP_API_BASE_URL || process.env.VUE_APP_API_BASE_URL || "";
+        const API_BASE_URL =
+          (globalThis.__env && globalThis.__env.VUE_APP_API_BASE_URL) ||
+          globalThis.VUE_APP_API_BASE_URL ||
+          process.env.VUE_APP_API_BASE_URL ||
+          '';
         const response = await axios.post(`${API_BASE_URL}/api/login`, {
           email: this.email,
           password: this.password,
@@ -186,87 +176,79 @@ export default {
         const userObj = response.data.user || {};
         const role = userObj.role;
         const name = userObj.name;
-        const firstName = userObj.first_name || "";
-        const lastName = userObj.last_name || "";
+        const firstName = userObj.first_name || '';
+        const lastName = userObj.last_name || '';
         const expiresAt = response.data.expires_at;
         // Try several places where organization_name might be present
         const organization_name =
-          (response.data.organizations &&
-            response.data.organizations.organization_name) ||
+          (response.data.organizations && response.data.organizations.organization_name) ||
           userObj.organization_name ||
           response.data.organization_name ||
-          "";
+          '';
 
         // Save tokens in storage
-        storage.set("authToken", token);
+        storage.set('authToken', token);
         // set axios header immediately so subsequent calls are authenticated
         if (token) {
-          axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         }
-        storage.set("refreshToken", refreshToken); // NEW: store refresh token
+        storage.set('refreshToken', refreshToken); // NEW: store refresh token
         if (expiresAt) {
-          storage.set("tokenExpiry", expiresAt);
+          storage.set('tokenExpiry', expiresAt);
         }
-        storage.set("role", role);
-        storage.set("first_name", firstName);
-        storage.set("last_name", lastName);
-        storage.set(
-          "userName",
-          firstName || lastName ? `${firstName} ${lastName}`.trim() : name
-        );
+        storage.set('role', role);
+        storage.set('first_name', firstName);
+        storage.set('last_name', lastName);
+        storage.set('userName', firstName || lastName ? `${firstName} ${lastName}`.trim() : name);
         // store the full user object so other components can access organization_name, organization_id, etc.
         try {
-          storage.set("user", userObj);
+          storage.set('user', userObj);
         } catch (e) {
-          console.error("Error storing user object:", e);
+          console.debug && console.debug('Error storing user object:', e);
         }
-        storage.set("organization_name", organization_name);
+        storage.set('organization_name', organization_name);
 
         // Welcome toast
-        storage.set("showDashboardWelcome", "1");
+        storage.set('showDashboardWelcome', '1');
         this.toast.add({
-          severity: "success",
-          summary: "Login Successful",
+          severity: 'success',
+          summary: 'Login Successful',
           detail: `Welcome, ${firstName} ${lastName}`.trim(),
           life: 3000,
         });
 
-        let redirectTo = "/dashboard";
+        let redirectTo = '/dashboard';
         try {
           const orgId = userObj.organization_id || userObj.org_id || null;
           const subStatus = await fetchSubscriptionStatus(orgId);
           if (subStatus) {
-            storage.set("subscription_status", subStatus.status || null);
-            storage.set("subscription_end", subStatus.subscription_end || null);
+            storage.set('subscription_status', subStatus.status || null);
+            storage.set('subscription_end', subStatus.subscription_end || null);
 
-            if (subStatus.status === "expired") {
+            if (subStatus.status === 'expired') {
               this.toast.add({
-                severity: "error",
-                summary: "Subscription Expired",
-                detail: "Please renew your subscription.",
+                severity: 'error',
+                summary: 'Subscription Expired',
+                detail: 'Please renew your subscription.',
                 life: 6000,
               });
-              redirectTo = "/manage-subscription";
+              redirectTo = '/manage-subscription';
             }
           }
         } catch (e) {
-          console.error("Failed to fetch subscription status on login:", e);
+          console.debug && console.debug('Failed to fetch subscription status on login:', e);
         }
 
         this.$router.push(redirectTo);
       } catch (error) {
-        console.error("Login failed:", error);
-        let errorMessage = "Login failed. Please check your credentials.";
-        if (
-          error.response &&
-          error.response.data &&
-          error.response.data.message
-        ) {
+        console.debug && console.debug('Login failed:', error);
+        let errorMessage = 'Login failed. Please check your credentials.';
+        if (error.response && error.response.data && error.response.data.message) {
           errorMessage = error.response.data.message;
         }
         this.toast.add({
-          severity: "error",
-          summary: "Login Error",
+          severity: 'error',
+          summary: 'Login Error',
           detail: errorMessage,
           life: 4000,
         });
@@ -275,17 +257,27 @@ export default {
 
     async refreshAccessToken() {
       try {
-        const refreshToken = storage.get("refreshToken");
+        const refreshToken = storage.get('refreshToken');
         if (!refreshToken) {
-          throw new Error("No refresh token available");
+          throw new Error('No refresh token available');
         }
 
-        const API_BASE_URL = (globalThis.__env && globalThis.__env.VUE_APP_API_BASE_URL) || globalThis.VUE_APP_API_BASE_URL || process.env.VUE_APP_API_BASE_URL || "";
-        const CLIENT_ID = (globalThis.__env && globalThis.__env.VUE_APP_CLIENT_ID) || process.env.VUE_APP_CLIENT_ID || "";
-        const CLIENT_SECRET = (globalThis.__env && globalThis.__env.VUE_APP_CLIENT_SECRET) || process.env.VUE_APP_CLIENT_SECRET || "";
+        const API_BASE_URL =
+          (globalThis.__env && globalThis.__env.VUE_APP_API_BASE_URL) ||
+          globalThis.VUE_APP_API_BASE_URL ||
+          process.env.VUE_APP_API_BASE_URL ||
+          '';
+        const CLIENT_ID =
+          (globalThis.__env && globalThis.__env.VUE_APP_CLIENT_ID) ||
+          process.env.VUE_APP_CLIENT_ID ||
+          '';
+        const CLIENT_SECRET =
+          (globalThis.__env && globalThis.__env.VUE_APP_CLIENT_SECRET) ||
+          process.env.VUE_APP_CLIENT_SECRET ||
+          '';
 
         const response = await axios.post(`${API_BASE_URL}/oauth/token`, {
-          grant_type: "refresh_token",
+          grant_type: 'refresh_token',
           refresh_token: refreshToken,
           client_id: CLIENT_ID,
           client_secret: CLIENT_SECRET,
@@ -295,22 +287,22 @@ export default {
         const newRefreshToken = response.data.refresh_token;
 
         // Save new tokens
-        storage.set("authToken", newAccessToken);
-        storage.set("refreshToken", newRefreshToken);
+        storage.set('authToken', newAccessToken);
+        storage.set('refreshToken', newRefreshToken);
 
         return newAccessToken;
       } catch (error) {
-        console.error("Token refresh failed:", error);
+        console.debug && console.debug('Token refresh failed:', error);
 
         this.toast.add({
-          severity: "error",
-          summary: "Session Expired",
-          detail: "Please log in again.",
+          severity: 'error',
+          summary: 'Session Expired',
+          detail: 'Please log in again.',
           life: 4000,
         });
         storage.clear(); // remove all tokens + user info
         storage.clear();
-        this.$router.push("/login");
+        this.$router.push('/login');
 
         return null;
       }
@@ -321,7 +313,7 @@ export default {
       try {
         return await fetchSubscriptionStatus(orgId);
       } catch (e) {
-        console.error("checkSubscriptionStatus: delegated service call failed", e);
+        console.debug && console.debug('checkSubscriptionStatus: delegated service call failed', e);
         return null;
       }
     },
@@ -378,14 +370,14 @@ export default {
   font-weight: 600;
   color: #234056;
   margin-bottom: 8px;
-  font-family: "Helvetica Neue LT Std", Arial, sans-serif;
+  font-family: 'Helvetica Neue LT Std', Arial, sans-serif;
 }
 
 .login-subtitle {
   font-size: 1rem;
   color: #787878;
   margin-bottom: 32px;
-  font-family: "Inter", Arial, sans-serif;
+  font-family: 'Inter', Arial, sans-serif;
 }
 
 .input-group {
@@ -427,7 +419,7 @@ export default {
   margin-bottom: 32px;
   font-size: 0.9rem;
   color: #787878;
-  font-family: "Inter", Arial, sans-serif;
+  font-family: 'Inter', Arial, sans-serif;
 }
 .remember-label {
   display: flex;
@@ -435,7 +427,7 @@ export default {
   gap: 8px;
   cursor: pointer;
 }
-.remember-label input[type="checkbox"] {
+.remember-label input[type='checkbox'] {
   margin: 0;
   accent-color: #0074c2;
 }
@@ -475,7 +467,7 @@ export default {
   margin-bottom: 16px;
   font-size: 1rem;
   color: #787878;
-  font-family: "Helvetica Neue LT Std", Arial, sans-serif;
+  font-family: 'Helvetica Neue LT Std', Arial, sans-serif;
 }
 
 .switch-link {
@@ -506,7 +498,7 @@ export default {
 .copyright {
   color: #787878;
   font-size: 14px;
-  font-family: "Inter", Arial, sans-serif;
+  font-family: 'Inter', Arial, sans-serif;
   text-align: center;
   margin-top: 4px;
 }

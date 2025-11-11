@@ -20,12 +20,9 @@
             </svg>
           </div>
 
-          <h2 class="thankyou-title">
-            Congratulations, {{ userName || "Valued Customer" }}!
-          </h2>
+          <h2 class="thankyou-title">Congratulations, {{ userName || 'Valued Customer' }}!</h2>
           <p class="thankyou-desc">
-            Your subscription is active. A confirmation receipt has been sent to
-            your email.
+            Your subscription is active. A confirmation receipt has been sent to your email.
           </p>
 
           <div class="key-details">
@@ -57,9 +54,7 @@
               </div>
             </div>
             <div class="plan-summary-right">
-              <button class="btn btn-outline" @click="goToBilling">
-                View Billing Details
-              </button>
+              <button class="btn btn-outline" @click="goToBilling">View Billing Details</button>
             </div>
           </div>
 
@@ -67,19 +62,14 @@
             <a :href="subscription.pdfUrl" target="_blank" rel="noopener">View Receipt</a>
           </div>
 
-          <div
-            v-else-if="loadingSession"
-            class="plan-summary plan-summary--loading"
-          >
+          <div v-else-if="loadingSession" class="plan-summary plan-summary--loading">
             <div class="loader">Loading plan details…</div>
           </div>
 
           <div class="whats-next">
             <h3 class="section-title">What's Next?</h3>
             <div class="onboarding-steps">
-              <a @click.prevent="() => router.push('/profile')"
-                >Set up your profile</a
-              >
+              <a @click.prevent="() => router.push('/profile')">Set up your profile</a>
               <a @click.prevent="() => router.push('/my-organization')"
                 >Set up your organization - Groups & Members</a
               >
@@ -87,9 +77,7 @@
           </div>
 
           <div class="success-actions">
-            <button class="btn btn-primary" @click="goToDashboard">
-              Go to Your Dashboard
-            </button>
+            <button class="btn btn-primary" @click="goToDashboard">Go to Your Dashboard</button>
           </div>
 
           <div class="thankyou-footer">
@@ -107,17 +95,17 @@
 </template>
 
 <script setup>
-import storage from "@/services/storage";
-import axios from "axios";
-import { fetchSubscriptionStatus } from "@/services/subscription";
-import { computed, onMounted, ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import storage from '@/services/storage';
+import axios from 'axios';
+import { fetchSubscriptionStatus } from '@/services/subscription';
+import { computed, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
 const router = useRouter();
 
 // --- State ---
-const userName = ref(storage.get("userName") || "");
+const userName = ref(storage.get('userName') || '');
 const checkoutSessionId = ref(null);
 const email = ref(null);
 const planAmount = ref(null);
@@ -134,19 +122,12 @@ const plan_name = computed(() => {
   const fromLocal = planName.value;
   const subPlan = subscription.value?.plan;
   const fromSubPlanName =
-    typeof subPlan === "object" && subPlan
+    typeof subPlan === 'object' && subPlan
       ? subPlan.name
-      : typeof subPlan === "string"
-      ? subPlan
-      : null;
-  return (
-    fromStatusPlanObj ||
-    fromStatus ||
-    fromSubName ||
-    fromLocal ||
-    fromSubPlanName ||
-    ""
-  );
+      : typeof subPlan === 'string'
+        ? subPlan
+        : null;
+  return fromStatusPlanObj || fromStatus || fromSubName || fromLocal || fromSubPlanName || '';
 });
 const subscription_end = ref(null);
 const nextBilling = ref(null);
@@ -162,36 +143,32 @@ const formatDate = (dateStr) => {
   const d = new Date(dateStr);
   return Number.isNaN(d.getTime())
     ? dateStr
-    : d.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
+    : d.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
       });
 };
 
 const API_BASE_URL = computed(() => {
   return (
     (globalThis.window !== undefined &&
-      (globalThis.__env?.VUE_APP_API_BASE_URL ||
-        globalThis.VUE_APP_API_BASE_URL)) ||
-    ""
+      (globalThis.__env?.VUE_APP_API_BASE_URL || globalThis.VUE_APP_API_BASE_URL)) ||
+    ''
   );
 });
 
 const shouldShowPlanSummary = computed(
   () =>
-    (plan_name.value ||
-      planAmount.value ||
-      subscriptionStatus.value ||
-      subscription.value) &&
+    (plan_name.value || planAmount.value || subscriptionStatus.value || subscription.value) &&
     !loadingSession.value &&
     !isLoading.value
 );
 
 const formattedAmount = computed(() => {
   const amount = subscription.value?.plan_amount || planAmount.value;
-  if (!amount) return "";
-  const n = Number.parseFloat(String(amount).replaceAll(",", ""));
+  if (!amount) return '';
+  const n = Number.parseFloat(String(amount).replaceAll(',', ''));
   if (!Number.isFinite(n)) return amount;
   const amountStr = n % 1 === 0 ? n.toFixed(0) : n.toFixed(2);
   return `${amountStr}`;
@@ -218,45 +195,44 @@ const formattedNextRenewal = computed(() => {
     subscription.value?.ends_at ||
     subscription_end.value ||
     null;
-  return formatDate(raw) || "—";
+  return formatDate(raw) || '—';
 });
 
 const planPeriodDisplay = computed(() => {
-  const period = subscription.value?.plan_period || planPeriod.value || "";
+  const period = subscription.value?.plan_period || planPeriod.value || '';
   const p = String(period).toLowerCase();
-  if (p.includes("month")) return "Month";
-  if (p.includes("ann") || p.includes("year")) return "Annual";
+  if (p.includes('month')) return 'Month';
+  if (p.includes('ann') || p.includes('year')) return 'Annual';
 
   const amount = subscription.value?.plan_amount || planAmount.value;
   if (amount) {
-    const n = Number.parseFloat(String(amount).replaceAll(/[,\s]/g, ""));
-    if (Number.isFinite(n)) return n >= 1000 ? "Annual" : "Month";
+    const n = Number.parseFloat(String(amount).replaceAll(/[,\s]/g, ''));
+    if (Number.isFinite(n)) return n >= 1000 ? 'Annual' : 'Month';
   }
-  return "Month";
+  return 'Month';
 });
 
 const subscriptionStatusLabel = computed(() => {
   const status = subscription.value?.status || subscriptionStatus.value;
-  if (!status) return "Active";
+  if (!status) return 'Active';
   const s = String(status);
   return s.charAt(0).toUpperCase() + s.slice(1);
 });
 
 const subscriptionStatusClass = computed(() => {
-  const status =
-    subscription.value?.status || subscriptionStatus.value || "active";
+  const status = subscription.value?.status || subscriptionStatus.value || 'active';
   const s = String(status).toLowerCase();
-  if (s === "active" || s === "success") return "status-active";
-  if (s === "expired" || s === "canceled") return "status-expired";
-  return "status-unknown";
+  if (s === 'active' || s === 'success') return 'status-active';
+  if (s === 'expired' || s === 'canceled') return 'status-expired';
+  return 'status-unknown';
 });
 
 // --- Methods ---
-const goToDashboard = () => router.push("/dashboard");
-const goToBilling = () => router.push("/organizations/billing-details");
+const goToDashboard = () => router.push('/dashboard');
+const goToBilling = () => router.push('/organizations/billing-details');
 
 const fetchSubscriptionDetails = async () => {
-  const authToken = storage.get("authToken");
+  const authToken = storage.get('authToken');
   const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
   // 1. Try to get from the current user's active subscription
   try {
@@ -277,12 +253,7 @@ const fetchSubscriptionDetails = async () => {
         next_billing: d.next_billing || d.nextBill || d.next_bill_date || null,
         created_at: d.created_at || d.paymentDate || d.payment_date || null,
         status: d.status || null,
-        pdfUrl:
-          d.latest_invoice?.invoice_url ||
-          d.invoice_url ||
-          d.receipt_url ||
-          d.pdfUrl ||
-          null,
+        pdfUrl: d.latest_invoice?.invoice_url || d.invoice_url || d.receipt_url || d.pdfUrl || null,
       };
       // If the backend explicitly provided a human-friendly `plan_name`, we can stop.
       if (d.plan_name) return;
@@ -290,7 +261,7 @@ const fetchSubscriptionDetails = async () => {
     }
   } catch (err) {
     console.debug(
-      "Could not fetch active subscription, will try checkout session next.",
+      'Could not fetch active subscription, will try checkout session next.',
       err?.message || err
     );
   }
@@ -327,13 +298,12 @@ const fetchSubscriptionDetails = async () => {
         plan_amount: d.amount_total ? (d.amount_total / 100).toFixed(2) : null,
         plan_name: d.line_items?.[0]?.description || null,
         ends_at: d.subscription_end || d.subscriptionEnd || null,
-        next_billing:
-          d.next_billing || d.nextBill || d.next_billing_date || null,
+        next_billing: d.next_billing || d.nextBill || d.next_billing_date || null,
         created_at: d.created ? new Date(d.created * 1000).toISOString() : null,
-        status: d.status || "active",
+        status: d.status || 'active',
       };
     } catch (err) {
-      console.debug("Could not fetch session details", err?.message || err);
+      console.debug('Could not fetch session details', err?.message || err);
     } finally {
       loadingSession.value = false;
     }
@@ -354,7 +324,7 @@ onMounted(async () => {
     statusInfo.value = s || null;
   } catch (e) {
     console.debug(
-      "Could not fetch subscription status endpoint (via service), will fallback",
+      'Could not fetch subscription status endpoint (via service), will fallback',
       e?.message || e
     );
   }

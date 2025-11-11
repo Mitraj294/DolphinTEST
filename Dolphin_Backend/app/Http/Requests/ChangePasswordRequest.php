@@ -11,6 +11,11 @@ class ChangePasswordRequest extends FormRequest
         return true;
     }
 
+    /**
+     * Rules for change password request.
+     *
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [
@@ -18,4 +23,5 @@ class ChangePasswordRequest extends FormRequest
             'new_password' => 'required|string|min:6|confirmed',
         ];
     }
+
 }

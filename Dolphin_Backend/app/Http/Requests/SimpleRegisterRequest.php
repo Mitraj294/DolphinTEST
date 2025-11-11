@@ -11,6 +11,11 @@ class SimpleRegisterRequest extends FormRequest
         return true;
     }
 
+    /**
+     * Validation rules for simple registration.
+     *
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [

@@ -2,7 +2,6 @@
   <div class="user-graphs-outer">
     <div class="user-graphs-card">
       <div class="user-graphs-content">
-
         <!-- Original Self Section -->
         <div class="user-graph-section">
           <div class="user-graph-header">Original Self</div>
@@ -12,7 +11,11 @@
             </div>
 
             <!-- Chart Loader + Guard -->
-            <template v-if="isReady && originalOption && originalOption.series && originalOption.series[0].data">
+            <template
+              v-if="
+                isReady && originalOption && originalOption.series && originalOption.series[0].data
+              "
+            >
               <VueECharts
                 class="echart"
                 :option="originalOption"
@@ -33,7 +36,11 @@
             </div>
 
             <!-- Chart Loader + Guard -->
-            <template v-if="isReady && adjustedOption && adjustedOption.series && adjustedOption.series[0].data">
+            <template
+              v-if="
+                isReady && adjustedOption && adjustedOption.series && adjustedOption.series[0].data
+              "
+            >
               <VueECharts
                 class="echart"
                 :option="adjustedOption"
@@ -44,23 +51,34 @@
             <div v-else class="chart-loading">Loading chart...</div>
           </div>
         </div>
-
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, computed, onMounted, nextTick } from "vue";
-import Dropdown from "@/components/Common/Common_UI/Dropdown.vue";
-import { fetchUserResults, normalizeBarData } from "@/services/results";
-import VueECharts from "vue-echarts";
-import * as echarts from "echarts/core";
-import { BarChart } from "echarts/charts";
-import { GridComponent, TooltipComponent, LegendComponent, TitleComponent } from "echarts/components";
-import { CanvasRenderer } from "echarts/renderers";
+import { ref, watch, computed, onMounted, nextTick } from 'vue';
+import Dropdown from '@/components/Common/Common_UI/Dropdown.vue';
+import { fetchUserResults, normalizeBarData } from '@/services/results';
+import VueECharts from 'vue-echarts';
+import * as echarts from 'echarts/core';
+import { BarChart } from 'echarts/charts';
+import {
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  TitleComponent,
+} from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
 
-echarts.use([BarChart, GridComponent, TooltipComponent, LegendComponent, TitleComponent, CanvasRenderer]);
+echarts.use([
+  BarChart,
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  TitleComponent,
+  CanvasRenderer,
+]);
 
 // Reactive state
 const attemptOptions = ref([]);
@@ -108,11 +126,13 @@ async function loadResults() {
 function updateSelectedData() {
   const attemptId = selectedAttempt.value;
   if (!attemptId) return;
-  const attemptResults = rawResults.value.filter(r => String(r.attempt_id) === String(attemptId));
+  const attemptResults = rawResults.value.filter((r) => String(r.attempt_id) === String(attemptId));
 
-  latestOriginal.value = attemptResults.find(r => r.type === "original") || null;
-  const adjustCandidates = attemptResults.filter(r => r.type === "adjust");
-  latestAdjusted.value = adjustCandidates.length ? adjustCandidates[adjustCandidates.length - 1] : null;
+  latestOriginal.value = attemptResults.find((r) => r.type === 'original') || null;
+  const adjustCandidates = attemptResults.filter((r) => r.type === 'adjust');
+  latestAdjusted.value = adjustCandidates.length
+    ? adjustCandidates[adjustCandidates.length - 1]
+    : null;
 }
 
 watch(selectedAttempt, updateSelectedData);
@@ -129,30 +149,30 @@ onMounted(async () => {
 // Chart options
 const originalOption = computed(() => {
   const data = normalizeBarData(latestOriginal.value)?.original;
-  if (!data || Object.values(data).some(v => v == null)) return null;
-  return buildBarOption(data, "Original Self");
+  if (!data || Object.values(data).some((v) => v == null)) return null;
+  return buildBarOption(data, 'Original Self');
 });
 
 const adjustedOption = computed(() => {
   const data = normalizeBarData(latestAdjusted.value)?.adjusted;
-  if (!data || Object.values(data).some(v => v == null)) return null;
-  return buildBarOption(data, "Adjusted Self");
+  if (!data || Object.values(data).some((v) => v == null)) return null;
+  return buildBarOption(data, 'Adjusted Self');
 });
 
 // Bar chart builder
 function buildBarOption(barData, title) {
   return {
-    title: { text: title, left: "center", textStyle: { fontSize: 14 } },
+    title: { text: title, left: 'center', textStyle: { fontSize: 14 } },
     grid: { left: 40, right: 10, top: 30, bottom: 30 },
-    xAxis: { type: "category", data: ["A", "B", "C", "D"] },
-    yAxis: { type: "value", max: 100 },
-    tooltip: { trigger: "axis" },
+    xAxis: { type: 'category', data: ['A', 'B', 'C', 'D'] },
+    yAxis: { type: 'value', max: 100 },
+    tooltip: { trigger: 'axis' },
     series: [
       {
-        type: "bar",
+        type: 'bar',
         data: [barData.a, barData.b, barData.c, barData.d],
-        itemStyle: { color: "#0164A5" },
-        barWidth: "45%",
+        itemStyle: { color: '#0164A5' },
+        barWidth: '45%',
       },
     ],
   };

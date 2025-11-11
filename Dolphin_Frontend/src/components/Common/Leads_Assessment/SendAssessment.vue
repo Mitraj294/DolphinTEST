@@ -10,28 +10,17 @@
           </div>
 
           <!-- Assessment send form -->
-          <form
-            class="send-assessment-form"
-            @submit.prevent="handleSendAssessment"
-          >
+          <form class="send-assessment-form" @submit.prevent="handleSendAssessment">
             <FormRow>
               <!-- Recipient Email -->
               <div class="send-assessment-field">
                 <FormLabel>To</FormLabel>
-                <FormInput
-                  v-model="to"
-                  type="email"
-                  placeholder="meet@gmail.com"
-                />
+                <FormInput v-model="to" type="email" placeholder="meet@gmail.com" />
               </div>
               <!-- Email Subject -->
               <div class="send-assessment-field">
                 <FormLabel>Subject</FormLabel>
-                <FormInput
-                  v-model="subject"
-                  type="text"
-                  placeholder="Type here"
-                />
+                <FormInput v-model="subject" type="text" placeholder="Type here" />
               </div>
             </FormRow>
 
@@ -51,12 +40,8 @@
             <!-- Form actions -->
             <div class="send-assessment-link-actions-row">
               <div class="send-assessment-actions">
-                <button
-                  type="submit"
-                  class="btn btn-primary"
-                  :disabled="sending"
-                >
-                  {{ sending ? "Sending..." : "Send Assessment" }}
+                <button type="submit" class="btn btn-primary" :disabled="sending">
+                  {{ sending ? 'Sending...' : 'Send Assessment' }}
                 </button>
               </div>
             </div>
@@ -69,14 +54,10 @@
 
 <script>
 // Layout and Form UI imports
-import {
-  FormInput,
-  FormLabel,
-  FormRow,
-} from "@/components/Common/Common_UI/Form";
-import MainLayout from "@/components/layout/MainLayout.vue";
-import Editor from "@tinymce/tinymce-vue";
-import axios from "axios";
+import { FormInput, FormLabel, FormRow } from '@/components/Common/Common_UI/Form';
+import MainLayout from '@/components/layout/MainLayout.vue';
+import axios from 'axios';
+import storage from '@/services/storage';
 
 // NOTE: we dynamically load TinyMCE core, icons, theme and plugins at runtime
 // so we can ensure the global `tinymce` is defined before icons/plugins run.
@@ -91,69 +72,74 @@ import axios from "axios";
 
  */
 export default {
-  name: "SendAssessment",
-  components: { MainLayout, Editor, FormInput, FormRow, FormLabel },
+  name: 'SendAssessment',
+  components: {
+    MainLayout,
+    FormInput,
+    FormRow,
+    FormLabel,
+    Editor: () => import('@tinymce/tinymce-vue'),
+  },
   data() {
     return {
       // don't render Editor until TinyMCE and plugins are loaded
       editorLoaded: false,
       leadId: null, // ID of the lead (from route, query, or backend)
-      to: "", // Recipient email
-      recipientName: "", // Recipient name
-      subject: "Complete Your Registration", // Default subject
-      templateContent: "", // Email body (HTML)
+      to: '', // Recipient email
+      recipientName: '', // Recipient name
+      subject: 'Complete Your Registration', // Default subject
+      templateContent: '', // Email body (HTML)
       sending: false, // Email sending state
-      registrationLink: "", // Registration link for invite
+      registrationLink: '', // Registration link for invite
 
       // TinyMCE configuration (self-hosted, free plugins only)
       tinymceConfigSelfHosted: {
         height: 500,
-        base_url: "/tinymce",
-        suffix: ".min",
-        skin_url: "/tinymce/skins/ui/oxide",
-        content_css: "/tinymce/skins/content/default/content.css",
-        menubar: "edit view insert format tools table help",
+        base_url: '/tinymce',
+        suffix: '.min',
+        skin_url: '/tinymce/skins/ui/oxide',
+        content_css: '/tinymce/skins/content/default/content.css',
+        menubar: 'edit view insert format tools table help',
         plugins: [
-          "advlist",
-          "autolink",
-          "lists",
-          "link",
-          "image",
-          "charmap",
-          "preview",
-          "anchor",
-          "searchreplace",
-          "visualblocks",
-          "code",
-          "fullscreen",
-          "insertdatetime",
-          "media",
-          "table",
-          "wordcount",
-          "help",
+          'advlist',
+          'autolink',
+          'lists',
+          'link',
+          'image',
+          'charmap',
+          'preview',
+          'anchor',
+          'searchreplace',
+          'visualblocks',
+          'code',
+          'fullscreen',
+          'insertdatetime',
+          'media',
+          'table',
+          'wordcount',
+          'help',
         ],
         toolbar:
-          "undo redo | formatselect | " +
-          "bold italic underline strikethrough | " +
-          "alignleft aligncenter alignright alignjustify | " +
-          "bullist numlist outdent indent | " +
-          "link image table | " +
-          "code preview fullscreen | help",
-        valid_elements: "*[*]",
+          'undo redo | formatselect | ' +
+          'bold italic underline strikethrough | ' +
+          'alignleft aligncenter alignright alignjustify | ' +
+          'bullist numlist outdent indent | ' +
+          'link image table | ' +
+          'code preview fullscreen | help',
+        valid_elements: '*[*]',
         cleanup: false,
         convert_urls: false,
         remove_script_host: false,
         relative_urls: false,
         block_formats:
-          "Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3; Heading 4=h4; Heading 5=h5; Heading 6=h6; Preformatted=pre",
+          'Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3; Heading 4=h4; Heading 5=h5; Heading 6=h6; Preformatted=pre',
         branding: false,
         statusbar: false,
         elementpath: false,
-        resize: "both",
+        resize: 'both',
         promotion: false,
-        content_style:
-          "body { font-family: Arial, sans-serif; font-size: 14px; margin: 20px; }",
-        license_key: "gpl",
+        content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; margin: 20px; }',
+        license_key: 'gpl',
       },
     };
   },
@@ -188,33 +174,33 @@ export default {
     async loadTinyMCEModules() {
       try {
         // load core and assign to global so icon modules can access it
-        const tinymceModule = await import("tinymce/tinymce");
+        const tinymceModule = await import('tinymce/tinymce');
         // some bundlers export default, others the module itself
         globalThis.tinymce = tinymceModule.default || tinymceModule;
 
         // load icons, theme, models and plugins
-        await import("tinymce/icons/default");
-        await import("tinymce/themes/silver");
-        await import("tinymce/models/dom");
+        await import('tinymce/icons/default');
+        await import('tinymce/themes/silver');
+        await import('tinymce/models/dom');
 
         const plugins = [
-          "advlist",
-          "anchor",
-          "autolink",
-          "charmap",
-          "code",
-          "fullscreen",
-          "help",
-          "image",
-          "insertdatetime",
-          "link",
-          "lists",
-          "media",
-          "preview",
-          "searchreplace",
-          "table",
-          "visualblocks",
-          "wordcount",
+          'advlist',
+          'anchor',
+          'autolink',
+          'charmap',
+          'code',
+          'fullscreen',
+          'help',
+          'image',
+          'insertdatetime',
+          'link',
+          'lists',
+          'media',
+          'preview',
+          'searchreplace',
+          'table',
+          'visualblocks',
+          'wordcount',
         ];
         await Promise.all(plugins.map((p) => import(`tinymce/plugins/${p}`)));
 
@@ -222,7 +208,7 @@ export default {
         this.editorLoaded = true;
       } catch (e) {
         // if dynamic import fails, still attempt to render editor (may error)
-        console.warn("Failed to dynamically load TinyMCE modules:", e);
+        console.debug && console.debug('Failed to dynamically load TinyMCE modules:', e);
         this.editorLoaded = true;
       }
     },
@@ -232,8 +218,7 @@ export default {
     async loadInitialLeadData(leadId) {
       try {
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-        const storage = require("@/services/storage").default;
-        const token = storage.get("authToken");
+        const token = storage.get('authToken');
         const res = await axios.get(`${API_BASE_URL}/api/leads/${leadId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
@@ -242,15 +227,13 @@ export default {
         const leadDefaultTemplate = res.data?.defaultTemplate;
         if (leadObj && leadDefaultTemplate) {
           this.leadId = leadObj.id || this.leadId;
-          this.to = leadObj.email || "";
-          this.recipientName = `${leadObj.first_name || ""} ${
-            leadObj.last_name || ""
-          }`.trim();
+          this.to = leadObj.email || '';
+          this.recipientName = `${leadObj.first_name || ''} ${leadObj.last_name || ''}`.trim();
           this.templateContent = String(leadDefaultTemplate);
         }
       } catch (e) {
-        console.error("Failed to load initial lead data:", e);
-        this.templateContent = "<p>Error: Could not load lead data.</p>";
+        console.debug && console.debug('Failed to load initial lead data:', e);
+        this.templateContent = '<p>Error: Could not load lead data.</p>';
       }
     },
 
@@ -260,17 +243,17 @@ export default {
     updateRegistrationLink() {
       if (this.to) {
         const origin =
-          (typeof globalThis !== "undefined" &&
+          (typeof globalThis !== 'undefined' &&
             globalThis.location &&
             globalThis.location.origin) ||
-          "";
+          '';
         const base = `${origin}/register`;
         const params = new URLSearchParams();
-        params.set("email", this.to);
-        if (this.leadId) params.set("lead_id", String(this.leadId));
+        params.set('email', this.to);
+        if (this.leadId) params.set('lead_id', String(this.leadId));
         this.registrationLink = `${base}?${params.toString()}`;
       } else {
-        this.registrationLink = "";
+        this.registrationLink = '';
       }
     },
 
@@ -286,21 +269,19 @@ export default {
           registration_link: this.registrationLink,
           name: this.recipientName,
         };
-        const res = await axios.get(
-          `${API_BASE_URL}/api/email-template/lead-registration`,
-          { params }
-        );
-        let html = res?.data ? String(res.data) : "";
+        const res = await axios.get(`${API_BASE_URL}/api/email-template/lead-registration`, {
+          params,
+        });
+        let html = res?.data ? String(res.data) : '';
         // Only use the .email-container inner HTML for the editor
         const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
-        const container = doc.querySelector(".email-container");
+        const doc = parser.parseFromString(html, 'text/html');
+        const container = doc.querySelector('.email-container');
         if (container) html = container.innerHTML;
         this.templateContent = html;
       } catch (e) {
-        console.error("Failed to fetch server template:", e?.message || e);
-        this.templateContent =
-          "<p>Error: Could not load the email template.</p>";
+        console.debug && console.debug('Failed to fetch server template:', e?.message || e);
+        this.templateContent = '<p>Error: Could not load the email template.</p>';
       }
     },
 
@@ -311,27 +292,32 @@ export default {
       if (this.sending) return;
       this.sending = true;
       try {
+        if (!this.to) {
+          this.$toast.add({
+            severity: 'warn',
+            summary: 'Missing',
+            detail: 'Please provide a recipient email.',
+          });
+          this.sending = false;
+          return;
+        }
+
         const name = this.computeRecipientName();
         const payload = this.buildPayload(name);
-        await axios.post(
-          `${process.env.VUE_APP_API_BASE_URL}/api/leads/send-assessment`,
-          payload
-        );
+        const token = storage.get('authToken');
+        await axios.post(`${process.env.VUE_APP_API_BASE_URL}/api/leads/send-assessment`, payload, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         this.$toast.add({
-          severity: "success",
-          summary: "Assessment Sent",
-          detail: "Assessment email sent successfully!",
+          severity: 'success',
+          summary: 'Assessment Sent',
+          detail: 'Assessment email sent successfully!',
           life: 3500,
         });
       } catch (error) {
         const detail = this.formatSendErrorDetail(error);
-        console.error("Send Assessment Error:", error);
-        this.$toast.add({
-          severity: "error",
-          summary: "Send Error",
-          detail,
-          life: 3500,
-        });
+        console.debug && console.debug('Send Assessment Error:', error);
+        this.$toast.add({ severity: 'error', summary: 'Send Error', detail, life: 3500 });
       } finally {
         this.sending = false;
       }
@@ -343,11 +329,10 @@ export default {
     computeRecipientName() {
       return (
         this.recipientName ||
-        (this.$route.params &&
-          (this.$route.params.contact || this.$route.params.name)) ||
+        (this.$route.params && (this.$route.params.contact || this.$route.params.name)) ||
         this.$route.query.contact ||
         this.$route.query.name ||
-        ""
+        ''
       );
     },
 
@@ -373,10 +358,10 @@ export default {
      * Format email sending error for toast notification.
      */
     formatSendErrorDetail(error) {
-      let detail = "Failed to send assessment email.";
+      let detail = 'Failed to send assessment email.';
       if (error?.response?.data) {
         const data = error.response.data;
-        if (typeof data === "string") {
+        if (typeof data === 'string') {
           detail += ` ${data}`;
         } else if (data.error) {
           detail += ` ${data.error}`;
@@ -388,7 +373,7 @@ export default {
       } else if (error?.message) {
         detail += ` ${error.message}`;
       } else {
-        detail += " An unknown error occurred.";
+        detail += ' An unknown error occurred.';
       }
       return detail;
     },
@@ -396,8 +381,8 @@ export default {
     /**
      * TinyMCE editor init callback.
      */
-    onTinyMCEInit(event, editor) {
-      console.log("TinyMCE initialized:", editor);
+    onTinyMCEInit() {
+      console.debug && console.debug('TinyMCE initialized');
     },
   },
 };

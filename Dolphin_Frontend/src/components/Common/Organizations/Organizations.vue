@@ -7,10 +7,10 @@
 </template>
 
 <script>
-import MainLayout from "@/components/layout/MainLayout.vue";
-import OrganizationTable from "./OrganizationTable.vue";
+import MainLayout from '@/components/layout/MainLayout.vue';
+import OrganizationTable from './OrganizationTable.vue';
 export default {
-  name: "Organizations",
+  name: 'Organizations',
   components: { MainLayout, OrganizationTable },
 };
 </script>

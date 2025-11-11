@@ -23,19 +23,13 @@
             </div>
             <div class="notifications-tabs">
               <button
-                :class="[
-                  'notifications-tab-btn-left',
-                  { active: tab === 'unread' },
-                ]"
+                :class="['notifications-tab-btn-left', { active: tab === 'unread' }]"
                 @click="switchTab('unread')"
               >
                 Unread
               </button>
               <button
-                :class="[
-                  'notifications-tab-btn-right',
-                  { active: tab === 'all' },
-                ]"
+                :class="['notifications-tab-btn-right', { active: tab === 'all' }]"
                 @click="switchTab('all')"
               >
                 All
@@ -56,33 +50,18 @@
                 cursor: pointer;
               "
             >
-              <i
-                class="fas fa-check"
-                style="margin-right: 6px"
-              ></i>
+              <i class="fas fa-check" style="margin-right: 6px"></i>
               <span v-if="!markAllLoading">Mark All As Read</span>
               <span v-else>Marking...</span>
             </button>
           </div>
           <div class="notifications-list">
-            <div
-              v-for="(item, id) in paginatedNotifications"
-              :key="id"
-              class="notification-item"
-            >
+            <div v-for="(item, id) in paginatedNotifications" :key="id" class="notification-item">
               <div
                 class="notification-meta"
-                style="
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                "
+                style="display: flex; flex-direction: column; align-items: center"
               >
-                <img
-                  src="@/assets/images/Logo.svg"
-                  class="notification-icon"
-                  alt="Company logo"
-                />
+                <img src="@/assets/images/Logo.svg" class="notification-icon" alt="Company logo" />
               </div>
               <div class="notification-body">
                 <span class="notification-date">{{ item.date }}</span>
@@ -93,11 +72,7 @@
               </div>
               <div
                 class="notification-meta"
-                style="
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                "
+                style="display: flex; flex-direction: column; align-items: center"
               >
                 <button
                   v-if="tab === 'unread' && !item.read_at && !isImpersonating"
@@ -118,19 +93,30 @@
                 </button>
               </div>
             </div>
-            <div
-              v-if="paginatedNotifications.length === 0"
-              class="no-data"
-            >
+            <div v-if="paginatedNotifications.length === 0" class="no-data">
               <span v-if="selectedDate">
-              <span v-if="tab === 'unread'">
-                No unread notifications found for
-                <strong>{{ (new Date(selectedDate)).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) }}</strong>.
-              </span>
-              <span v-else>
-                No notification found for
-                <strong>{{ (new Date(selectedDate)).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) }}</strong>.
-              </span>
+                <span v-if="tab === 'unread'">
+                  No unread notifications found for
+                  <strong>{{
+                    new Date(selectedDate).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: '2-digit',
+                      year: 'numeric',
+                    })
+                  }}</strong
+                  >.
+                </span>
+                <span v-else>
+                  No notification found for
+                  <strong>{{
+                    new Date(selectedDate).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: '2-digit',
+                      year: 'numeric',
+                    })
+                  }}</strong
+                  >.
+                </span>
               </span>
               <span v-else-if="tab === 'unread'">No unread notifications found.</span>
               <span v-else>No notification found.</span>
@@ -207,15 +193,10 @@ export default {
         if (isValid(sel)) {
           list = list.filter((n) => {
             const createdAt =
-              n.created_at ||
-              (n._rawData && (n._rawData.created_at || n._rawData.createdAt)) ||
-              '';
+              n.created_at || (n._rawData && (n._rawData.created_at || n._rawData.createdAt)) || '';
             if (!createdAt) return false;
             // try parsing ISO, if invalid fallback to Date
-            let d =
-              typeof createdAt === 'string'
-                ? parseISO(createdAt)
-                : new Date(createdAt);
+            let d = typeof createdAt === 'string' ? parseISO(createdAt) : new Date(createdAt);
             if (!isValid(d)) {
               d = new Date(createdAt);
             }
@@ -304,13 +285,12 @@ export default {
       }
       const role = authMiddleware.getRole();
       if (role === 'superadmin') {
-        const storedUserIdParam =
-          storage.get('userId') || storage.get('user_id');
+        const storedUserIdParam = storage.get('userId') || storage.get('user_id');
         const uid = storedUserIdParam ? Number.parseInt(storedUserIdParam, 10) : 0;
         if (uid) {
           return `/api/notifications?notifiable_type=${encodeURIComponent(
-              String.raw`App\Models\User`
-            )}&notifiable_id=${uid}`;
+            String.raw`App\Models\User`
+          )}&notifiable_id=${uid}`;
         }
         return '/api/notifications';
       }
@@ -321,11 +301,7 @@ export default {
       try {
         return await axios.get(endpoint, config);
       } catch (err) {
-        if (
-          err.response &&
-          err.response.status === 403 &&
-          endpoint !== '/api/notifications/user'
-        ) {
+        if (err.response && err.response.status === 403 && endpoint !== '/api/notifications/user') {
           const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || '';
           return axios.get(`${API_BASE_URL}/api/notifications/user`, config);
         }
@@ -336,10 +312,9 @@ export default {
     _extractNotifications(response) {
       if (!response || !response.data) return [];
       if (Array.isArray(response.data)) return response.data;
-      if (Array.isArray(response.data.notifications))
-        return response.data.notifications;
+      if (Array.isArray(response.data.notifications)) return response.data.notifications;
       if (Array.isArray(response.data.unread)) return response.data.unread;
-      console.warn('Unexpected notifications response format:', response.data);
+      console.debug && console.debug('Unexpected notifications response format:', response.data);
       return [];
     },
 
@@ -355,7 +330,7 @@ export default {
           (d.recipient_id && Number.parseInt(d.recipient_id, 10) === currentUserId)
         );
       } catch (e) {
-        console.error('Error parsing notification data:', e);
+        console.debug && console.debug('Error parsing notification data:', e);
         return false;
       }
     },
@@ -366,19 +341,11 @@ export default {
         try {
           d = JSON.parse(d);
         } catch (e) {
-          console.error('Error parsing notification data:', e);
+          console.debug && console.debug('Error parsing notification data:', e);
         }
       }
 
-      const bodyKeys = [
-        'body',
-        'message',
-        'text',
-        'details',
-        'description',
-        'content',
-        'msg',
-      ];
+      const bodyKeys = ['body', 'message', 'text', 'details', 'description', 'content', 'msg'];
       let bodyDisplay = this._pickString(d, bodyKeys) || n.body || '';
 
       if (!bodyDisplay && d && typeof d === 'object') {
@@ -413,13 +380,9 @@ export default {
     _handleFetchError(error) {
       this.notifications = [];
       this.readNotifications = [];
-      console.error(
-        'Failed to fetch notifications:',
-        error,
-        error?.response?.data
-      );
-      const serverMsg =
-        error?.response?.data?.message || error?.response?.data?.error || null;
+      console.debug &&
+        console.debug('Failed to fetch notifications:', error, error?.response?.data);
+      const serverMsg = error?.response?.data?.message || error?.response?.data?.error || null;
       this.$nextTick(() => {
         if (this.$notify) {
           this.$notify({
@@ -465,9 +428,7 @@ export default {
         if (typeof token !== 'string') {
           token = '';
         }
-        const config = token
-          ? { headers: { Authorization: `Bearer ${token}` } }
-          : {};
+        const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
         await axios.post('/api/notifications/mark-all-read', {}, config);
         // Refresh notifications
         await this.fetchNotifications();
@@ -475,13 +436,13 @@ export default {
         try {
           this.updateNotificationCount();
         } catch (e) {
-          console.error('Error updating notification count:', e);
+          console.debug && console.debug('Error updating notification count:', e);
         }
         // Broadcast events for in-window and cross-tab listeners
-  globalThis.dispatchEvent(new Event('notification-updated'));
-  globalThis.dispatchEvent(new Event('storage'));
+        globalThis.dispatchEvent(new Event('notification-updated'));
+        globalThis.dispatchEvent(new Event('storage'));
       } catch (error) {
-        console.error('Error marking all as read:', error);
+        console.debug && console.debug('Error marking all as read:', error);
         if (this.$notify) {
           this.$notify({
             type: 'error',
@@ -499,9 +460,7 @@ export default {
       if (typeof token !== 'string') {
         token = '';
       }
-      const config = token
-        ? { headers: { Authorization: `Bearer ${token}` } }
-        : {};
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
       if (notif && notif.id) {
         try {
           await axios.post(`/api/announcements/${notif.id}/read`, {}, config);
@@ -510,12 +469,12 @@ export default {
           try {
             this.updateNotificationCount();
           } catch (e) {
-            console.error('Error updating notification count:', e);
+            console.debug && console.debug('Error updating notification count:', e);
           }
           globalThis.dispatchEvent(new Event('notification-updated'));
           globalThis.dispatchEvent(new Event('storage'));
         } catch (error) {
-          console.error('Failed to mark notification as read:', error);
+          console.debug && console.debug('Failed to mark notification as read:', error);
           if (this.$notify) {
             this.$notify({
               type: 'error',
@@ -547,9 +506,7 @@ export default {
       if (!this.notificationsReady) {
         return;
       }
-      const unreadCount = Array.isArray(this.notifications)
-        ? this.notifications.length
-        : 0;
+      const unreadCount = Array.isArray(this.notifications) ? this.notifications.length : 0;
       storage.set('notificationCount', String(unreadCount));
       // Broadcast a storage event for cross-tab listeners
       globalThis.dispatchEvent(new Event('storage'));
@@ -563,10 +520,7 @@ export default {
       );
     },
     markAllRead() {
-      this.readNotifications = [
-        ...this.readNotifications,
-        ...this.notifications,
-      ];
+      this.readNotifications = [...this.readNotifications, ...this.notifications];
       this.notifications = [];
       this.updateNotificationCount();
     },
@@ -684,7 +638,11 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.18s, color 0.18s, border 0.18s, font-weight 0.18s;
+  transition:
+    background 0.18s,
+    color 0.18s,
+    border 0.18s,
+    font-weight 0.18s;
   cursor: pointer;
   box-sizing: border-box;
 }
@@ -706,7 +664,11 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.18s, color 0.18s, border 0.18s, font-weight 0.18s;
+  transition:
+    background 0.18s,
+    color 0.18s,
+    border 0.18s,
+    font-weight 0.18s;
   cursor: pointer;
   box-sizing: border-box;
 }

@@ -37,7 +37,7 @@
                     :alt="item.schedule ? 'Details' : 'Schedule'"
                     class="btn-icon"
                   />
-                  {{ item.schedule ? "Details" : "Schedule" }}
+                  {{ item.schedule ? 'Details' : 'Schedule' }}
                 </button>
               </td>
             </tr>
@@ -86,17 +86,17 @@
 </template>
 
 <script>
-import TableHeader from "@/components/Common/Common_UI/TableHeader.vue";
-import CreateAssessmentModal from "@/components/Common/Leads_Assessment/CreateAssessmentModal.vue";
-import ScheduleAssessmentModal from "@/components/Common/Leads_Assessment/ScheduleAssessmentModal.vue";
-import ScheduleDetailsModal from "@/components/Common/Leads_Assessment/ScheduleDetailsModal.vue";
-import Pagination from "@/components/layout/Pagination.vue";
-import storage from "@/services/storage";
-import axios from "axios";
-import { useToast } from "primevue/usetoast";
+import TableHeader from '@/components/Common/Common_UI/TableHeader.vue';
+import CreateAssessmentModal from '@/components/Common/Leads_Assessment/CreateAssessmentModal.vue';
+import ScheduleAssessmentModal from '@/components/Common/Leads_Assessment/ScheduleAssessmentModal.vue';
+import ScheduleDetailsModal from '@/components/Common/Leads_Assessment/ScheduleDetailsModal.vue';
+import Pagination from '@/components/layout/Pagination.vue';
+import storage from '@/services/storage';
+import axios from 'axios';
+import { useToast } from 'primevue/usetoast';
 
 export default {
-  name: "OrganizationAdminAssessmentsCard",
+  name: 'OrganizationAdminAssessmentsCard',
   components: {
     Pagination,
     ScheduleAssessmentModal,
@@ -139,12 +139,12 @@ export default {
     },
     memberNameMap() {
       return (this.allMembers || []).reduce((map, m) => {
-        const first = (m.first_name || m.name || "").toString().trim();
-        const last = (m.last_name || "").toString().trim();
-        const role = (m.member_role || m.role || "").toString().trim();
+        const first = (m.first_name || m.name || '').toString().trim();
+        const last = (m.last_name || '').toString().trim();
+        const role = (m.member_role || m.role || '').toString().trim();
         let full = first;
         if (last) full = full ? `${full} ${last}` : last;
-        if (!full) full = m.email || m.id || "Unknown";
+        if (!full) full = m.email || m.id || 'Unknown';
         if (role) full = `${full} — ${role}`;
         map[m.id] = full;
         return map;
@@ -152,15 +152,15 @@ export default {
     },
     memberDetailMap() {
       return (this.allMembers || []).reduce((map, m) => {
-        const first = (m.first_name || m.name || "").toString().trim();
-        const last = (m.last_name || "").toString().trim();
+        const first = (m.first_name || m.name || '').toString().trim();
+        const last = (m.last_name || '').toString().trim();
         let name = first;
         if (last) name = name ? `${name} ${last}` : last;
         if (!name) name = m.email || `Member ${m.id}`;
         map[m.id] = {
           name,
-          email: m.email || "",
-          role: (m.member_role || m.role || "").toString().trim() || "",
+          email: m.email || '',
+          role: (m.member_role || m.role || '').toString().trim() || '',
         };
         return map;
       }, {});
@@ -177,33 +177,32 @@ export default {
     async initializeComponent() {
       this.loading = true;
       try {
-        const authToken = storage.get("authToken");
+        const authToken = storage.get('authToken');
         const params = await this.getRequestParams(authToken);
-
         if (!params.organization_id && !params.user_id) {
-          console.warn("[AssessmentsCard] No orgId or userId found.");
+          this._showToast('warn', 'Missing context', 'No organization or user id found.');
           return;
         }
+
         await this.fetchData(authToken, params);
-      } catch (e) {
-        console.error(
-          "[AssessmentsCard] Failed to fetch initial data",
-          e?.message
-        );
+      } catch (err) {
+        console.debug &&
+          console.debug('[AssessmentsCard] Failed to fetch initial data', err?.message || err);
         this.assessments = [];
-        this._showToast("error", "Error", "Could not load assessment data.");
+        this._showToast('error', 'Error', 'Could not load assessment data.');
       } finally {
         this.loading = false;
       }
     },
     async getRequestParams(authToken) {
-      const userId = storage.get("user_id");
+      // Prefer explicit organization id keys in storage; fall back to profile when needed
+      const userId = storage.get('user_id');
       let orgId =
-        storage.get("organization_id") ||
-        storage.get("org_id") ||
-        storage.get("organizationId") ||
-        storage.get("orgId") ||
-        (storage.get("user") && storage.get("user").organization_id) ||
+        storage.get('organization_id') ||
+        storage.get('org_id') ||
+        storage.get('organizationId') ||
+        storage.get('orgId') ||
+        (storage.get('user') && storage.get('user').organization_id) ||
         null;
 
       if (!orgId && authToken) {
@@ -213,74 +212,82 @@ export default {
             headers: { Authorization: `Bearer ${authToken}` },
           });
           const prof = profileRes.data || {};
-          orgId =
-            prof.organization_id ||
-            (prof.user && prof.user.organization_id) ||
-            null;
+          orgId = prof.organization_id || (prof.user && prof.user.organization_id) || null;
         } catch (e) {
-          console.warn("[AssessmentsCard] Failed to fetch profile", e?.message);
+          // non-fatal: we'll try user_id next
+          console.debug('[AssessmentsCard] profile fetch failed', e?.message || e);
         }
       }
 
       const params = {};
       if (orgId) params.organization_id = orgId;
       else if (userId) params.user_id = userId;
-      else console.warn("[AssessmentsCard] No orgId or userId found.");
 
       return params;
     },
     async fetchData(authToken, params) {
       const base = process.env.VUE_APP_API_BASE_URL;
-      const headers = { Authorization: `Bearer ${authToken}` };
+      const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
 
-      const [assessmentsRes, groupsRes, membersRes] = await Promise.all([
-        axios.get(`${base}/api/assessments`, { headers, params }),
-        axios.get(`${base}/api/groups`, { headers }),
-        axios.get(`${base}/api/organization/members`, { headers }),
-      ]);
+      try {
+        const [assessmentsRes, groupsRes, membersRes] = await Promise.all([
+          axios.get(`${base}/api/assessments`, { headers, params }),
+          axios.get(`${base}/api/groups`, { headers }),
+          axios.get(`${base}/api/organization/members`, { headers }),
+        ]);
 
-      this.assessments = this.parseApiResponse(assessmentsRes, "assessments");
-      this.allGroups = this.parseApiResponse(groupsRes, "groups");
-      this.allMembers = this.parseApiResponse(membersRes, "data");
+        this.assessments = this.parseApiResponse(assessmentsRes, 'assessments');
+        this.allGroups = this.parseApiResponse(groupsRes, 'groups');
+        this.allMembers = this.parseApiResponse(membersRes, 'data');
+      } catch (e) {
+        console.debug && console.debug('[AssessmentsCard] fetchData error', e?.message || e);
+        this.assessments = [];
+        this.allGroups = [];
+        this.allMembers = [];
+      }
 
       await this.fetchScheduleStatuses(authToken);
     },
     parseApiResponse(response, key) {
       const data = response?.data;
       if (!data) return [];
-      if (Array.isArray(data[key])) return data[key];
+      if (key && Array.isArray(data[key])) return data[key];
       if (Array.isArray(data)) return data;
-      return [data];
+      return typeof data === 'object' ? [data] : [];
     },
-    async fetchScheduleStatuses(authToken) {
+    async fetchScheduleStatuses() {
+      // Attempt to enrich assessments with schedule metadata. Non-fatal on failure.
       try {
-        const scheduleChecks = this.assessments.map((assessment) =>
-          this.fetchScheduleForAssessment(assessment, authToken)
+        const promises = this.assessments.map((assessment) =>
+          this.fetchScheduleForAssessment(assessment).catch(() => ({ ...assessment }))
         );
-        const updatedItems = await Promise.all(scheduleChecks);
-        this.assessments = updatedItems;
+        const results = await Promise.all(promises);
+        this.assessments = results;
       } catch (err) {
-        console.warn(
-          "[AssessmentsCard] Failed to pre-fetch schedule statuses.",
-          err
-        );
+        console.debug &&
+          console.debug('[AssessmentsCard] fetchScheduleStatuses encountered an error', err);
       }
     },
-    async fetchScheduleForAssessment(assessment, authToken) {
-      // NOTE: /api/scheduled-email/show endpoint was removed during cleanup
-      // Schedule functionality needs to be reimplemented using assessment_schedules table
+    async fetchScheduleForAssessment(assessment) {
+      // Try to fetch schedule info for the given assessment. If no schedule endpoint
+      // is available on the backend this will safely return the original assessment.
       try {
-        // TODO: Implement schedule fetching from /api/assessment-schedules endpoint
-        console.warn(
-          `[AssessmentsCard] Schedule fetching disabled for assessment ${assessment.id} - endpoint removed`
-        );
-        return { ...assessment, schedule: null };
+        const base = process.env.VUE_APP_API_BASE_URL;
+        const authToken = storage.get('authToken');
+        const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+        const res = await axios.get(`${base}/api/assessment-schedules`, {
+          headers,
+          params: { assessment_id: assessment.id },
+        });
+        const data = res?.data;
+        // If backend returns an array of schedules, pick the first one; otherwise accept object
+        const schedule = Array.isArray(data) ? data[0] || null : data || null;
+        return { ...assessment, schedule };
       } catch (e) {
-        console.warn(
-          `[AssessmentsCard] Failed to fetch schedule for assessment ${assessment.id}`,
-          e?.message
-        );
-        return { ...assessment, schedule: null };
+        // Non-fatal: backend may not support this endpoint. Return assessment unchanged.
+        console.debug &&
+          console.debug('[AssessmentsCard] fetchScheduleForAssessment failed', e?.message || e);
+        return { ...assessment };
       }
     },
 
@@ -319,13 +326,7 @@ export default {
       this.closeCreateModal();
     },
     handleValidationError(errorData) {
-      this._showToast(
-        errorData.type,
-        errorData.title,
-        errorData.message,
-        4000,
-        true
-      );
+      this._showToast(errorData.type, errorData.title, errorData.message, 4000, true);
     },
     handleError(errorData) {
       this._showToast(errorData.type, errorData.title, errorData.message);
@@ -339,23 +340,24 @@ export default {
       const selectedMembers = payload?.selectedMembers || [];
 
       if (!this.selectedAssessment || !date || !time) {
-        return this._showToast(
-          "warn",
-          "Missing Data",
-          "Please select assessment, date, and time."
-        );
+        return this._showToast('warn', 'Missing Data', 'Please select assessment, date, and time.');
       }
 
       this.loading = true;
-      try {
-        const authToken = storage.get("authToken");
-        const base = process.env.VUE_APP_API_BASE_URL;
+      const authToken = storage.get('authToken');
+      const base = process.env.VUE_APP_API_BASE_URL;
+      const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
 
-        // Compute sendAt (interpret date/time as frontend local time) and convert to UTC ISO
+      // Make sure ids are arrays
+      const toArray = (v) => (Array.isArray(v) ? v : v ? [v] : []);
+      const gIds = toArray(groupIds);
+      const mIds = toArray(memberIds);
+
+      try {
         const localDateTime = new Date(`${date}T${time}:00`);
         const sendAt = localDateTime.toISOString();
 
-        // 1) Create the assessment schedule record and include send_at so backend can schedule correctly in UTC
+        // Create schedule record
         await axios.post(
           `${base}/api/assessment-schedules`,
           {
@@ -363,82 +365,67 @@ export default {
             date,
             time,
             send_at: sendAt,
-            group_ids: groupIds,
-            member_ids: memberIds,
+            group_ids: gIds,
+            member_ids: mIds,
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           },
-          { headers: { Authorization: `Bearer ${authToken}` } }
+          { headers }
         );
 
-        // 2) Queue individual scheduled emails. Use allSettled so one failing
-        // recipient doesn't cancel the whole batch (we'll surface failures below).
+        // Queue individual scheduled emails (best-effort)
         const emailPromises = (selectedMembers || []).map((member) => {
-          if (member && member.email) {
-            const group_id =
-              member.group_id ||
-              (Array.isArray(member.group_ids) && member.group_ids[0]) ||
-              (Array.isArray(groupIds) && groupIds.length === 1
-                ? groupIds[0]
-                : null);
-            return axios
-              .post(
-                `${base}/api/schedule-email`,
-                {
-                  recipient_email: member.email,
-                  subject: "Assessment Scheduled",
-                  body: `You have an assessment scheduled: ${this.selectedAssessment.name}`,
-                  send_at: sendAt,
-                  assessment_id: this.selectedAssessment.id,
-                  member_id: member.id,
-                  group_id: group_id,
-                },
-                { headers: { Authorization: `Bearer ${authToken}` } }
-              )
-              .catch((err) => ({ error: err, member }));
-          }
-          return Promise.resolve({ skipped: true });
+          if (!member || !member.email) return Promise.resolve({ skipped: true });
+          const group_id =
+            member.group_id ||
+            (Array.isArray(member.group_ids) && member.group_ids[0]) ||
+            (gIds.length === 1 ? gIds[0] : null);
+          return axios
+            .post(
+              `${base}/api/schedule-email`,
+              {
+                recipient_email: member.email,
+                subject: 'Assessment Scheduled',
+                body: `You have an assessment scheduled: ${this.selectedAssessment.name}`,
+                send_at: sendAt,
+                assessment_id: this.selectedAssessment.id,
+                member_id: member.id,
+                group_id,
+              },
+              { headers }
+            )
+            .catch((err) => ({ error: err, member }));
         });
 
         const results = await Promise.allSettled(emailPromises);
         const failed = results
-          .filter((r) => r.status === "fulfilled" && r.value && r.value.error)
+          .filter((r) => r.status === 'fulfilled' && r.value && r.value.error)
           .map((r) => r.value && r.value.member?.email)
           .filter(Boolean);
 
         const msg = failed.length
-          ? "Assessment scheduled - " + failed.length + " email(s) failed"
-          : "Assessment scheduled";
-        this._showToast("success", "Scheduled", msg);
+          ? `Assessment scheduled - ${failed.length} email(s) failed`
+          : 'Assessment scheduled';
+        this._showToast('success', 'Scheduled', msg);
 
-        // Close modal then refresh the single assessment's schedule to avoid
-        // a full re-initialize (less disruptive and faster).
+        // Close and refresh the scheduled data for the affected assessment
         this.closeScheduleModal();
         try {
-          const updated = await this.fetchScheduleForAssessment(
-            this.selectedAssessment,
-            authToken
-          );
-          // Replace the matching assessment in the list (preserve ordering)
-          this.assessments = this.assessments.map((a) =>
-            a.id === updated.id ? updated : a
-          );
-        } catch (error_) {
-          // If single refresh fails, fall back to full refresh (best-effort)
-          console.warn(
-            "[AssessmentsCard] Failed to refresh single schedule, falling back to full refresh.",
-            error_
-          );
+          const updated = await this.fetchScheduleForAssessment(this.selectedAssessment);
+          this.assessments = this.assessments.map((a) => (a.id === updated.id ? updated : a));
+        } catch (err_) {
+          console.debug && console.debug('[AssessmentsCard] refresh single schedule failed', err_);
           await this.initializeComponent();
         }
       } catch (e) {
-        console.error("Failed to schedule assessment", e);
+        console.debug && console.debug('Failed to schedule assessment', e?.message || e);
+        this._showToast('error', 'Failed', 'Could not schedule assessment.');
       } finally {
         this.loading = false;
       }
     },
     goToSummary(item) {
       this.$router.push({
-        name: "AssessmentSummary",
+        name: 'AssessmentSummary',
         params: { assessmentId: item.id },
       });
     },
@@ -459,28 +446,26 @@ export default {
     formatLocalDateTime(dateStr, timeStr) {
       try {
         const date = this._parseDateTime(dateStr, timeStr);
-        if (!date) return `${dateStr || ""} ${timeStr || ""}`.trim();
+        if (!date) return `${dateStr || ''} ${timeStr || ''}`.trim();
 
         const options = {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
           hour12: true,
         };
-        const formatter = new Intl.DateTimeFormat("en-US", options);
-        return formatter.format(date).replace(",", "");
+        const formatter = new Intl.DateTimeFormat('en-US', options);
+        return formatter.format(date).replace(',', '');
       } catch (e) {
-        console.error("Failed to format date/time", e);
-        return `${dateStr || ""} ${timeStr || ""}`.trim();
+        console.debug && console.debug('Failed to format date/time', e);
+        return `${dateStr || ''} ${timeStr || ''}`.trim();
       }
     },
     _parseDateTime(dateStr, timeStr) {
       if (!dateStr) return null;
-      const dateTimeString = `${String(dateStr).trim()} ${String(
-        timeStr || "00:00:00"
-      ).trim()}`;
+      const dateTimeString = `${String(dateStr).trim()} ${String(timeStr || '00:00:00').trim()}`;
       const date = new Date(dateTimeString);
       return Number.isNaN(date.getTime()) ? null : date;
     },

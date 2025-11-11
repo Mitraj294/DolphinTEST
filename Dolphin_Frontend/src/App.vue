@@ -8,15 +8,15 @@
 </template>
 
 <script>
-import MainLayout from "@/components/layout/MainLayout.vue";
+import MainLayout from '@/components/layout/MainLayout.vue';
 
 export default {
-  name: "App",
+  name: 'App',
   computed: {
     layoutComponent() {
       const layout = this.$route.meta.layout;
-      if (layout === "main") return MainLayout;
-      return "div";
+      if (layout === 'main') return MainLayout;
+      return 'div';
     },
   },
 };

@@ -1,11 +1,7 @@
 <template>
   <div class="thanks-page">
     <img src="@/assets/images/Lines.svg" alt="Lines" class="bg-lines" />
-    <img
-      src="@/assets/images/Image.svg"
-      alt="Illustration"
-      class="bg-illustration"
-    />
+    <img src="@/assets/images/Image.svg" alt="Illustration" class="bg-illustration" />
     <div class="thanks-card">
       <div class="check-circle">
         <svg width="56" height="56" viewBox="0 0 56 56">
@@ -32,11 +28,7 @@
         </template>
       </div>
       <div class="thanks-footer">
-        <img
-          :src="require('@/assets/images/Logo.svg')"
-          alt="Dolphin Logo"
-          class="footer-logo"
-        />
+        <img :src="require('@/assets/images/Logo.svg')" alt="Dolphin Logo" class="footer-logo" />
         <div class="copyright">©2025 Dolphin | All Rights Reserved</div>
       </div>
     </div>
@@ -45,7 +37,7 @@
 
 <script>
 export default {
-  name: "ThanksPage",
+  name: 'ThanksPage',
 };
 </script>
 

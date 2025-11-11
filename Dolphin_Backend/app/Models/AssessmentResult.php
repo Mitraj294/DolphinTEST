@@ -5,6 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @mixin \Eloquent
+ * @property int $id
+ * @method static \Illuminate\Database\Eloquent\Builder|static where(string $column, $value = null)
+ * @method static static create(array $attributes = [])
+ */
 class AssessmentResult extends Model
 {
     protected $fillable = [

@@ -5,7 +5,7 @@
 export async function loadRuntimeEnv() {
   if (globalThis.__env) return;
   try {
-    const res = await fetch("/env.json", { cache: "no-store" });
+    const res = await fetch('/env.json', { cache: 'no-store' });
     if (res.ok) {
       const obj = await res.json();
       globalThis.__env = obj;
@@ -16,7 +16,7 @@ export async function loadRuntimeEnv() {
     // Log the error for debugging rather than silently swallowing it.
     // Still set an empty env object as a safe fallback for the app.
     // eslint-disable-next-line no-console
-    console.warn("Failed to load runtime env:", e);
+    console.debug && console.debug('Failed to load runtime env:', e);
     globalThis.__env = {};
   }
 }

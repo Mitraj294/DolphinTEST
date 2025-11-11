@@ -118,7 +118,6 @@ class LeadNoteController extends Controller
             Log::error('Failed to update lead note', ['lead_id' => $leadId, 'note_id' => $noteId, 'error' => $e->getMessage()]);
             return response()->json(['message' => 'Failed to update note'], 500);
         }
-
     }
 
     /**
@@ -148,6 +147,5 @@ class LeadNoteController extends Controller
             Log::error('Failed to delete lead note', ['lead_id' => $leadId, 'note_id' => $noteId, 'error' => $e->getMessage()]);
             return response()->json(['message' => 'Failed to delete note'], 500);
         }
-
     }
 }

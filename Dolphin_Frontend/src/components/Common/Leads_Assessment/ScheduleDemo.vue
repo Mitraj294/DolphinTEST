@@ -5,8 +5,7 @@
         <div class="schedule-demo-card">
           <h2 class="schedule-demo-title">{{ titleText }}</h2>
           <div class="schedule-demo-desc">
-            Lorem Ipsum is simply dummy text of the printing and typesetting
-            industry.
+            Lorem Ipsum is simply dummy text of the printing and typesetting industry.
           </div>
           <form class="schedule-demo-form">
             <FormRow>
@@ -47,11 +46,7 @@
               <div class="schedule-demo-field schedule-demo-schedule-field">
                 <FormLabel>Schedule</FormLabel>
                 <div class="schedule-demo-schedule-inputs">
-                  <FormInput
-                    v-model="date"
-                    type="date"
-                    placeholder="MM/DD/YYYY"
-                  />
+                  <FormInput v-model="date" type="date" placeholder="MM/DD/YYYY" />
                   <FormInput v-model="time" type="time" placeholder="00:00" />
                 </div>
               </div>
@@ -70,35 +65,30 @@
 </template>
 
 <script>
-import {
-  FormDropdown,
-  FormInput,
-  FormLabel,
-  FormRow,
-} from "@/components/Common/Common_UI/Form";
-import MainLayout from "@/components/layout/MainLayout.vue";
+import { FormDropdown, FormInput, FormLabel, FormRow } from '@/components/Common/Common_UI/Form';
+import MainLayout from '@/components/layout/MainLayout.vue';
 export default {
-  name: "ScheduleDemo",
+  name: 'ScheduleDemo',
   components: { MainLayout, FormInput, FormDropdown, FormRow, FormLabel },
   data() {
     return {
-      organization: "",
-      admin: "",
-      user: "",
-      subject: "",
-      method: "",
-      date: "",
-      time: "",
+      organization: '',
+      admin: '',
+      user: '',
+      subject: '',
+      method: '',
+      date: '',
+      time: '',
     };
   },
   computed: {
     titleText() {
       const mode = this.$route && this.$route.query && this.$route.query.mode;
-      return mode === "followup" ? "Schedule Follow up" : "Schedule Demo";
+      return mode === 'followup' ? 'Schedule Follow up' : 'Schedule Demo';
     },
     submitText() {
       const mode = this.$route && this.$route.query && this.$route.query.mode;
-      return mode === "followup" ? "Schedule Follow up" : "Schedule Demo";
+      return mode === 'followup' ? 'Schedule Follow up' : 'Schedule Demo';
     },
   },
 };
@@ -207,8 +197,8 @@ export default {
 .schedule-demo-schedule-inputs .form-input-noicon-wrap {
   width: 100%;
 }
-.schedule-demo-schedule-inputs input.form-input[type="date"],
-.schedule-demo-schedule-inputs input.form-input[type="time"] {
+.schedule-demo-schedule-inputs input.form-input[type='date'],
+.schedule-demo-schedule-inputs input.form-input[type='time'] {
   width: 100%;
   background: #fafafa;
   border: 1.5px solid #e0e0e0;
@@ -220,8 +210,8 @@ export default {
   transition: border 0.2s;
   box-sizing: border-box;
 }
-.schedule-demo-schedule-inputs input.form-input[type="date"]::placeholder,
-.schedule-demo-schedule-inputs input.form-input[type="time"]::placeholder {
+.schedule-demo-schedule-inputs input.form-input[type='date']::placeholder,
+.schedule-demo-schedule-inputs input.form-input[type='time']::placeholder {
   color: #888;
   opacity: 1;
 }

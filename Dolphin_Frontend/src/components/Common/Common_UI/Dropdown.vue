@@ -1,9 +1,5 @@
 <template>
-  <div
-    class="dropdown-radio"
-    :style="widthStyle + 'margin-right:0;'"
-    ref="dropdownRoot"
-  >
+  <div class="dropdown-radio" :style="[widthStyle, { marginRight: '0' }]" ref="dropdownRoot">
     <button
       class="dropdown-radio-btn"
       :class="{ open }"
@@ -16,9 +12,7 @@
       <img
         class="dropdown-radio-arrow"
         :src="
-          open
-            ? require('@/assets/images/VectorUp.svg')
-            : require('@/assets/images/VectorDown.svg')
+          open ? require('@/assets/images/VectorUp.svg') : require('@/assets/images/VectorDown.svg')
         "
         :alt="open ? 'Close' : 'Open'"
       />
@@ -42,33 +36,36 @@
 </template>
 
 <script>
+import { getWidthStyle } from './styleHelpers';
+
 export default {
-  name: "UniversalDropdown",
+  name: 'UniversalDropdown',
   props: {
     options: { type: Array, default: () => [] },
-    modelValue: { type: String, default: "" },
+    modelValue: { type: [String, Number], default: '' },
     dropdownWidth: {
-      type: Number,
+      type: [String, Number],
       default: 240,
     },
   },
-  emits: ["update:modelValue"],
+  emits: ['update:modelValue'],
   data() {
     return {
       open: false,
-      internalValue: this.modelValue || this.options[0]?.value || "",
+      internalValue: this.modelValue || this.options[0]?.value || '',
     };
   },
   computed: {
     widthStyle() {
-      return `width: ${this.dropdownWidth}px; min-width: ${this.dropdownWidth}px; max-width: ${this.dropdownWidth}px;`;
+      // returns an object suitable for Vue :style binding
+      return getWidthStyle(this.dropdownWidth);
     },
     displayLabel() {
       const found = this.options.find((o) => o.value === this.internalValue);
-      return found ? found.label : this.options[0]?.label || "";
+      return found ? found.label : this.options[0]?.label || '';
     },
     dropdownListStyle() {
-      return `width: ${this.dropdownWidth}px; min-width: ${this.dropdownWidth}px; max-width: ${this.dropdownWidth}px;`;
+      return getWidthStyle(this.dropdownWidth);
     },
   },
   watch: {
@@ -76,7 +73,7 @@ export default {
       this.internalValue = val;
     },
     internalValue(val) {
-      this.$emit("update:modelValue", val);
+      this.$emit('update:modelValue', val);
     },
   },
   methods: {
@@ -94,10 +91,10 @@ export default {
     },
   },
   mounted() {
-    document.addEventListener("mousedown", this.handleClickOutside);
+    document.addEventListener('mousedown', this.handleClickOutside);
   },
   beforeUnmount() {
-    document.removeEventListener("mousedown", this.handleClickOutside);
+    document.removeEventListener('mousedown', this.handleClickOutside);
   },
 };
 </script>

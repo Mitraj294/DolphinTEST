@@ -7,29 +7,18 @@
             <div class="manage-card">
               <div class="manage-top">
                 <div class="manage-illustration">
-                  <img
-                    src="@/assets/images/Group 14.svg"
-                    alt="Subscription"
-                  />
+                  <img src="@/assets/images/Group 14.svg" alt="Subscription" />
                 </div>
-                <h1
-                  class="welcome-line"
-                  v-if="!loading && userName"
-                >
+                <h1 class="welcome-line" v-if="!loading && userName">
                   Welcome back, {{ userName }}!
                 </h1>
                 <h2 class="manage-title">
                   <span v-if="loading">Checking subscription…</span>
                   <span v-else-if="status === 'active'">You're subscribed</span>
-                  <span v-else-if="status === 'expired'"
-                    >Subscription expired</span
-                  >
+                  <span v-else-if="status === 'expired'">Subscription expired</span>
                   <span v-else>Get started with a plan</span>
                 </h2>
-                <p
-                  class="manage-subtitle"
-                  v-if="!loading"
-                >
+                <p class="manage-subtitle" v-if="!loading">
                   <template v-if="status === 'active'">
                     You are subscribed to the
                     <span
@@ -58,22 +47,16 @@
                     on <strong>{{ subscriptionEnd || '—' }}</strong
                     >. Please renew to continue access.
                   </template>
-                  <template v-else>
-                    Choose from our plans and start using Dolphin today.
-                  </template>
+                  <template v-else> Choose from our plans and start using Dolphin today. </template>
                 </p>
               </div>
 
               <div class="manage-actions">
-                <button
-                  class="btn btn-primary"
-                  @click="navigateToPlans"
-                  :disabled="loading"
-                >
+                <button class="btn btn-primary" @click="navigateToPlans" :disabled="loading">
                   <template v-if="loading">Checking...</template>
                   <template v-else>
-                  <span v-if="isSubscribed">Manage Subscription</span>
-                  <span v-else>Explore Subscriptions</span>
+                    <span v-if="isSubscribed">Manage Subscription</span>
+                    <span v-else>Explore Subscriptions</span>
                   </template>
                 </button>
 
@@ -121,7 +104,7 @@ export default {
       this.subscriptionEnd = res.subscription_end;
       this.isSubscribed = this.status === 'active';
     } catch (e) {
-      console.error(e);
+      console.debug && console.debug(e);
       this.status = 'none';
       this.plan_name = null;
       this.subscriptionEnd = null;
@@ -153,7 +136,7 @@ export default {
       const historyData = Array.isArray(histRes.data) ? histRes.data : [];
       this.hasBillingHistory = historyData.length > 0;
     } catch (e) {
-      console.warn('Failed to fetch billing history:', e);
+      console.debug && console.debug('Failed to fetch billing history:', e);
       this.hasBillingHistory = false;
     }
   },
@@ -172,7 +155,11 @@ export default {
       try {
         this.$router.push({ name: 'SubscriptionPlans' });
       } catch (e) {
-        console.warn('Unable to navigate to subscription plans', { error: e, url: plansUrl });
+        console.debug &&
+          console.debug('Unable to navigate to subscription plans', {
+            error: e,
+            url: plansUrl,
+          });
       }
     },
     async handleButton() {
@@ -195,13 +182,14 @@ export default {
             if (typeof globalThis !== 'undefined' && globalThis.location) {
               globalThis.location.href = url;
             } else {
-              console.warn('Unable to redirect to Stripe portal without window.location', {
-                url,
-              });
+              console.debug &&
+                console.debug('Unable to redirect to Stripe portal without window.location', {
+                  url,
+                });
             }
           }
         } catch (e) {
-          console.error('Failed to open customer portal:', e);
+          console.debug && console.debug('Failed to open customer portal:', e);
         } finally {
           this.loading = false;
         }

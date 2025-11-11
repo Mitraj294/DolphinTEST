@@ -62,7 +62,7 @@ class AnnouncementController extends Controller
             'schedule_time' => $validated['schedule_time'] ?? null,
             // Use null-safe operator in case request is unauthenticated
             'sender_id' => $request->user()?->id ?? null,
-        ]);
+            ]);
 
         // Attach recipients if provided
         if (!empty($validated['organization_ids'])) {

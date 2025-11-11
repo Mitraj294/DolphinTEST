@@ -114,8 +114,8 @@ class UserController extends Controller
 
     // Capture the user's current primary role (if any) so we can detect
     // transitions (e.g. organizationadmin -> user) and react accordingly.
-    $oldRole = $user->roles()->first();
-    $oldRoleName = $oldRole->name ?? null;
+        $oldRole = $user->roles()->first();
+        $oldRoleName = $oldRole->name ?? null;
 
         try {
             DB::transaction(function () use ($user, $validatedData, $request) {
@@ -390,7 +390,7 @@ class UserController extends Controller
     private function formatUserPayload(User $user): array
     {
         $fullName = trim($user->first_name . ' ' . $user->last_name);
-        
+
         return [
             'id' => $user->id,
             'email' => $user->email,

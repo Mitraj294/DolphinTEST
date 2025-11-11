@@ -26,10 +26,7 @@
                   <tr v-for="row in paginatedRows" :key="row.name">
                     <td class="member-name-td">{{ row.name }}</td>
                     <td>
-                      <span
-                        v-if="row.result === 'Submitted'"
-                        class="status submitted"
-                      >
+                      <span v-if="row.result === 'Submitted'" class="status submitted">
                         <svg
                           width="20"
                           height="20"
@@ -60,12 +57,7 @@
                             margin-right: 8px;
                           "
                         >
-                          <svg
-                            width="20"
-                            height="20"
-                            viewBox="0 0 20 20"
-                            fill="none"
-                          >
+                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                             <circle cx="10" cy="10" r="10" fill="#F0F0F0" />
                           </svg>
                           <img
@@ -115,17 +107,11 @@
           @togglePageDropdown="togglePageDropdown"
         />
         <!-- Modal for assessment details -->
-        <div
-          v-if="showModal"
-          class="assessment-modal-overlay"
-          @click.self="closeModal"
-        >
+        <div v-if="showModal" class="assessment-modal-overlay" @click.self="closeModal">
           <div class="assessment-modal-content">
             <div class="assessment-modal-header-row sticky-modal-header">
               <h2>{{ selectedMember.name }}’s Assessments</h2>
-              <button class="btn modal-close-btn" @click="closeModal">
-                &times;
-              </button>
+              <button class="btn modal-close-btn" @click="closeModal">&times;</button>
             </div>
             <div class="assessment-modal-scrollable">
               <div
@@ -133,9 +119,7 @@
                 :key="idx"
                 class="assessment-question-block"
               >
-                <div class="assessment-question">
-                  Q.{{ idx + 1 }} {{ q.question }}
-                </div>
+                <div class="assessment-question">Q.{{ idx + 1 }} {{ q.question }}</div>
                 <div class="assessment-answer">{{ q.answer }}</div>
               </div>
             </div>
@@ -148,13 +132,13 @@
 </template>
 
 <script>
-import TableHeader from "@/components/Common/Common_UI/TableHeader.vue";
-import MainLayout from "@/components/layout/MainLayout.vue";
-import Pagination from "@/components/layout/Pagination.vue";
-import axios from "axios";
+import TableHeader from '@/components/Common/Common_UI/TableHeader.vue';
+import MainLayout from '@/components/layout/MainLayout.vue';
+import Pagination from '@/components/layout/Pagination.vue';
+import axios from 'axios';
 
 export default {
-  name: "AssessmentSummaryPage",
+  name: 'AssessmentSummaryPage',
   components: { MainLayout, Pagination, TableHeader },
   data() {
     return {
@@ -162,9 +146,9 @@ export default {
       rows: [],
       summary: { total_sent: 0, submitted: 0, pending: 0 },
       tableColumns: [
-        { label: "Member Name", key: "name" },
-        { label: "Result", key: "result" },
-        { label: "Actions", key: "actions" },
+        { label: 'Member Name', key: 'name' },
+        { label: 'Result', key: 'result' },
+        { label: 'Actions', key: 'actions' },
       ],
       pageSizes: [10, 25, 100],
       pageSize: 10,
@@ -188,9 +172,7 @@ export default {
       if (!this.assessmentId) return;
       try {
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-        const res = await axios.get(
-          `${API_BASE_URL}/api/assessments/${this.assessmentId}/summary`
-        );
+        const res = await axios.get(`${API_BASE_URL}/api/assessments/${this.assessmentId}/summary`);
         const data = res.data;
 
         // Set navbar title from the fetched data
@@ -198,21 +180,13 @@ export default {
           const assessmentName = data.assessment.name;
           // Use the event bus to update the navbar title
           if (this.$root && this.$root.$emit) {
-            this.$root.$emit(
-              "page-title-override",
-              `Assessment ${assessmentName} Summary`
-            );
+            this.$root.$emit('page-title-override', `Assessment ${assessmentName} Summary`);
           }
         }
 
         this.rows = (data.members || []).map((member) => ({
-          name:
-            member.name ||
-            (member.member_id ? `Member #${member.member_id}` : "Unknown"),
-          result:
-            member.answers && member.answers.length > 0
-              ? "Submitted"
-              : "Pending",
+          name: member.name || (member.member_id ? `Member #${member.member_id}` : 'Unknown'),
+          result: member.answers && member.answers.length > 0 ? 'Submitted' : 'Pending',
           assessment: (member.answers || []).map((a) => ({
             question: a.question,
             answer: a.answer,
@@ -226,7 +200,7 @@ export default {
       } catch (e) {
         this.rows = [];
         this.summary = { total_sent: 0, submitted: 0, pending: 0 };
-        console.error("Failed to fetch assessment summary:", e);
+        console.debug && console.debug('Failed to fetch assessment summary:', e);
       }
     },
     openModal(row) {
@@ -260,7 +234,7 @@ export default {
   beforeDestroy() {
     // Reset the override when leaving the page
     if (this.$root && this.$root.$emit) {
-      this.$root.$emit("page-title-override", null);
+      this.$root.$emit('page-title-override', null);
     }
   },
 };

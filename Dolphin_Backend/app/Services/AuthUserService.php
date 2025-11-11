@@ -15,15 +15,18 @@ class AuthUserService
 {
     /**
      * Create a user and their associated details in a transaction.
+     *
+     * @param array<string,mixed> $data
      */
     public function createUserAndDetails(array $data): User
     {
         return DB::transaction(function () use ($data) {
             // Check if user is registering from a lead with existing organization
-            $lead = Lead::where('email', $data['email'])->first();
-            $existingOrgId = $lead?->organization_id ?? null;
+            $lead = Lead::query()->where('email', $data['email'])->first();
+            /** @var \App\Models\Lead|null $lead */
+            $existingOrgId = $lead ? $lead->getAttribute('organization_id') : null;
 
-            $user = User::create([
+            $user = User::query()->create([
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'email' => $data['email'],
@@ -39,29 +42,30 @@ class AuthUserService
                 'organization_id' => $existingOrgId, // Link to existing org if available
             ]);
 
+            /** @var \App\Models\Organization|null $org */
             $org = null;
 
             if ($existingOrgId) {
                 // Use and UPDATE existing organization from lead
-                $org = Organization::find($existingOrgId);
+                $org = Organization::query()->find($existingOrgId);
 
                 if ($org) {
                     // Attach user if missing
-                    if (!$org->user_id) {
-                        $org->user_id = $user->id;
+                    if (!$org->getAttribute('user_id')) {
+                        $org->setAttribute('user_id', $user->getKey());
                     }
 
                     // Update core organization fields (allow override via registration form)
                     // Determine the appropriate referral_other_text
-                    $newReferralSourceId = $data['referral_source_id'] ?? $data['find_us'] ?? $org->referral_source_id;
+                    $newReferralSourceId = $data['referral_source_id'] ?? $data['find_us'] ?? $org->getAttribute('referral_source_id');
                     $newReferralOtherText = null;
                     if ((int)$newReferralSourceId === 10) {
-                        $newReferralOtherText = $data['referral_other_text'] ?? $org->referral_other_text;
+                        $newReferralOtherText = $data['referral_other_text'] ?? $org->getAttribute('referral_other_text');
                     }
 
                     $org->fill([
-                        'name' => $data['name'] ?? $data['organization_name'] ?? $org->name,
-                        'size' => $data['size'] ?? $data['organization_size'] ?? $org->size,
+                        'name' => $data['name'] ?? $data['organization_name'] ?? $org->getAttribute('name'),
+                        'size' => $data['size'] ?? $data['organization_size'] ?? $org->getAttribute('size'),
                         'referral_source_id' => $newReferralSourceId,
                         'referral_other_text' => $newReferralOtherText,
                     ]);
@@ -71,8 +75,8 @@ class AuthUserService
                     }
 
                     // Update or create organization address (always persist latest form values)
-                    \App\Models\OrganizationAddress::updateOrCreate(
-                        ['organization_id' => $org->id],
+                    \App\Models\OrganizationAddress::query()->updateOrCreate(
+                        ['organization_id' => $org->getKey()],
                         [
                             'address_line_1' => $data['address_line_1'] ?? $data['address'] ?? null,
                             'address_line_2' => $data['address_line_2'] ?? null,
@@ -85,8 +89,8 @@ class AuthUserService
                 }
             } else {
                 // Create new organization
-                $org = Organization::create([
-                    'user_id' => $user->id,
+                $org = Organization::query()->create([
+                    'user_id' => $user->getKey(),
                     'name' => $data['name'] ?? $data['organization_name'] ?? null,
                     'size' => $data['size'] ?? $data['organization_size'] ?? null,
                     'referral_source_id' => $data['referral_source_id'] ?? $data['find_us'] ?? null,
@@ -96,8 +100,8 @@ class AuthUserService
                 ]);
 
                 // Create organization address
-                \App\Models\OrganizationAddress::create([
-                    'organization_id' => $org->id,
+                \App\Models\OrganizationAddress::query()->create([
+                    'organization_id' => $org->getKey(),
                     'address_line_1' => $data['address_line_1'] ?? $data['address'] ?? null,
                     'address_line_2' => $data['address_line_2'] ?? null,
                     'country_id' => $data['country_id'] ?? $data['country'] ?? null,
@@ -108,12 +112,15 @@ class AuthUserService
 
                 // Set the organization_id on the user
                 if ($org) {
-                    $user->organization_id = $org->id;
+                    $user->setAttribute('organization_id', $org->getKey());
                     $user->save();
                 }
             }
 
-            $user->roles()->attach(Role::where('name', 'user')->first());
+            $role = Role::query()->where('name', 'user')->first();
+            if ($role) {
+                $user->roles()->attach($role);
+            }
 
             return $user;
         });
@@ -122,7 +129,7 @@ class AuthUserService
     public function updateLeadStatus(string $email): void
     {
         try {
-            $lead = Lead::where('email', $email)->first();
+            $lead = Lead::query()->where('email', $email)->first();
             if ($lead) {
                 $lead->update(['status' => 'Registered', 'registered_at' => now()]);
             }
@@ -131,59 +138,83 @@ class AuthUserService
         }
     }
 
+    /**
+     * Build payload for a user to return to the frontend.
+     *
+     * @param User $user
+     * @return array<string,mixed>
+     */
     public function buildUserPayload(User $user): array
     {
         // Ensure we have country and roles loaded and fetch the owning organization
         $user->loadMissing(['country', 'roles']);
-        $org = Organization::with('address')->where('user_id', $user->id)->first();
+    /** @var \App\Models\Organization|null $org */
+        $org = Organization::query()->with('address')->where('user_id', $user->getKey())->first();
 
         $orgPayload = null;
         if ($org) {
+            $lastContacted = $org->getAttribute('last_contacted');
+            $lastContactedStr = null;
+            if ($lastContacted instanceof \DateTimeInterface) {
+                $lastContactedStr = $lastContacted->format('Y-m-d H:i:s');
+            } elseif ($lastContacted) {
+                $lastContactedStr = (string) $lastContacted;
+            }
+
             $orgPayload = [
-                'id' => $org->id,
-                'name' => $org->name,
-                'size' => $org->size,
-                'referral_source_id' => $org->referral_source_id,
-                'referral_other_text' => $org->referral_other_text,
-                'last_contacted' => $org->last_contacted?->toDateTimeString(),
+                'id' => $org->getKey(),
+                'name' => $org->getAttribute('name'),
+                'size' => $org->getAttribute('size'),
+                'referral_source_id' => $org->getAttribute('referral_source_id'),
+                'referral_other_text' => $org->getAttribute('referral_other_text'),
+                'last_contacted' => $lastContactedStr,
                 'address' => null,
             ];
 
-            if ($org->address) {
+            $addr = $org->getRelationValue('address');
+            if ($addr) {
                 $orgPayload['address'] = [
-                    'address_line_1' => $org->address->address_line_1,
-                    'address_line_2' => $org->address->address_line_2,
-                    'zip_code' => $org->address->zip_code,
-                    'country_id' => $org->address->country_id,
-                    'state_id' => $org->address->state_id,
-                    'city_id' => $org->address->city_id,
+                    'address_line_1' => $addr->getAttribute('address_line_1'),
+                    'address_line_2' => $addr->getAttribute('address_line_2'),
+                    'zip_code' => $addr->getAttribute('zip_code'),
+                    'country_id' => $addr->getAttribute('country_id'),
+                    'state_id' => $addr->getAttribute('state_id'),
+                    'city_id' => $addr->getAttribute('city_id'),
                 ];
             }
         }
 
         return [
-            'id' => $user->id,
-            'email' => $user->email,
-            'role' => $user->roles->first()->name ?? 'user',
-            'first_name' => $user->first_name,
-            'last_name' => $user->last_name,
-            'phone_number' => $user->phone_number ?? null,
-            'country' => $user->country->name ?? null,
-            'country_id' => $user->country_id ?? null,
-            'organization_id' => $org?->id,
-            'organization_name' => $org?->name, // keep for frontend compatibility
-            'name' => $org?->name, // new field name
+            'id' => $user->getKey(),
+            'email' => $user->getAttribute('email'),
+            'role' => (
+                ($user->getRelationValue('roles') instanceof \Illuminate\Support\Collection) ?
+                    (($user->getRelationValue('roles')->first())?->getAttribute('name') ?? 'user') : 'user'
+            ),
+            'first_name' => $user->getAttribute('first_name'),
+            'last_name' => $user->getAttribute('last_name'),
+            'phone_number' => $user->getAttribute('phone_number') ?? null,
+            'country' => ($user->getRelationValue('country')?->getAttribute('name')) ?? null,
+            'country_id' => $user->getAttribute('country_id') ?? null,
+            'organization_id' => $org ? $org->getKey() : null,
+            'organization_name' => $org ? $org->getAttribute('name') : null, // keep for frontend compatibility
+            'name' => $org ? $org->getAttribute('name') : null, // new field name
             // Helpful organization metadata consumed by the frontend
             'organization' => $orgPayload,
         ];
     }
 
+    /**
+     * @param User $user
+     * @param array<string,mixed> $userData
+     * @param array<string,mixed> $detailsData
+     */
     public function updateUserRecord(User $user, array $userData, array $detailsData): void
     {
         $user->fill([
-            'email' => $userData['email'] ?? $detailsData['email'] ?? $user->email,
-            'first_name' => $detailsData['first_name'] ?? $user->first_name,
-            'last_name' => $detailsData['last_name'] ?? $user->last_name,
+            'email' => $userData['email'] ?? $detailsData['email'] ?? $user->getAttribute('email'),
+            'first_name' => $detailsData['first_name'] ?? $user->getAttribute('first_name'),
+            'last_name' => $detailsData['last_name'] ?? $user->getAttribute('last_name'),
         ]);
 
         if ($user->isDirty()) {
@@ -191,6 +222,10 @@ class AuthUserService
         }
     }
 
+    /**
+     * @param User $user
+     * @param array<string,mixed> $detailsData
+     */
     public function updateUserDetailsRecord(User $user, array $detailsData): void
     {
         if (empty($detailsData)) {
@@ -198,16 +233,16 @@ class AuthUserService
         }
 
     // Store phone into the users.phone_number column. Accept either 'phone' or 'phone_number'
-    $user->phone_number = $detailsData['phone_number'] ?? $detailsData['phone'] ?? $user->phone_number;
+        $user->setAttribute('phone_number', $detailsData['phone_number'] ?? $detailsData['phone'] ?? $user->getAttribute('phone_number'));
 
         if (isset($detailsData['country'])) {
-            $user->country_id = $this->resolveCountryId($detailsData['country']);
+            $user->setAttribute('country_id', $this->resolveCountryId($detailsData['country']));
         }
 
         if (isset($detailsData['referral_source_id'])) {
-            $user->referral_source_id = $detailsData['referral_source_id'];
+            $user->setAttribute('referral_source_id', $detailsData['referral_source_id']);
         } elseif (isset($detailsData['find_us'])) {
-            $user->referral_source_id = $detailsData['find_us'];
+            $user->setAttribute('referral_source_id', $detailsData['find_us']);
         }
 
         if ($user->isDirty()) {
@@ -215,6 +250,9 @@ class AuthUserService
         }
     }
 
+    /**
+     * @param mixed $countryInput
+     */
     private function resolveCountryId($countryInput): ?int
     {
         if (is_numeric($countryInput)) {
@@ -222,8 +260,8 @@ class AuthUserService
         }
 
         if (is_string($countryInput) && !empty(trim($countryInput))) {
-            $country = Country::where('name', trim($countryInput))->orWhere('code', trim($countryInput))->first();
-            return $country?->id;
+            $country = Country::query()->where('name', trim($countryInput))->orWhere('code', trim($countryInput))->first();
+            return $country ? $country->getKey() : null;
         }
 
         return null;

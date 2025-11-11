@@ -72,11 +72,9 @@
                   ]"
                   required
                 />
-                <FormLabel
-                  v-if="errors.referral_source_id"
-                  class="error-message"
-                  >{{ errors.referral_source_id[0] }}</FormLabel
-                >
+                <FormLabel v-if="errors.referral_source_id" class="error-message">{{
+                  errors.referral_source_id[0]
+                }}</FormLabel>
               </div>
               <div v-if="isReferralSourceOther">
                 <FormLabel>Please specify</FormLabel>
@@ -86,11 +84,9 @@
                   placeholder="Please specify how you found us"
                   :required="isReferralSourceOther"
                 />
-                <FormLabel
-                  v-if="errors.referral_other_text"
-                  class="error-message"
-                  >{{ errors.referral_other_text[0] }}</FormLabel
-                >
+                <FormLabel v-if="errors.referral_other_text" class="error-message">{{
+                  errors.referral_other_text[0]
+                }}</FormLabel>
               </div>
               <div v-else></div>
             </FormRow>
@@ -103,11 +99,9 @@
                   placeholder="Organization Name"
                   required
                 />
-                <FormLabel
-                  v-if="errors.organization_name"
-                  class="error-message"
-                  >{{ errors.organization_name[0] }}</FormLabel
-                >
+                <FormLabel v-if="errors.organization_name" class="error-message">{{
+                  errors.organization_name[0]
+                }}</FormLabel>
               </div>
               <div>
                 <FormLabel>Organization Size</FormLabel>
@@ -120,11 +114,9 @@
                   ]"
                   required
                 />
-                <FormLabel
-                  v-if="errors.organization_size"
-                  class="error-message"
-                  >{{ errors.organization_size[0] }}</FormLabel
-                >
+                <FormLabel v-if="errors.organization_size" class="error-message">{{
+                  errors.organization_size[0]
+                }}</FormLabel>
               </div>
               <div></div>
             </FormRow>
@@ -222,11 +214,7 @@
               <div></div>
             </FormRow>
             <div class="lead-capture-actions">
-              <button
-                type="button"
-                class="org-edit-cancel"
-                @click="$router.push('/leads')"
-              >
+              <button type="button" class="org-edit-cancel" @click="$router.push('/leads')">
                 Cancel
               </button>
               <button type="submit" class="org-edit-update">Save Lead</button>
@@ -245,14 +233,15 @@ import {
   FormInput,
   FormLabel,
   FormRow,
-} from "@/components/Common/Common_UI/Form";
-import MainLayout from "@/components/layout/MainLayout.vue";
-import { orgSizeOptions } from "@/utils/formUtils";
-import axios from "axios";
-import Toast from "primevue/toast";
-import { useToast } from "primevue/usetoast";
+} from '@/components/Common/Common_UI/Form';
+import MainLayout from '@/components/layout/MainLayout.vue';
+import { orgSizeOptions } from '@/utils/formUtils';
+import axios from 'axios';
+import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
+import storage from '@/services/storage';
 export default {
-  name: "LeadCapture",
+  name: 'LeadCapture',
   components: {
     MainLayout,
     FormRow,
@@ -269,32 +258,31 @@ export default {
   },
   data() {
     return {
-      showPassword: false,
       referralSources: [],
       orgSizeOptions,
       form: {
-        firstName: "",
-        lastName: "",
-        name: "",
-        email: "",
-        phone_number: "",
+        firstName: '',
+        lastName: '',
+        name: '',
+        email: '',
+        phone_number: '',
         referral_source_id: null,
-        referral_other_text: "",
-        organization_name: "",
+        referral_other_text: '',
+        organization_name: '',
         organization_size: null,
-        address_line_1: "",
-        address_line_2: "",
+        address_line_1: '',
+        address_line_2: '',
         country_id: null,
         state_id: null,
         city_id: null,
-        zip_code: "",
+        zip_code: '',
       },
       countries: [],
       states: [],
       cities: [],
       loading: false,
-      successMessage: "",
-      errorMessage: "",
+      successMessage: '',
+      errorMessage: '',
       errors: {},
     };
   },
@@ -302,105 +290,84 @@ export default {
     isReferralSourceOther() {
       // Check if the selected referral source is "Other"
       if (!this.form.referral_source_id) return false;
-      const selected = this.referralSources.find(
-        (r) => r.id === this.form.referral_source_id
-      );
-      return selected && selected.name && selected.name.toLowerCase() === "other";
+      const selected = this.referralSources.find((r) => r.id === this.form.referral_source_id);
+      return selected && selected.name && selected.name.toLowerCase() === 'other';
     },
   },
   watch: {
-    "form.country_id"(val) {
-      console.log(
-        `[LeadCapture] [FRONTEND] country_id changed:`,
-        val,
-        "type:",
-        typeof val
-      );
+    'form.country_id'() {
+      // country id changes are handled by onCountryChange
     },
-    "form.referral_source_id"(val) {
+    'form.referral_source_id'() {
       // Clear "other" text when switching away from "Other" option
       if (!this.isReferralSourceOther) {
-        this.form.referral_other_text = "";
+        this.form.referral_other_text = '';
       }
     },
   },
   methods: {
-    togglePassword() {
-      this.showPassword = !this.showPassword;
-    },
+    // password toggle removed; not used in form
     async fetchReferralSources() {
       const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-      console.log("[LeadCapture] [FRONTEND] Fetching referral sources...");
-      const res = await axios.get(`${API_BASE_URL}/api/referral-sources`);
-      this.referralSources = res.data;
-      console.log(
-        "[LeadCapture] [FRONTEND] Referral sources fetched:",
-        this.referralSources
-      );
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/referral-sources`);
+        this.referralSources = res.data || [];
+      } catch (err) {
+        console.debug('[LeadCapture] fetchReferralSources failed', err);
+        this.referralSources = [];
+      }
     },
     async fetchCountries() {
       const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-      console.log("[LeadCapture] [FRONTEND] Fetching countries...");
-      const res = await axios.get(`${API_BASE_URL}/api/countries`);
-      this.countries = res.data;
-      console.log(
-        "[LeadCapture] [FRONTEND] Countries fetched:",
-        this.countries
-      );
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/countries`);
+        this.countries = res.data || [];
+      } catch (err) {
+        console.debug('[LeadCapture] fetchCountries failed', err);
+        this.countries = [];
+      }
     },
     async fetchStates() {
       if (!this.form.country_id) {
         this.states = [];
-        console.log(
-          "[LeadCapture] [FRONTEND] No country selected, states cleared."
-        );
         return;
       }
       const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-      console.log(
-        `[LeadCapture] [FRONTEND] Fetching states for country_id: ${this.form.country_id}`
-      );
-      const res = await axios.get(
-        `${API_BASE_URL}/api/states?country_id=${this.form.country_id}`
-      );
-      this.states = res.data;
-      console.log("[LeadCapture] [FRONTEND] States fetched:", this.states);
+      try {
+        const res = await axios.get(
+          `${API_BASE_URL}/api/states?country_id=${this.form.country_id}`
+        );
+        this.states = res.data || [];
+      } catch (err) {
+        console.debug('[LeadCapture] fetchStates failed', err);
+        this.states = [];
+      }
     },
     async fetchCities() {
       if (!this.form.state_id) {
         this.cities = [];
-        console.log(
-          "[LeadCapture] [FRONTEND] No state selected, cities cleared."
-        );
         return;
       }
       const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-      console.log(
-        `[LeadCapture] [FRONTEND] Fetching cities for state_id: ${this.form.state_id}`
-      );
-      const res = await axios.get(
-        `${API_BASE_URL}/api/cities?state_id=${this.form.state_id}`
-      );
-      this.cities = res.data;
-      console.log("[LeadCapture] [FRONTEND] Cities fetched:", this.cities);
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/cities?state_id=${this.form.state_id}`);
+        this.cities = res.data || [];
+      } catch (err) {
+        console.debug('[LeadCapture] fetchCities failed', err);
+        this.cities = [];
+      }
     },
     onCountryChange() {
       let val = this.form.country_id;
 
-      if (val !== null && val !== "" && typeof val !== "number") {
+      if (val !== null && val !== '' && typeof val !== 'number') {
         const num = Number(val);
         if (!Number.isNaN(num)) {
           this.form.country_id = num;
           val = num;
         }
       }
-      console.log(
-        `[LeadCapture] [FRONTEND] Country changed:`,
-        val,
-        "type:",
-        typeof val
-      );
-      if (val && typeof val === "number") {
+      if (val && typeof val === 'number') {
         this.form.state_id = null;
         this.form.city_id = null;
         this.states = [];
@@ -411,47 +378,36 @@ export default {
         this.form.city_id = null;
         this.states = [];
         this.cities = [];
-        console.log(
-          "[LeadCapture] [FRONTEND] No country selected, states cleared."
-        );
+       
       }
     },
     onStateChange() {
       let val = this.form.state_id;
-      if (val !== null && val !== "" && typeof val !== "number") {
+      if (val !== null && val !== '' && typeof val !== 'number') {
         const num = Number(val);
         if (!Number.isNaN(num)) {
           this.form.state_id = num;
           val = num;
         }
       }
-      console.log(
-        `[LeadCapture] [FRONTEND] State changed:`,
-        val,
-        "type:",
-        typeof val
-      );
-      if (val && typeof val === "number") {
+      if (val && typeof val === 'number') {
         this.form.city_id = null;
         this.cities = [];
         this.fetchCities();
       } else {
         this.form.city_id = null;
         this.cities = [];
-        console.log(
-          "[LeadCapture] [FRONTEND] No state selected, cities cleared."
-        );
+    
       }
     },
     async handleSaveLead() {
       this.loading = true;
-      this.successMessage = "";
-      this.errorMessage = "";
+      this.successMessage = '';
+      this.errorMessage = '';
       try {
-        const storage = require("@/services/storage").default;
-        const token = storage.get("authToken");
+        const token = storage.get('authToken');
         if (!token) {
-          this.errorMessage = "Authentication token not found. Please log in.";
+          this.errorMessage = 'Authentication token not found. Please log in.';
           this.loading = false;
           return;
         }
@@ -473,52 +429,47 @@ export default {
           country_id: this.form.country_id,
           state_id: this.form.state_id,
           city_id: this.form.city_id,
-          status: "Lead Stage",
+          status: 'Lead Stage',
           create_organization: true, // Flag to tell backend to create organization
         };
 
         // Remove keys with null/empty-string values so backend doesn't validate them
         for (const k of Object.keys(payload)) {
           const v = payload[k];
-          if (v === null || v === "" || (Array.isArray(v) && v.length === 0)) {
+          if (v === null || v === '' || (Array.isArray(v) && v.length === 0)) {
             delete payload[k];
           }
         }
 
         // include password only when provided
-        if (this.form.password && this.form.password !== "") {
+        if (this.form.password && this.form.password !== '') {
           payload.password = this.form.password;
         }
 
-        const response = await axios.post(
-          `${API_BASE_URL}/api/leads`,
-          payload,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        this.successMessage =
-          response.data.message || "Lead saved successfully!";
+        const response = await axios.post(`${API_BASE_URL}/api/leads`, payload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        this.successMessage = response.data.message || 'Lead saved successfully!';
         this.resetForm();
-        this.$router.push("/leads");
+        this.$router.push('/leads');
       } catch (error) {
-        console.error("Error saving lead:", error);
+        console.debug && console.debug('Error saving lead:', error);
 
         if (error.response?.data) {
           const { message, errors } = error.response.data;
 
-          this.errorMessage = message || "Failed to save lead.";
+          this.errorMessage = message || 'Failed to save lead.';
           this.errors = errors || {};
         } else {
-          this.errorMessage = "An unexpected error occurred.";
+          this.errorMessage = 'An unexpected error occurred.';
         }
 
         // Use PrimeVue Toast for error notification
         this.$toast.add({
-          severity: "error",
-          summary: "Validation Error",
+          severity: 'error',
+          summary: 'Validation Error',
           detail: this.errorMessage,
           life: 5000,
         });
@@ -528,21 +479,21 @@ export default {
     },
     resetForm() {
       this.form = {
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone_number: "",
-        password: "",
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone_number: '',
+        password: '',
         referral_source_id: null,
-        referral_other_text: "",
-        organization_name: "",
+        referral_other_text: '',
+        organization_name: '',
         organization_size: null,
-        address_line_1: "",
-        address_line_2: "",
+        address_line_1: '',
+        address_line_2: '',
         country_id: null,
         state_id: null,
         city_id: null,
-        zip_code: "",
+        zip_code: '',
       };
       this.states = [];
       this.cities = [];
@@ -555,30 +506,25 @@ export default {
         let first = q.first_name || null;
         let last = q.last_name || null;
         if (!first && !last && q.name) {
-          const parts = (q.name || "").trim().split(/\s+/);
-          first = parts.shift() || "";
-          last = parts.join(" ") || "";
+          const parts = (q.name || '').trim().split(/\s+/);
+          first = parts.shift() || '';
+          last = parts.join(' ') || '';
         }
         if (!first && !last && q.contact) {
-          first = q.contact.split(" ")[0] || "";
-          last = q.contact.split(" ")[1] || "";
+          first = q.contact.split(' ')[0] || '';
+          last = q.contact.split(' ')[1] || '';
         }
 
-        this.form.firstName = first || "";
-        this.form.lastName = last || "";
-        this.form.name =
-          q.name || `${this.form.firstName} ${this.form.lastName}`.trim();
+        this.form.firstName = first || '';
+        this.form.lastName = last || '';
+        this.form.name = q.name || `${this.form.firstName} ${this.form.lastName}`.trim();
         this.form.email = q.email || this.form.email;
-        this.form.phone_number =
-          q.phone_number || q.phone || this.form.phone_number;
-        this.form.referral_source_id =
-          q.referral_source_id || this.form.referral_source_id;
+        this.form.phone_number = q.phone_number || q.phone || this.form.phone_number;
+        this.form.referral_source_id = q.referral_source_id || this.form.referral_source_id;
         this.form.organization_name =
           q.organization || q.organization_name || this.form.organization_name;
-        this.form.organization_size =
-          q.size || q.organization_size || this.form.organization_size;
-        this.form.address_line_1 =
-          q.address_line_1 || q.address || this.form.address_line_1;
+        this.form.organization_size = q.size || q.organization_size || this.form.organization_size;
+        this.form.address_line_1 = q.address_line_1 || q.address || this.form.address_line_1;
         this.form.address_line_2 = q.address_line_2 || this.form.address_line_2;
         this.form.country_id = q.country_id || this.form.country_id;
         this.form.state_id = q.state_id || this.form.state_id;

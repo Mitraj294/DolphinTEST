@@ -48,12 +48,12 @@
 
 <script>
 export default {
-  name: "FormDropdown",
+  name: 'FormDropdown',
   props: {
     modelValue: [String, Number],
     options: { type: Array, required: false, default: null }, // If not provided, will use slot
-    icon: { type: String, default: "" },
-    placeholder: { type: String, default: "Select" },
+    icon: { type: String, default: '' },
+    placeholder: { type: String, default: 'Select' },
     disabled: { type: Boolean, default: false },
     // allow callers to override horizontal padding in px (left/right)
     paddingLeft: { type: [Number, String], default: 36 },
@@ -62,7 +62,7 @@ export default {
   data() {
     return {
       showDropdown: false,
-      search: "",
+      search: '',
       dropdownStyle: {},
       focusedIndex: -1,
     };
@@ -90,20 +90,15 @@ export default {
         // Parse slot options
         const slotNodes = this.$slots.default();
         opts = slotNodes
-          .filter(
-            (node) =>
-              node.type === "option" &&
-              node.props &&
-              node.props.value !== undefined
-          )
+          .filter((node) => node.type === 'option' && node.props && node.props.value !== undefined)
           .map((node) => {
-            let childText = "";
-            if (typeof node.children === "string") {
+            let childText = '';
+            if (typeof node.children === 'string') {
               childText = node.children;
             } else if (Array.isArray(node.children)) {
-              childText = node.children.join("");
+              childText = node.children.join('');
             } else {
-              console.warn("Unsupported slot child type in FormDropdown");
+              console.debug && console.debug('Unsupported slot child type in FormDropdown');
             }
             return {
               value: node.props.value,
@@ -114,7 +109,7 @@ export default {
 
       if (!this.search) return opts;
       return opts.filter((opt) =>
-        (opt.text || "").toLowerCase().includes(this.search.toLowerCase())
+        (opt.text || '').toLowerCase().includes(this.search.toLowerCase())
       );
     },
   },
@@ -144,17 +139,14 @@ export default {
       }
     },
     selectOption(option) {
-      this.$emit("update:modelValue", option.value);
-      this.$emit("change", option.value); // Always emit change event
+      this.$emit('update:modelValue', option.value);
+      this.$emit('change', option.value); // Always emit change event
       this.showDropdown = false;
-      this.search = "";
+      this.search = '';
       this.focusedIndex = -1;
     },
     selectFocusedOption() {
-      if (
-        this.focusedIndex >= 0 &&
-        this.focusedIndex < this.filteredOptions.length
-      ) {
+      if (this.focusedIndex >= 0 && this.focusedIndex < this.filteredOptions.length) {
         this.selectOption(this.filteredOptions[this.focusedIndex]);
       }
     },
@@ -176,8 +168,7 @@ export default {
           }
           // Check if item is below the visible area
           else if (itemRect.bottom > dropdownRect.bottom) {
-            dropdownEl.scrollTop =
-              item.offsetTop - dropdownEl.clientHeight + item.clientHeight;
+            dropdownEl.scrollTop = item.offsetTop - dropdownEl.clientHeight + item.clientHeight;
           }
         }
       });
@@ -186,86 +177,82 @@ export default {
       if (this.disabled) return;
 
       switch (event.key) {
-        case "ArrowDown":
-        case "Down":
+        case 'ArrowDown':
+        case 'Down':
           event.preventDefault();
-          if (!this.showDropdown) {
-            this.toggleDropdown();
-          } else {
-            this.focusedIndex = Math.min(
-              this.focusedIndex + 1,
-              this.filteredOptions.length - 1
-            );
+          if (this.showDropdown) {
+            this.focusedIndex = Math.min(this.focusedIndex + 1, this.filteredOptions.length - 1);
             this.scrollToFocusedItem();
+          } else {
+            this.toggleDropdown();
           }
           break;
-        case "ArrowUp":
-        case "Up":
+        case 'ArrowUp':
+        case 'Up':
           event.preventDefault();
           if (this.showDropdown) {
             this.focusedIndex = Math.max(this.focusedIndex - 1, 0);
             this.scrollToFocusedItem();
           }
           break;
-        case "Enter":
+        case 'Enter':
           event.preventDefault();
-          if (!this.showDropdown) {
-            this.toggleDropdown();
-          } else {
+          if (this.showDropdown) {
             this.selectFocusedOption();
+          } else {
+            this.toggleDropdown();
           }
           break;
-        case "Escape":
+        case 'Escape':
           event.preventDefault();
           this.showDropdown = false;
           this.focusedIndex = -1;
           break;
-        case " ":
-        case "Spacebar":
-          if (!this.showDropdown) {
-            event.preventDefault();
-            this.toggleDropdown();
+        case ' ':
+        case 'Spacebar':
+          if (this.showDropdown) {
+            break;
           }
+          event.preventDefault();
+          this.toggleDropdown();
           break;
       }
     },
     handleSearchKeyDown(event) {
       switch (event.key) {
-        case "ArrowDown":
-        case "Down":
+        case 'ArrowDown':
+        case 'Down':
           event.preventDefault();
-          this.focusedIndex = Math.min(
-            this.focusedIndex + 1,
-            this.filteredOptions.length - 1
-          );
+          this.focusedIndex = Math.min(this.focusedIndex + 1, this.filteredOptions.length - 1);
           this.scrollToFocusedItem();
           break;
-        case "ArrowUp":
-        case "Up":
+        case 'ArrowUp':
+        case 'Up':
           event.preventDefault();
           this.focusedIndex = Math.max(this.focusedIndex - 1, 0);
           this.scrollToFocusedItem();
           break;
-        case "Enter":
+        case 'Enter':
           event.preventDefault();
           this.selectFocusedOption();
           break;
-        case "Escape":
+        case 'Escape':
           event.preventDefault();
           this.showDropdown = false;
           this.focusedIndex = -1;
           break;
       }
     },
+
     handleClickOutside(event) {
-      if (!this.showDropdown) return;
-      const root = this.$refs.dropdownRoot;
-      const dropdownEl = this.$refs.dropdownEl;
-      const clickedInsideRoot = root && root.contains(event.target);
-      const clickedInsideDropdown =
-        dropdownEl && dropdownEl.contains(event.target);
-      if (!clickedInsideRoot && !clickedInsideDropdown) {
-        this.showDropdown = false;
+      if (this.showDropdown) {
+        const root = this.$refs.dropdownRoot;
+        const dropdownEl = this.$refs.dropdownEl;
+        const clickedInsideRoot = root && root.contains(event.target);
+        const clickedInsideDropdown = dropdownEl && dropdownEl.contains(event.target);
+        if (!clickedInsideRoot && !clickedInsideDropdown) {
+          this.showDropdown = false;
+        }
       }
     },
     updateDropdownPosition() {
@@ -279,7 +266,7 @@ export default {
       const width = rect.width;
       // apply fixed-positioning so it stays in viewport during scroll
       this.dropdownStyle = {
-        position: "absolute",
+        position: 'absolute',
         top: `${top}px`,
         left: `${left}px`,
         width: `${width}px`,
@@ -288,10 +275,10 @@ export default {
     },
   },
   mounted() {
-    document.addEventListener("mousedown", this.handleClickOutside);
+    document.addEventListener('mousedown', this.handleClickOutside);
     // keep position updated on resize/scroll
-    globalThis.addEventListener("resize", this.updateDropdownPosition);
-    globalThis.addEventListener("scroll", this.updateDropdownPosition, true);
+    globalThis.addEventListener('resize', this.updateDropdownPosition);
+    globalThis.addEventListener('scroll', this.updateDropdownPosition, true);
   },
   watch: {
     showDropdown(newVal) {
@@ -299,21 +286,19 @@ export default {
         this.$nextTick(() => this.updateDropdownPosition());
       } else {
         this.focusedIndex = -1;
-        this.search = "";
+        this.search = '';
       }
     },
     search() {
       // Reset focused index when search changes, but maintain selection if visible
-      const selectedIndex = this.filteredOptions.findIndex(
-        (opt) => opt.value === this.modelValue
-      );
+      const selectedIndex = this.filteredOptions.findIndex((opt) => opt.value === this.modelValue);
       this.focusedIndex = selectedIndex >= 0 ? selectedIndex : -1;
     },
   },
   beforeUnmount() {
-    document.removeEventListener("mousedown", this.handleClickOutside);
-    globalThis.removeEventListener("resize", this.updateDropdownPosition);
-    globalThis.removeEventListener("scroll", this.updateDropdownPosition, true);
+    document.removeEventListener('mousedown', this.handleClickOutside);
+    globalThis.removeEventListener('resize', this.updateDropdownPosition);
+    globalThis.removeEventListener('scroll', this.updateDropdownPosition, true);
   },
 };
 </script>

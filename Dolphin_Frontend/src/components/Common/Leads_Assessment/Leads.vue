@@ -11,11 +11,7 @@
           <div class="table-search-header-row">
             <div class="table-search-bar-filters">
               <!-- Search Input -->
-              <input
-                class="org-search"
-                placeholder="Search Leads ...."
-                v-model="search"
-              />
+              <input class="org-search" placeholder="Search Leads ...." v-model="search" />
 
               <!-- Organization Size Dropdown -->
               <FormDropdown
@@ -44,7 +40,7 @@
                 v-model="form.referral_other_text"
                 placeholder="Specify Other Source"
                 class="org-search"
-                style="max-width:220px;"
+                style="max-width: 220px"
               />
             </div>
 
@@ -53,11 +49,7 @@
               class="btn btn-primary add-new-btn"
               @click="$router.push('/leads/lead-capture')"
             >
-              <img
-                src="@/assets/images/Add.svg"
-                alt="Add"
-                class="leads-add-btn-icon"
-              />
+              <img src="@/assets/images/Add.svg" alt="Add" class="leads-add-btn-icon" />
               Add New
             </button>
           </div>
@@ -70,15 +62,9 @@
                 <TableHeader :columns="tableColumns" @sort="sortBy" />
                 <!-- Table Body -->
                 <tbody>
-                  <tr
-                    v-for="lead in paginatedLeads"
-                    :key="lead.id || lead.email"
-                  >
+                  <tr v-for="lead in paginatedLeads" :key="lead.id || lead.email">
                     <td data-label="Contact">
-                      <span
-                        class="lead-contact-link"
-                        @click="goToLeadDetail(lead)"
-                      >
+                      <span class="lead-contact-link" @click="goToLeadDetail(lead)">
                         {{ lead.contact }}
                       </span>
                     </td>
@@ -90,31 +76,20 @@
                     <td data-label="Status">
                       <span
                         class="status-badge"
-                        :class="
-                          lead.status &&
-                          lead.status.toLowerCase().replace(/\s+/g, '-')
-                        "
+                        :class="lead.status && lead.status.toLowerCase().replace(/\s+/g, '-')"
                       >
-                        {{ lead.status || "Lead Stage" }}
+                        {{ lead.status || 'Lead Stage' }}
                       </span>
                     </td>
                     <td data-label="Notes">
                       <button class="btn-view" @click="openNotesModal(lead)">
                         <!-- Notes Action Icon -->
                         <template v-if="lead.notesAction === 'View'">
-                          <img
-                            src="@/assets/images/Detail.svg"
-                            alt="View"
-                            class="btn-view-icon"
-                          />
+                          <img src="@/assets/images/Detail.svg" alt="View" class="btn-view-icon" />
                           View
                         </template>
                         <template v-else>
-                          <img
-                            src="@/assets/images/AddBlack.svg"
-                            alt="Add"
-                            class="btn-view-icon"
-                          />
+                          <img src="@/assets/images/AddBlack.svg" alt="Add" class="btn-view-icon" />
                           Add
                         </template>
                       </button>
@@ -159,13 +134,9 @@
         />
 
         <!-- Notes Modal -->
-        <div
-          v-if="showNotesModal"
-          class="notes-modal-overlay"
-          @click.self="closeNotesModal"
-        >
+        <div v-if="showNotesModal" class="notes-modal-overlay" @click.self="closeNotesModal">
           <div class="notes-modal">
-            <h3>{{ notesModalMode === "add" ? "Add Notes" : "Notes" }}</h3>
+            <h3>{{ notesModalMode === 'add' ? 'Add Notes' : 'Notes' }}</h3>
             <textarea
               v-model="notesInput"
               rows="5"
@@ -174,11 +145,9 @@
             ></textarea>
             <div class="notes-modal-actions">
               <button class="btn btn-primary" @click="updateLeadNotes">
-                {{ notesModalMode === "add" ? "Submit" : "Update" }}
+                {{ notesModalMode === 'add' ? 'Submit' : 'Update' }}
               </button>
-              <button class="btn btn-secondary" @click="closeNotesModal">
-                Cancel
-              </button>
+              <button class="btn btn-secondary" @click="closeNotesModal">Cancel</button>
             </div>
           </div>
         </div>
@@ -211,28 +180,28 @@
 
 <script>
 // Vue composition API imports
-import axios from "axios";
-import { useConfirm } from "primevue/useconfirm";
-import { useToast } from "primevue/usetoast";
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import axios from 'axios';
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 // Component imports
-import FormDropdown from "@/components/Common/Common_UI/Form/FormDropdown.vue";
-import TableHeader from "@/components/Common/Common_UI/TableHeader.vue";
-import MainLayout from "@/components/layout/MainLayout.vue";
-import Pagination from "@/components/layout/Pagination.vue";
-import Toast from "primevue/toast";
+import FormDropdown from '@/components/Common/Common_UI/Form/FormDropdown.vue';
+import TableHeader from '@/components/Common/Common_UI/TableHeader.vue';
+import MainLayout from '@/components/layout/MainLayout.vue';
+import Pagination from '@/components/layout/Pagination.vue';
+import Toast from 'primevue/toast';
 
 // Utility imports
-import storage from "@/services/storage.js";
-import { findUsOptions, orgSizeOptions } from "@/utils/formUtils";
+import storage from '@/services/storage.js';
+import { findUsOptions, orgSizeOptions } from '@/utils/formUtils';
 
 //Leads Management Component
 //Handles the display, filtering, pagination, and actions for all leads.
 
 export default {
-  name: "Leads",
+  name: 'Leads',
   components: {
     MainLayout,
     Pagination,
@@ -248,13 +217,17 @@ export default {
 
     // States
     const leads = ref([]);
-    const search = ref("");
-  const form = ref({ organization_size: null, referral_source_id: null, referral_other_text: '' });
+    const search = ref('');
+    const form = ref({
+      organization_size: null,
+      referral_source_id: null,
+      referral_other_text: '',
+    });
     const isLoading = ref(false);
     const referralSources = ref([]);
 
     // Table and pagination state
-    const sortKey = ref("");
+    const sortKey = ref('');
     const sortAsc = ref(true);
     const pageSize = ref(10);
     const currentPage = ref(1);
@@ -264,42 +237,42 @@ export default {
     const menuOpen = ref(null);
     const menuPosition = ref({ top: 0, left: 0 });
     const showNotesModal = ref(false);
-    const notesModalMode = ref("add");
-    const notesInput = ref("");
+    const notesModalMode = ref('add');
+    const notesInput = ref('');
     const currentLead = ref(null);
 
     // Menu options for each lead
     const customMenuOptions = [
-      "Schedule Follow up",
-      "Schedule Demo",
-      "Schedule Class/Training",
-      "Send Assessment",
-      "Send Agreement/Payment Link",
-      "Convert to Client",
-      "Delete Lead",
+      'Schedule Follow up',
+      'Schedule Demo',
+      'Schedule Class/Training',
+      'Send Assessment',
+      'Send Agreement/Payment Link',
+      'Convert to Client',
+      'Delete Lead',
     ];
 
     // Table columns definition
     const tableColumns = [
-      { label: "Contact", key: "contact", sortable: true, width: "170px" },
-      { label: "Email", key: "email", width: "250px" },
-      { label: "Phone Number", key: "phone", width: "150px" },
+      { label: 'Contact', key: 'contact', sortable: true, width: '170px' },
+      { label: 'Email', key: 'email', width: '250px' },
+      { label: 'Phone Number', key: 'phone', width: '150px' },
       {
-        label: "Organization",
-        key: "organization",
+        label: 'Organization',
+        key: 'organization',
         sortable: true,
-        width: "175px",
+        width: '175px',
       },
-      { label: "Size", width: "250px" },
-      { label: "Source", width: "120px" },
-      { label: "Status", key: "status", sortable: true, width: "150px" },
-      { label: "Notes", key: "notesAction", width: "100px" },
-      { label: "Actions", key: "actions", width: "80px" },
+      { label: 'Size', width: '250px' },
+      { label: 'Source', width: '120px' },
+      { label: 'Status', key: 'status', sortable: true, width: '150px' },
+      { label: 'Notes', key: 'notesAction', width: '100px' },
+      { label: 'Actions', key: 'actions', width: '80px' },
     ];
 
     // Dropdown options
     const orgSizeOptionsWithDefault = [
-      { value: null, text: "Select", disabled: true },
+      { value: null, text: 'Select', disabled: true },
       ...orgSizeOptions.map((o) => ({ value: o, text: o })),
     ];
 
@@ -307,9 +280,9 @@ export default {
     const fetchLeads = async () => {
       isLoading.value = true;
       try {
-        const token = storage.get("authToken");
+        const token = storage.get('authToken');
         if (!token) {
-          router.push("/login");
+          router.push('/login');
           return;
         }
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
@@ -319,8 +292,8 @@ export default {
         // Map leads and resolve referral source name if possible
         leads.value = response.data.map((lead) => {
           // Figure out the referral source name
-          let sourceName = lead.find_us || "";
-          
+          let sourceName = lead.find_us || '';
+
           // Check if backend provided referral_source_name
           if (lead.referral_source_name) {
             sourceName = lead.referral_source_name;
@@ -348,19 +321,16 @@ export default {
           // Prefer backend 'name' (canonical); fallback to first+last or contact
           const contactName =
             lead.name ||
-            `${lead.first_name || ""} ${lead.last_name || ""}`.trim() ||
+            `${lead.first_name || ''} ${lead.last_name || ''}`.trim() ||
             lead.contact ||
-            "";
-          const phone_number = lead.phone_number || lead.phone || "";
+            '';
+          const phone_number = lead.phone_number || lead.phone || '';
           const organization =
-            (lead.organization &&
-              (lead.organization.name || lead.organization)) ||
+            (lead.organization && (lead.organization.name || lead.organization)) ||
             lead.organization_name ||
-            "";
+            '';
           const size =
-            lead.organization_size ||
-            (lead.organization && lead.organization.size) ||
-            "";
+            lead.organization_size || (lead.organization && lead.organization.size) || '';
 
           return {
             id: lead.id,
@@ -373,17 +343,17 @@ export default {
             source: sourceName,
             referral_source_id: lead.referral_source_id || null,
             referral_other_text: lead.referral_other_text || null,
-            status: lead.registered_at ? "Registered" : lead.status,
+            status: lead.registered_at ? 'Registered' : lead.status,
             notes: lead.notes,
-            notesAction: lead.notes ? "View" : "Add",
+            notesAction: lead.notes ? 'View' : 'Add',
           };
         });
       } catch (error) {
-        console.error("Error fetching leads:", error);
+        console.debug && console.debug('Error fetching leads:', error);
         toast.add({
-          severity: "error",
-          summary: "Error",
-          detail: "Failed to fetch leads.",
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to fetch leads.',
           life: 3000,
         });
       } finally {
@@ -396,17 +366,17 @@ export default {
       if (!lead || !lead.id) return;
       confirm.require({
         message: `Are you sure you want to delete lead "${lead.contact}"? This will archive the lead.`,
-        header: "Confirm Delete",
-        icon: "pi pi-trash",
-        acceptLabel: "OK",
-        rejectLabel: "Cancel",
+        header: 'Confirm Delete',
+        icon: 'pi pi-trash',
+        acceptLabel: 'OK',
+        rejectLabel: 'Cancel',
         acceptProps: {
-          style: "background-color: #e53935; color: white; font-weight: bold;",
+          style: 'background-color: #e53935; color: white; font-weight: bold;',
         },
-        rejectProps: { style: "background-color: gray;" },
+        rejectProps: { style: 'background-color: gray;' },
         accept: async () => {
           try {
-            const token = storage.get("authToken");
+            const token = storage.get('authToken');
             const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
             await axios.delete(`${API_BASE_URL}/api/leads/${lead.id}`, {
               headers: { Authorization: `Bearer ${token}` },
@@ -416,17 +386,17 @@ export default {
               leads.value.splice(idx, 1);
             }
             toast.add({
-              severity: "success",
-              summary: "Lead deleted",
-              detail: "Lead archived successfully",
+              severity: 'success',
+              summary: 'Lead deleted',
+              detail: 'Lead archived successfully',
               life: 3000,
             });
           } catch (error) {
-            console.error("Error deleting lead:", error);
+            console.debug && console.debug('Error deleting lead:', error);
             toast.add({
-              severity: "error",
-              summary: "Delete failed",
-              detail: "Failed to delete lead",
+              severity: 'error',
+              summary: 'Delete failed',
+              detail: 'Failed to delete lead',
               life: 4000,
             });
           }
@@ -439,7 +409,7 @@ export default {
     const updateLeadNotes = async () => {
       if (!currentLead.value) return;
       try {
-        const token = storage.get("authToken");
+        const token = storage.get('authToken');
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
         await axios.patch(
           `${API_BASE_URL}/api/leads/${currentLead.value.id}`,
@@ -447,23 +417,23 @@ export default {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         toast.add({
-          severity: "success",
-          summary: "Success",
-          detail: "Notes updated successfully.",
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Notes updated successfully.',
           life: 3000,
         });
         const lead = leads.value.find((l) => l.id === currentLead.value.id);
         if (lead) {
           lead.notes = notesInput.value;
-          lead.notesAction = notesInput.value ? "View" : "Add";
+          lead.notesAction = notesInput.value ? 'View' : 'Add';
         }
         closeNotesModal();
       } catch (error) {
-        console.error("Error updating notes:", error);
+        console.debug && console.debug('Error updating notes:', error);
         toast.add({
-          severity: "error",
-          summary: "Error",
-          detail: "Failed to update notes.",
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to update notes.',
           life: 3000,
         });
       }
@@ -482,12 +452,12 @@ export default {
         );
       }
       if (form.value.organization_size) {
-        filtered = filtered.filter(
-          (lead) => lead.size === form.value.organization_size
-        );
+        filtered = filtered.filter((lead) => lead.size === form.value.organization_size);
       }
       if (form.value.referral_source_id) {
-        filtered = filtered.filter((lead) => String(lead.referral_source_id) === String(form.value.referral_source_id));
+        filtered = filtered.filter(
+          (lead) => String(lead.referral_source_id) === String(form.value.referral_source_id)
+        );
         // If "Other" is selected and user types custom text, further filter
         if (Number(form.value.referral_source_id) === 10 && form.value.referral_other_text) {
           const txt = form.value.referral_other_text.toLowerCase();
@@ -501,8 +471,8 @@ export default {
     });
 
     const STATUS_ORDER = {
-      "Lead Stage": 1,
-      "Assessment Sent": 2,
+      'Lead Stage': 1,
+      'Assessment Sent': 2,
       Registered: 3,
     };
     const sortedLeads = computed(() => {
@@ -510,9 +480,9 @@ export default {
       const leadsToSort = [...filteredLeads.value];
       leadsToSort.sort((a, b) => {
         let comparison = 0;
-        if (sortKey.value === "status") {
-          const orderA = STATUS_ORDER[a.status || "Lead Stage"] || 0;
-          const orderB = STATUS_ORDER[b.status || "Lead Stage"] || 0;
+        if (sortKey.value === 'status') {
+          const orderA = STATUS_ORDER[a.status || 'Lead Stage'] || 0;
+          const orderB = STATUS_ORDER[b.status || 'Lead Stage'] || 0;
           comparison = orderA - orderB;
         } else {
           const valA = a[sortKey.value];
@@ -525,9 +495,7 @@ export default {
       return leadsToSort;
     });
 
-    const totalPages = computed(() =>
-      Math.ceil(sortedLeads.value.length / pageSize.value)
-    );
+    const totalPages = computed(() => Math.ceil(sortedLeads.value.length / pageSize.value));
     const paginatedLeads = computed(() => {
       const start = (currentPage.value - 1) * pageSize.value;
       return sortedLeads.value.slice(start, start + pageSize.value);
@@ -583,46 +551,46 @@ export default {
     // Notes modal
     const openNotesModal = (lead) => {
       currentLead.value = lead;
-      notesInput.value = lead.notes || "";
-      notesModalMode.value = lead.notes ? "view" : "add";
+      notesInput.value = lead.notes || '';
+      notesModalMode.value = lead.notes ? 'view' : 'add';
       showNotesModal.value = true;
     };
     const closeNotesModal = () => {
       showNotesModal.value = false;
       currentLead.value = null;
-      notesInput.value = "";
+      notesInput.value = '';
     };
 
     // Lead detail navigation
     const goToLeadDetail = (lead) => {
-      router.push({ name: "LeadDetail", params: { id: lead.id } });
+      router.push({ name: 'LeadDetail', params: { id: lead.id } });
     };
 
     // Lead actions from menu
     const selectCustomAction = (lead, option) => {
       menuOpen.value = null;
-      if (option === "Schedule Demo") {
-        router.push({ name: "ScheduleDemo", query: { lead_id: lead.id } });
-      } else if (option === "Schedule Follow up") {
+      if (option === 'Schedule Demo') {
+        router.push({ name: 'ScheduleDemo', query: { lead_id: lead.id } });
+      } else if (option === 'Schedule Follow up') {
         router.push({
-          name: "ScheduleDemo",
-          query: { lead_id: lead.id, mode: "followup" },
+          name: 'ScheduleDemo',
+          query: { lead_id: lead.id, mode: 'followup' },
         });
-      } else if (option === "Schedule Class/Training") {
+      } else if (option === 'Schedule Class/Training') {
         router.push({
-          name: "ScheduleClassTraining",
+          name: 'ScheduleClassTraining',
           query: { lead_id: lead.id },
         });
-      } else if (option === "Send Assessment") {
-        router.push({ name: "SendAssessment", params: { id: lead.id } });
-      } else if (option === "Send Agreement/Payment Link") {
-        router.push({ name: "SendAgreement", params: { id: lead.id } });
-      } else if (option === "Delete Lead") {
+      } else if (option === 'Send Assessment') {
+        router.push({ name: 'SendAssessment', params: { id: lead.id } });
+      } else if (option === 'Send Agreement/Payment Link') {
+        router.push({ name: 'SendAgreement', params: { id: lead.id } });
+      } else if (option === 'Delete Lead') {
         deleteLead(lead);
       } else {
         toast.add({
-          severity: "info",
-          summary: "Info",
+          severity: 'info',
+          summary: 'Info',
           detail: `Action "${option}" is not implemented yet.`,
           life: 3000,
         });
@@ -632,14 +600,14 @@ export default {
     // Close menu handlers
     const handleClickOutside = (event) => {
       if (!menuOpen.value) return;
-      const clickedInActions = event.target.closest(".actions-row");
-      const clickedInMenu = event.target.closest(".teleported-leads-menu");
+      const clickedInActions = event.target.closest('.actions-row');
+      const clickedInMenu = event.target.closest('.teleported-leads-menu');
       if (!clickedInActions && !clickedInMenu) {
         menuOpen.value = null;
       }
     };
     const onKeyDown = (event) => {
-      if (event.key === "Escape" && menuOpen.value) menuOpen.value = null;
+      if (event.key === 'Escape' && menuOpen.value) menuOpen.value = null;
     };
 
     // Lifecycle hooks
@@ -649,7 +617,7 @@ export default {
         const res = await axios.get(`${API_BASE_URL}/api/referral-sources`);
         referralSources.value = res.data || res.data?.options || [];
       } catch (e) {
-        console.warn("Failed to fetch referral sources", e);
+        console.debug && console.debug('Failed to fetch referral sources', e);
         referralSources.value = [];
       }
     };
@@ -657,12 +625,12 @@ export default {
     onMounted(async () => {
       await fetchReferralSources();
       await fetchLeads();
-      document.addEventListener("click", handleClickOutside);
-      document.addEventListener("keydown", onKeyDown);
+      document.addEventListener('click', handleClickOutside);
+      document.addEventListener('keydown', onKeyDown);
     });
     onBeforeUnmount(() => {
-      document.removeEventListener("click", handleClickOutside);
-      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('keydown', onKeyDown);
     });
 
     // Return to template
@@ -949,7 +917,7 @@ export default {
   background: #f8f8f8;
   font-size: 14px;
   outline: none;
-  background-image: url("@/assets/images/Search.svg");
+  background-image: url('@/assets/images/Search.svg');
   background-repeat: no-repeat;
   background-position: 8px center;
   background-size: 16px 16px;

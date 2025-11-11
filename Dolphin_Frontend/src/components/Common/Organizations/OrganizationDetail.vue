@@ -15,8 +15,7 @@
             <div
               class="org-detail-main-card-header-title"
               style="
-                font-family: 'Helvetica Neue LT Std', Helvetica, Arial,
-                  sans-serif;
+                font-family: 'Helvetica Neue LT Std', Helvetica, Arial, sans-serif;
                 font-weight: 600;
                 font-size: 24px;
                 color: #222;
@@ -29,48 +28,39 @@
                 class="btn btn-primary"
                 @click="$router.push(`/organizations/${organization.id}/edit`)"
               >
-                <img
-                  src="@/assets/images/EditWhite.svg"
-                  alt="Edit"
-                  class="org-edit-icon"
-                />
+                <img src="@/assets/images/EditWhite.svg" alt="Edit" class="org-edit-icon" />
                 Edit Details
               </button>
             </div>
           </div>
 
           <div class="org-detail-main-cols">
-            <div
-              class="org-detail-main-cols-group org-detail-main-cols-group--row"
-            >
+            <div class="org-detail-main-cols-group org-detail-main-cols-group--row">
               <div class="org-detail-col org-detail-col-left">
                 <h3 class="org-detail-section-title">Organization Detail</h3>
                 <div class="org-detail-list-card org-detail-list-card--box">
                   <div class="org-detail-list-row">
-                    <span>Organization Name</span
-                    ><b>{{ organization.name || "N/A" }}</b>
+                    <span>Organization Name</span><b>{{ organization.name || 'N/A' }}</b>
                   </div>
                   <div class="org-detail-list-row">
                     <span>Organization Size</span>
-                    <b>{{ organization.size || "N/A" }}</b>
+                    <b>{{ organization.size || 'N/A' }}</b>
                   </div>
                   <div class="org-detail-list-row">
-                    <span>Contract Start</span
-                    ><b>{{ formatDate(organization.contract_start) }}</b>
+                    <span>Contract Start</span><b>{{ formatDate(organization.contract_start) }}</b>
                   </div>
                   <div class="org-detail-list-row">
-                    <span>Contract End</span
-                    ><b>{{ formatDate(organization.contract_end) }}</b>
+                    <span>Contract End</span><b>{{ formatDate(organization.contract_end) }}</b>
                   </div>
                   <div class="org-detail-list-row">
                     <span>Source</span>
                     <b>
                       {{
                         organization.source ||
-                          organization.referral_other_text ||
-                          organization.find_us ||
-                          organization.referral_source_name ||
-                          "N/A"
+                        organization.referral_other_text ||
+                        organization.find_us ||
+                        organization.referral_source_name ||
+                        'N/A'
                       }}
                     </b>
                   </div>
@@ -84,43 +74,45 @@
                 <h3 class="org-detail-section-title">Admin Detail</h3>
                 <div class="org-detail-list-card org-detail-list-card--box">
                   <div class="org-detail-list-row">
-                    <span>Main Contact</span
-                    ><b>{{ organization.main_contact || "N/A" }}</b>
+                    <span>Main Contact</span><b>{{ organization.main_contact || 'N/A' }}</b>
                   </div>
                   <div class="org-detail-list-row">
                     <span>Admin Email</span
-                    ><b>{{ organization.admin_email || organization.user?.email || "N/A" }}</b>
+                    ><b>{{ organization.admin_email || organization.user?.email || 'N/A' }}</b>
                   </div>
                   <div class="org-detail-list-row">
                     <span>Admin Phone</span>
-                    <b>{{ organization.admin_phone || organization.user?.phone || organization.phone_number || "N/A" }}</b>
+                    <b>{{
+                      organization.admin_phone ||
+                      organization.user?.phone ||
+                      organization.phone_number ||
+                      'N/A'
+                    }}</b>
                   </div>
                   <div class="org-detail-list-row">
-                    <span>Sales Person</span
-                    ><b>{{ organization.sales_person || "N/A" }}</b>
+                    <span>Sales Person</span><b>{{ organization.sales_person || 'N/A' }}</b>
                   </div>
                   <div class="org-detail-list-row">
                     <span>Last Contacted</span
-                    ><b>{{ formatDate(organization.last_contacted || organization.user?.last_login || organization.user?.last_logged_in) }}</b>
+                    ><b>{{
+                      formatDate(
+                        organization.last_contacted ||
+                          organization.user?.last_login ||
+                          organization.user?.last_logged_in
+                      )
+                    }}</b>
                   </div>
                   <div class="org-detail-list-row">
-                    <span>Certified Staff</span
-                    ><b>{{ organization.certified_staff || 0 }}</b>
+                    <span>Certified Staff</span><b>{{ organization.certified_staff || 0 }}</b>
                   </div>
                 </div>
               </div>
             </div>
-            <div
-              class="org-detail-main-cols-group org-detail-main-cols-group--row"
-            >
-              <div
-                class="org-detail-box org-detail-box--half org-detail-box-flex"
-              >
+            <div class="org-detail-main-cols-group org-detail-main-cols-group--row">
+              <div class="org-detail-box org-detail-box--half org-detail-box-flex">
                 <div class="org-detail-box-info">
                   <div class="org-detail-box-label">Org Chart Type</div>
-                  <div class="org-detail-box-value">
-                    Functional/Role - Based
-                  </div>
+                  <div class="org-detail-box-value">Functional/Role - Based</div>
                 </div>
                 <div class="org-detail-box-action">
                   <button class="org-view-btn custom-view-btn">
@@ -133,41 +125,22 @@
                   </button>
                 </div>
               </div>
-              <div
-                class="org-detail-box org-detail-box--half org-detail-box-flex"
-              >
+              <div class="org-detail-box org-detail-box--half org-detail-box-flex">
                 <div class="org-detail-box-info">
                   <div class="org-detail-box-label">Billing Status</div>
                   <div class="org-detail-box-value">
                     <template v-if="hasBillingPlan">
-                      <div
-                        style="
-                          text-align: left;
-                          display: flex;
-                          justify-content: flex-start;
-                        "
-                      >
-                        {{ billingPlan.plan_name || "Plan" }}
+                      <div style="text-align: left; display: flex; justify-content: flex-start">
+                        {{ displayPlanName }}
                       </div>
                       <div style="font-weight: 500; font-size: 16px">
-                        ${{ billingPlan.amount }}/{{ billingPlan.period }}
+                        {{ displayPrice }}
                       </div>
                       <div
                         v-if="isExpired"
-                        style="
-                          color: #d32f2f;
-                          margin-top: 6px;
-                          font-weight: 500;
-                        "
+                        style="color: #d32f2f; margin-top: 6px; font-weight: 500"
                       >
-                        Expired on
-                        {{
-                          formatDate(
-                            billingPlan.end ||
-                              billingPlan.contract_end ||
-                              billingPlan.subscription_end
-                          )
-                        }}
+                        Expired on {{ formatDate(expiryDate) }}
                       </div>
                     </template>
                     <template v-else>
@@ -193,11 +166,7 @@
                         query: { orgId: organization.id },
                       })
                     "
-                    v-if="
-                      organization &&
-                      organization.id &&
-                      (hasBillingPlan || hasHistory)
-                    "
+                    v-if="organization && organization.id && (hasBillingPlan || hasHistory)"
                   >
                     <img
                       src="@/assets/images/Billing Status view details.svg"
@@ -209,9 +178,7 @@
                 </div>
               </div>
             </div>
-            <div
-              class="org-detail-main-cols-group org-detail-main-cols-group--row"
-            >
+            <div class="org-detail-main-cols-group org-detail-main-cols-group--row">
               <div
                 class="org-detail-box org-detail-box--half org-detail-box-algo org-detail-box-flex"
               >
@@ -225,9 +192,7 @@
                   <button class="org-algo-btn custom-view-btn">Assigned</button>
                 </div>
               </div>
-              <div
-                class="org-detail-box org-detail-box--half org-detail-box-empty"
-              ></div>
+              <div class="org-detail-box org-detail-box--half org-detail-box-empty"></div>
             </div>
           </div>
         </div>
@@ -237,12 +202,12 @@
 </template>
 
 <script setup>
-import MainLayout from "@/components/layout/MainLayout.vue";
-import storage from "@/services/storage.js";
-import axios from "axios";
-import { format, parseISO } from "date-fns";
-import { computed, onMounted, ref } from "vue";
-import { useRoute } from "vue-router";
+import MainLayout from '@/components/layout/MainLayout.vue';
+import storage from '@/services/storage.js';
+import axios from 'axios';
+import { format, parseISO } from 'date-fns';
+import { computed, onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
 // STATE
 const route = useRoute();
@@ -254,27 +219,27 @@ const error = ref(null);
 
 // COMPUTED PROPERTIES
 const formattedAddress = computed(() => {
-  if (!organization.value) return "N/A";
+  if (!organization.value) return 'N/A';
   // Support multiple shapes returned by API: addresses array, individual fields, or generic address
   const o = organization.value || {};
   const addrObj = (o.addresses && o.addresses[0]) || {};
-  const addressLine1 = o.address_line_1 || addrObj.address_line_1 || o.address || "";
-  const addressLine2 = o.address_line_2 || addrObj.address_line_2 || "";
-  const city = o.city || addrObj.city_name || o.city_name || o.city_id || "";
-  const state = o.state || addrObj.state_name || o.state_name || o.state_id || "";
-  const zip = o.zip || o.zip_code || addrObj.zip_code || "";
-  const country = o.country || addrObj.country_name || o.country_name || "";
+  const addressLine1 = o.address_line_1 || addrObj.address_line_1 || o.address || '';
+  const addressLine2 = o.address_line_2 || addrObj.address_line_2 || '';
+  const city = o.city || addrObj.city_name || o.city_name || o.city_id || '';
+  const state = o.state || addrObj.state_name || o.state_name || o.state_id || '';
+  const zip = o.zip || o.zip_code || addrObj.zip_code || '';
+  const country = o.country || addrObj.country_name || o.country_name || '';
 
   return (
-    [addressLine1, addressLine2, city, state, zip, country].filter(Boolean).join(", ") || "N/A"
+    [addressLine1, addressLine2, city, state, zip, country].filter(Boolean).join(', ') || 'N/A'
   );
 });
 
 // METHODS
 const formatDate = (dateString) => {
-  if (!dateString) return "N/A";
+  if (!dateString) return 'N/A';
   try {
-    return format(parseISO(dateString), "dd MMM, yyyy");
+    return format(parseISO(dateString), 'dd MMM, yyyy');
   } catch {
     return dateString; // Fallback for invalid date formats
   }
@@ -302,45 +267,73 @@ const isExpired = computed(() => {
 });
 
 const lastBillingEndDisplay = computed(() => {
-  if (!hasHistory.value) return "N/A";
+  if (!hasHistory.value) return 'N/A';
   // pick the most recent entry by subscriptionEnd or paymentDate
   const sorted = [...billingHistory.value].sort((a, b) => {
-    const ta =
-      a.subscriptionEnd ||
-      a.subscription_end ||
-      a.paymentDate ||
-      a.payment_date ||
-      "";
-    const tb =
-      b.subscriptionEnd ||
-      b.subscription_end ||
-      b.paymentDate ||
-      b.payment_date ||
-      "";
+    const ta = a.subscriptionEnd || a.subscription_end || a.paymentDate || a.payment_date || '';
+    const tb = b.subscriptionEnd || b.subscription_end || b.paymentDate || b.payment_date || '';
     return new Date(tb) - new Date(ta);
   });
   const item = sorted[0] || {};
   const dateStr =
-    item.subscriptionEnd ||
-    item.subscription_end ||
-    item.paymentDate ||
-    item.payment_date ||
-    null;
-  return dateStr ? formatDate(dateStr) : "Unknown";
+    item.subscriptionEnd || item.subscription_end || item.paymentDate || item.payment_date || null;
+  return dateStr ? formatDate(dateStr) : 'Unknown';
+});
+
+// Helpers for display
+const currencySymbol = (code) => {
+  if (!code) return '$';
+  const c = String(code).toLowerCase();
+  if (c === 'usd') return '$';
+  if (c === 'eur') return '€';
+  if (c === 'gbp') return '£';
+  return String(code).toUpperCase() + ' ';
+};
+
+const displayPlanName = computed(() => {
+  return billingPlan.value?.plan_name || billingPlan.value?.plan?.name || 'Plan';
+});
+
+const displayPrice = computed(() => {
+  const plan = billingPlan.value || {};
+  const amount = plan.amount ?? plan.plan?.amount ?? null;
+  const currency = plan.currency ?? plan.plan?.currency ?? 'USD';
+  const period = plan.period ?? plan.plan?.interval ?? null;
+
+  if (amount === null || amount === undefined || amount === '') {
+    return period ? `/${period}` : 'Price not available';
+  }
+
+  const num = Number(amount);
+  let formatted;
+  if (Number.isFinite(num)) {
+    formatted = Number.isInteger(num) ? String(num) : num.toFixed(2);
+  } else {
+    formatted = String(amount);
+  }
+  return `${currencySymbol(currency)}${formatted}${period ? '/' + period : ''}`;
+});
+
+const expiryDate = computed(() => {
+  return (
+    billingPlan.value?.end ||
+    billingPlan.value?.contract_end ||
+    billingPlan.value?.subscription_end ||
+    null
+  );
 });
 
 const fetchAllData = async () => {
   const orgId = route.params.id;
   if (!orgId) {
-    error.value = "Organization ID not found in URL.";
+    error.value = 'Organization ID not found in URL.';
     isLoading.value = false;
     return;
   }
 
-  const authToken = storage.get("authToken");
+  const authToken = storage.get('authToken');
   const headers = { Authorization: `Bearer ${authToken}` };
-  const API_BASE_URL =
-    process.env.VUE_APP_API_BASE_URL || "http://127.0.0.1:8000";
+  const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || 'http://127.0.0.1:8000';
 
   isLoading.value = true;
   error.value = null;
@@ -359,12 +352,10 @@ const fetchAllData = async () => {
 
     organization.value = orgResponse.data;
     billingPlan.value = billingResponse.data;
-    billingHistory.value = Array.isArray(historyResponse.data)
-      ? historyResponse.data
-      : [];
+    billingHistory.value = Array.isArray(historyResponse.data) ? historyResponse.data : [];
   } catch (err) {
-    console.error("Failed to fetch organization data:", err);
-    error.value = "Could not load organization details. Please try again.";
+    console.debug && console.debug('Failed to fetch organization data:', err);
+    error.value = 'Could not load organization details. Please try again.';
   } finally {
     isLoading.value = false;
   }
@@ -463,7 +454,7 @@ onMounted(fetchAllData);
 }
 
 .org-detail-section-title {
-  font-family: "Helvetica Neue LT Std", Helvetica, Arial, sans-serif;
+  font-family: 'Helvetica Neue LT Std', Helvetica, Arial, sans-serif;
   font-weight: 600;
   font-size: 20px;
   color: #222;
@@ -507,7 +498,7 @@ onMounted(fetchAllData);
   min-width: 160px;
   text-align: left;
   font-size: 19px; /* Increased font size */
-  font-family: "Inter", Arial, sans-serif;
+  font-family: 'Inter', Arial, sans-serif;
   line-height: 1.7;
   letter-spacing: 0.01em;
   flex: 1 1 50%;
@@ -519,7 +510,7 @@ onMounted(fetchAllData);
   text-align: left; /* Add this */
   word-break: break-word;
   font-size: 17px; /* Increased font size */
-  font-family: "Inter", Arial, sans-serif;
+  font-family: 'Inter', Arial, sans-serif;
   line-height: 1.7;
   letter-spacing: 0.01em;
   flex: 1 1 50%;
@@ -534,13 +525,15 @@ onMounted(fetchAllData);
   border: none;
   padding: 8px 24px 8px 16px;
   font-size: 15px;
-  font-family: "Helvetica Neue LT Std", Helvetica, Arial, sans-serif;
+  font-family: 'Helvetica Neue LT Std', Helvetica, Arial, sans-serif;
   font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: background 0.2s, border 0.2s;
+  transition:
+    background 0.2s,
+    border 0.2s;
   box-shadow: none;
 }
 .org-edit-btn:hover {
@@ -652,7 +645,7 @@ onMounted(fetchAllData);
   margin-bottom: 16px;
   margin-top: 2px;
   letter-spacing: 0.01em;
-  font-family: "Inter", Arial, sans-serif;
+  font-family: 'Inter', Arial, sans-serif;
 }
 
 .org-detail-algo-row {
@@ -682,7 +675,9 @@ onMounted(fetchAllData);
   margin-left: 0;
   margin-top: 0;
   box-shadow: none;
-  transition: background 0.18s, border 0.18s;
+  transition:
+    background 0.18s,
+    border 0.18s;
 }
 
 .org-view-btn:hover,

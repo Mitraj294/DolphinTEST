@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Lead;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use App\Mail\LeadAssessmentRegistrationMail;
-
 
 // LeadController
 // Controller for managing Lead operations:
@@ -24,63 +25,48 @@ use App\Mail\LeadAssessmentRegistrationMail;
 
 
 
-// 1. Validation Rules for Lead Model Fields
-
-class LeadValidationRules
-{
-    public const REQUIRED_INTEGER = 'required|integer';
-    public const REQUIRED_STRING = 'required|string';
-    public const REQUIRED_EMAIL = 'required|email';
-    public const OPTIONAL_INTEGER = 'nullable|integer';
-    public const OPTIONAL_STRING = 'nullable|string';
-    public const REQUIRED_BOOLEAN = 'required|boolean';
-    public const REQUIRED_DATE = 'required|date';
-}
-
-
-// 2. Common Messages Used by LeadController
-
-class Message
-{
-    public const MESSAGE = 'Lead Not Found';
-}
-
-
 // 3. LeadController
 
 class LeadController extends Controller
 {
+    // Validation constants (kept local to the controller to comply with PSR-12
+    // single-class-per-file expectations).
+    private const REQUIRED_STRING = 'required|string';
+    private const REQUIRED_EMAIL = 'required|email';
+    private const OPTIONAL_STRING = 'nullable|string';
 
+    // Common messages
+    private const MESSAGE = 'Lead Not Found';
     // Update an existing lead.
     // Handles PATCH for notes-only update.
     // @param Request $request
     // @param int $id
     // @return \Illuminate\Http\JsonResponse
 
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id): JsonResponse
     {
         $lead = Lead::find($id);
 
         if (!$lead) {
-            return response()->json(['message' => Message::MESSAGE], 404);
+            return response()->json(['message' => self::MESSAGE], 404);
         }
 
         // Full update validation rules
         $data = $request->validate([
-            'first_name'         => LeadValidationRules::REQUIRED_STRING,
-            'last_name'          => LeadValidationRules::REQUIRED_STRING,
-            'email'              => LeadValidationRules::REQUIRED_EMAIL,
+            'first_name'         => self::REQUIRED_STRING,
+            'last_name'          => self::REQUIRED_STRING,
+            'email'              => self::REQUIRED_EMAIL,
             'phone_number'       => 'required|regex:/^[6-9]\d{9}$/',
-            'status'             => LeadValidationRules::OPTIONAL_STRING,
+            'status'             => self::OPTIONAL_STRING,
             'organization_id'    => 'nullable|integer|exists:organizations,id',
-            'organization_name'  => LeadValidationRules::OPTIONAL_STRING,
-            'organization_size'  => LeadValidationRules::OPTIONAL_STRING,
+            'organization_name'  => self::OPTIONAL_STRING,
+            'organization_size'  => self::OPTIONAL_STRING,
             'referral_source_id' => 'nullable|integer|exists:referral_sources,id',
-            'referral_other_text' => LeadValidationRules::OPTIONAL_STRING,
-            'find_us'            => LeadValidationRules::OPTIONAL_STRING,
-            'address_line_1'     => LeadValidationRules::OPTIONAL_STRING,
-            'address_line_2'     => LeadValidationRules::OPTIONAL_STRING,
-            'zip_code'           => LeadValidationRules::OPTIONAL_STRING,
+            'referral_other_text' => self::OPTIONAL_STRING,
+            'find_us'            => self::OPTIONAL_STRING,
+            'address_line_1'     => self::OPTIONAL_STRING,
+            'address_line_2'     => self::OPTIONAL_STRING,
+            'zip_code'           => self::OPTIONAL_STRING,
             'country_id'         => 'nullable|integer|exists:countries,id',
             'state_id'           => 'nullable|integer|exists:states,id',
             'city_id'            => 'nullable|integer|exists:cities,id',
@@ -166,23 +152,23 @@ class LeadController extends Controller
     // @param Request $request
     // @return \Illuminate\Http\JsonResponse
 
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'first_name'         => LeadValidationRules::REQUIRED_STRING,
-            'last_name'          => LeadValidationRules::REQUIRED_STRING,
+            'first_name'         => self::REQUIRED_STRING,
+            'last_name'          => self::REQUIRED_STRING,
             'email'              => 'required|string|email|max:255',
             'phone_number'       => 'required|regex:/^[6-9]\d{9}$/',
-            'status'             => LeadValidationRules::OPTIONAL_STRING,
+            'status'             => self::OPTIONAL_STRING,
             'organization_id'    => 'nullable|integer|exists:organizations,id',
-            'organization_name'  => LeadValidationRules::OPTIONAL_STRING,
-            'organization_size'  => LeadValidationRules::OPTIONAL_STRING,
+            'organization_name'  => self::OPTIONAL_STRING,
+            'organization_size'  => self::OPTIONAL_STRING,
             'referral_source_id' => 'nullable|integer|exists:referral_sources,id',
-            'referral_other_text' => LeadValidationRules::OPTIONAL_STRING,
-            'find_us'            => LeadValidationRules::OPTIONAL_STRING,
-            'address_line_1'     => LeadValidationRules::OPTIONAL_STRING,
-            'address_line_2'     => LeadValidationRules::OPTIONAL_STRING,
-            'zip_code'           => LeadValidationRules::OPTIONAL_STRING,
+            'referral_other_text' => self::OPTIONAL_STRING,
+            'find_us'            => self::OPTIONAL_STRING,
+            'address_line_1'     => self::OPTIONAL_STRING,
+            'address_line_2'     => self::OPTIONAL_STRING,
+            'zip_code'           => self::OPTIONAL_STRING,
             'country_id'         => 'nullable|integer|exists:countries,id',
             'state_id'           => 'nullable|integer|exists:states,id',
             'city_id'            => 'nullable|integer|exists:cities,id',
@@ -267,7 +253,7 @@ class LeadController extends Controller
     // Superadmin sees all leads.
     // @return \Illuminate\Http\JsonResponse
 
-    public function index()
+    public function index(): JsonResponse
     {
         $user = request()->user();
         if (!$user) {
@@ -277,9 +263,10 @@ class LeadController extends Controller
         $with = [
             'notes.creator:id,first_name,last_name,email',
             'organization.user:id,first_name,last_name,email,phone_number',
-            'organization:id,name,size,contract_start,contract_end,referral_source_id,referral_other_text',
+            'organization:id,name,size'
+                . ',contract_start,contract_end,referral_source_id,referral_other_text',
             'organization.referralSource',
-            'organization.address'
+            'organization.address',
         ];
 
         // Role-based visibility
@@ -290,7 +277,15 @@ class LeadController extends Controller
             // Organization admin can see leads for their organization only
             $orgId = \App\Models\Organization::where('user_id', $user->id)->value('id');
             $leads = Lead::with($with)
-                ->when($orgId, fn($q) => $q->where('organization_id', $orgId), fn($q) => $q->whereRaw('1=0'))
+                ->when(
+                    $orgId,
+                    function ($q) use ($orgId) {
+                        return $q->where('organization_id', $orgId);
+                    },
+                    function ($q) {
+                        return $q->whereRaw('1=0');
+                    }
+                )
                 ->get();
         } elseif (Schema::hasColumn('leads', 'created_by')) {
             // Fallback: creator-scoped
@@ -351,7 +346,7 @@ class LeadController extends Controller
     // @param int $id
     // @return \Illuminate\Http\JsonResponse
 
-    public function show($id)
+    public function show(int $id): JsonResponse
     {
         $lead = Lead::with([
             'notes.creator:id,first_name,last_name,email',
@@ -364,7 +359,7 @@ class LeadController extends Controller
             'organization',
         ])->find($id);
         if (!$lead) {
-            return response()->json(['message' => Message::MESSAGE], 404);
+            return response()->json(['message' => self::MESSAGE], 404);
         }
         $registration_link = $this->buildRegistrationLink($lead);
         Log::info('LeadController: prepared registration_link', [
@@ -474,7 +469,9 @@ class LeadController extends Controller
             'lead_id' => $lead->id,
         ];
 
-        return rtrim($frontendBase, '/') . '/register?' . http_build_query($queryParams);
+        $base = rtrim($frontendBase, '/');
+        $query = http_build_query($queryParams);
+        return $base . '/register?' . $query;
     }
 
     /**
@@ -485,14 +482,19 @@ class LeadController extends Controller
         $safeLink = htmlspecialchars($registrationLink, ENT_QUOTES, 'UTF-8');
         // Prefer a canonical display name for the lead (name > first+last > email)
         $safeName = htmlspecialchars((string)$this->resolveDisplayName($lead), ENT_QUOTES, 'UTF-8');
-
         return <<<HTML
             <h2>Hello {$safeName},</h2>
             <p>You've been invited to complete your signup. Please click the button below to enter your details and activate your account.</p>
             <p style="text-align: center;">
-                <a href="{$safeLink}" style="display: inline-block; padding: 12px 24px; background-color: #0164A5; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold;">Complete Signup</a>
+                <a href="{$safeLink}"
+                   style="display: inline-block; padding: 12px 24px; background-color: #0164A5;"
+                   >
+                    <span style="color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold; display:inline-block; padding:6px 8px;">Complete Signup</span>
+                </a>
             </p>
-            <p style="font-size: 13px; color: #888888; text-align: center;">If you did not request this, you can safely ignore this email.</p>
+            <p style="font-size: 13px; color: #888888; text-align: center;">
+                If you did not request this, you can safely ignore this email.
+            </p>
         HTML;
     }
 
@@ -542,11 +544,11 @@ class LeadController extends Controller
     // @param int $id
     // @return \Illuminate\Http\JsonResponse
 
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, int $id): JsonResponse
     {
         $lead = Lead::find($id);
         if (!$lead) {
-            return response()->json(['message' => Message::MESSAGE], 404);
+            return response()->json(['message' => self::MESSAGE], 404);
         }
 
         try {
@@ -567,7 +569,7 @@ class LeadController extends Controller
     // @param Request $request
     // @return \Illuminate\Http\Response
 
-    public function leadRegistration(Request $request)
+    public function leadRegistration(Request $request): Response
     {
         $registration_link = $request->query('registration_link', rtrim(env('FRONTEND_URL', env('APP_URL', 'http://127.0.0.1:8080')), '/') . '/register');
         $name = $request->query('name', '');
@@ -590,7 +592,10 @@ class LeadController extends Controller
                         <div style="font-size:20px; font-weight:bold; color:#333333; margin-bottom:15px;">Hello {$safeName},</div>
                         <div style="font-size:16px; color:#555555; line-height:1.5; margin-bottom:25px;">You’ve been invited to complete your signup. Please click the button below to enter your details and activate your account.</div>
                         <div style="text-align:center;">
-                            <a href="{$safeLink}" style="display:inline-block; padding:10px 20px; background-color:#0164A5; color:#ffffff; text-decoration:none; border-radius:50px; font-weight:bold;">Complete Signup</a>
+                            <a href="{$safeLink}"
+                               style="display:inline-block; padding:10px 20px; background-color:#0164A5;">
+                                <span style="color:#ffffff; text-decoration:none; border-radius:50px; font-weight:bold; display:inline-block; padding:6px 8px;">Complete Signup</span>
+                            </a>
                         </div>
                         <div style="font-size:13px; color:#888888; text-align:center; margin-top:30px;">If you did not request this, you can safely ignore this email.</div>
                     </div>
@@ -608,7 +613,7 @@ class LeadController extends Controller
     // @param Request $request
     // @return \Illuminate\Http\Response
 
-    public function leadAgreement(Request $request)
+    public function leadAgreement(Request $request): Response
     {
         $checkout_url = $request->query('checkout_url', rtrim(env('FRONTEND_URL', env('APP_URL', 'http://127.0.0.1:8080')), '/') . '/subscriptions/plans');
         $name = $request->query('name', '');
@@ -633,7 +638,10 @@ class LeadController extends Controller
                         <div style="font-size:20px; font-weight:bold; color:#333333; margin-bottom:15px;">Hello {$safeName},</div>
                         <div style="font-size:16px; color:#555555; line-height:1.5; margin-bottom:25px;">Please find your agreement and payment link below. Click the button to proceed with the subscription.</div>
                         <div style="text-align:center;">
-                            <a href="{$safeLink}" style="display:inline-block; padding:10px 20px; background-color:#0164A5; color:#ffffff; text-decoration:none; border-radius:50px; font-weight:bold;">Proceed to Payment</a>
+                            <a href="{$safeLink}"
+                               style="display:inline-block; padding:10px 20px; background-color:#0164A5;">
+                                <span style="color:#ffffff; text-decoration:none; border-radius:50px; font-weight:bold; display:inline-block; padding:6px 8px;">Proceed to Payment</span>
+                            </a>
                         </div>
                         <div style="font-size:13px; color:#888888; text-align:center; margin-top:30px;">If you did not request this, you can safely ignore this email.</div>
                     </div>
@@ -651,13 +659,13 @@ class LeadController extends Controller
     // @param Request $request
     // @return \Illuminate\Http\JsonResponse
 
-    public function prefill(Request $request)
+    public function prefill(Request $request): JsonResponse
     {
         $lead = null;
         if ($request->has('lead_id')) {
             $lead = Lead::with([
                 'organization.address.country',
-                'organization.address.state', 
+                'organization.address.state',
                 'organization.address.city',
                 'organization.referralSource'
             ])->find($request->input('lead_id'));
@@ -670,13 +678,13 @@ class LeadController extends Controller
             ])->where('email', $request->input('email'))->first();
         }
         if (!$lead) {
-            return response()->json(['message' => Message::MESSAGE], 404);
+            return response()->json(['message' => self::MESSAGE], 404);
         }
-        
+
         // Get organization data
         $org = $lead->organization;
         $orgAddress = $org?->address;
-        
+
         return response()->json(['lead' => [
             'organization_id'        => $lead->organization_id ?? null,
             'first_name'             => $lead->first_name ?? null,
@@ -709,7 +717,7 @@ class LeadController extends Controller
     // Get referral sources from referral_sources table.
     // @return \Illuminate\Http\JsonResponse
 
-    public function findUsOptions()
+    public function findUsOptions(): JsonResponse
     {
         // Preserve ordering by numeric id as requested (instead of alphabetical name)
         $sources = \App\Models\ReferralSource::orderBy('id')->get(['id', 'name']);

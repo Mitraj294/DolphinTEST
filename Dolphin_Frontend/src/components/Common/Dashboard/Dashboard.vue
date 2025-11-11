@@ -9,11 +9,11 @@
 </template>
 
 <script>
-import Toast from "primevue/toast";
-import { useToast } from "primevue/usetoast";
-import MainLayout from "../../layout/MainLayout.vue";
-import OrgAdminGraphs from "./OrgAdminGraphs.vue";
-import UserGraphs from "./UserGraphs.vue";
+import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
+import MainLayout from '../../layout/MainLayout.vue';
+import OrgAdminGraphs from './OrgAdminGraphs.vue';
+import UserGraphs from './UserGraphs.vue';
 
 export default {
   components: {
@@ -28,18 +28,14 @@ export default {
   },
   computed: {
     isOrgAdmin() {
-      const storage = require("@/services/storage").default;
-      const role = storage.get("role");
-      return (
-        role === "organizationadmin" ||
-        role === "superadmin" ||
-        role === "Dolphinadmin"
-      );
+      const storage = require('@/services/storage').default;
+      const role = storage.get('role');
+      return role === 'organizationadmin' || role === 'superadmin' || role === 'Dolphinadmin';
     },
     isUser() {
-      const storage = require("@/services/storage").default;
-      const role = storage.get("role");
-      return role === "user" || role === "salesperson";
+      const storage = require('@/services/storage').default;
+      const role = storage.get('role');
+      return role === 'user' || role === 'salesperson';
     },
   },
 };

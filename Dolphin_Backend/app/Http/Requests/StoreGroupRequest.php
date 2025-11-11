@@ -11,6 +11,11 @@ class StoreGroupRequest extends FormRequest
         return $this->user()->hasRole('organizationadmin');
     }
 
+    /**
+     * Validation rules for creating a group.
+     *
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         return [

@@ -8,22 +8,55 @@
           <div class="billing-plan-box">
             <template v-if="subscription">
               <div class="plan-left">
-                <div class="plan-name">{{ subscription.plan?.name || 'Plan' }}</div>
-                <div class="plan-price" style="text-align: left;">
-                  {{ subscription.plan?.currency && subscription.plan.currency.toLowerCase() === 'usd' ? '$' : '' }}{{ subscription.plan?.amount || subscription.latest_amount_paid || '' }}
-                  <span class="plan-card-period">/{{ subscription.plan?.interval === 'monthly' ? 'Month' : 'Annual' }}</span>
+                <div class="plan-name">
+                  {{ subscription.plan?.name || 'Plan' }}
+                </div>
+                <div class="plan-price" style="text-align: left">
+                  {{
+                    subscription.plan?.currency &&
+                    subscription.plan.currency.toLowerCase() === 'usd'
+                      ? '$'
+                      : ''
+                  }}{{ subscription.plan?.amount || subscription.latest_amount_paid || '' }}
+                  <span class="plan-card-period"
+                    >/{{ subscription.plan?.interval === 'monthly' ? 'Month' : 'Annual' }}</span
+                  >
                 </div>
               </div>
 
               <div class="plan-right">
                 <div class="plan-meta-row">
-                  <div>Subscription Start : <b>{{ subscription.start ? formatDate(subscription.start) : (subscription.started_at ? formatDate(subscription.started_at) : 'N/A') }}</b></div>
+                  <div>
+                    Subscription Start :
+                    <b>{{
+                      subscription.start
+                        ? formatDate(subscription.start)
+                        : subscription.started_at
+                          ? formatDate(subscription.started_at)
+                          : 'N/A'
+                    }}</b>
+                  </div>
                 </div>
                 <div class="plan-meta-row">
-                  <div>Subscription End : <b>{{ subscription.end ? formatDate(subscription.end) : (subscription.ends_at ? formatDate(subscription.ends_at) : 'N/A') }}</b></div>
+                  <div>
+                    Subscription End :
+                    <b>{{
+                      subscription.end
+                        ? formatDate(subscription.end)
+                        : subscription.ends_at
+                          ? formatDate(subscription.ends_at)
+                          : 'N/A'
+                    }}</b>
+                  </div>
                 </div>
-                <div class="plan-meta-row small">(Next bill on {{ subscription.current_period_end ? formatDate(subscription.current_period_end) : 'N/A' }})</div>
-               
+                <div class="plan-meta-row small">
+                  (Next bill on
+                  {{
+                    subscription.current_period_end
+                      ? formatDate(subscription.current_period_end)
+                      : 'N/A'
+                  }})
+                </div>
               </div>
             </template>
             <template v-else>
@@ -44,14 +77,34 @@
                 <!-- Reuse shared table header component for consistent styling -->
                 <TableHeader :columns="columns" />
                 <tbody>
-                  <tr v-for="(invoice, idx) in invoices" :key="invoice.invoice_id || invoice.subscription_id || idx">
-                    <td data-label="Payment Method">{{ invoice.payment_method || subscription?.payment_method?.label || '-' }}</td>
-                    <td data-label="Payment Date">{{ invoice.paymentDate ? formatDate(invoice.paymentDate) : '' }}</td>
-                    <td data-label="Subscription End">{{ invoice.subscriptionEnd ? formatDate(invoice.subscriptionEnd) : '' }}</td>
-                    <td data-label="Amount">{{ invoice.currency && invoice.currency.toLowerCase() === 'usd' ? '$' : '' }}{{ invoice.amount ?? invoice.amount_paid ?? invoice.amount_due ?? '' }}</td>
+                  <tr
+                    v-for="(invoice, idx) in invoices"
+                    :key="invoice.invoice_id || invoice.subscription_id || idx"
+                  >
+                    <td data-label="Payment Method">
+                      {{ invoice.payment_method || subscription?.payment_method?.label || '-' }}
+                    </td>
+                    <td data-label="Payment Date">
+                      {{ invoice.paymentDate ? formatDate(invoice.paymentDate) : '' }}
+                    </td>
+                    <td data-label="Subscription End">
+                      {{ invoice.subscriptionEnd ? formatDate(invoice.subscriptionEnd) : '' }}
+                    </td>
+                    <td data-label="Amount">
+                      {{ invoice.currency && invoice.currency.toLowerCase() === 'usd' ? '$' : ''
+                      }}{{ invoice.amount ?? invoice.amount_paid ?? invoice.amount_due ?? '' }}
+                    </td>
                     <td data-label="Receipt">
-                      <a v-if="invoice.pdfUrl" :href="invoice.pdfUrl" target="_blank" rel="noopener">View Receipt</a>
-                      <a v-else-if="invoice.hosted_invoice_url" :href="invoice.hosted_invoice_url" target="_blank" rel="noopener">View Receipt</a>
+                      <a v-if="invoice.pdfUrl" :href="invoice.pdfUrl" target="_blank" rel="noopener"
+                        >View Receipt</a
+                      >
+                      <a
+                        v-else-if="invoice.hosted_invoice_url"
+                        :href="invoice.hosted_invoice_url"
+                        target="_blank"
+                        rel="noopener"
+                        >View Receipt</a
+                      >
                       <span v-else>—</span>
                     </td>
                   </tr>
@@ -66,12 +119,16 @@
 </template>
 
 <script>
-import MainLayout from "@/components/layout/MainLayout.vue";
-import TableHeader from "@/components/Common/Common_UI/TableHeader.vue";
-import { getActiveSubscription, getInvoices, createBillingPortalSession } from "@/services/subscription";
+import MainLayout from '@/components/layout/MainLayout.vue';
+import TableHeader from '@/components/Common/Common_UI/TableHeader.vue';
+import {
+  getActiveSubscription,
+  getInvoices,
+  createBillingPortalSession,
+} from '@/services/subscription';
 
 export default {
-  name: "BillingDetails",
+  name: 'BillingDetails',
   components: { MainLayout, TableHeader },
   data() {
     return {
@@ -79,8 +136,17 @@ export default {
       invoices: [],
       columns: [
         { label: 'Payment Method', key: 'payment_method', minWidth: '180px' },
-        { label: 'Payment Date', key: 'paymentDate', minWidth: '160px', sortable: true },
-        { label: 'Subscription End', key: 'subscriptionEnd', minWidth: '160px' },
+        {
+          label: 'Payment Date',
+          key: 'paymentDate',
+          minWidth: '160px',
+          sortable: true,
+        },
+        {
+          label: 'Subscription End',
+          key: 'subscriptionEnd',
+          minWidth: '160px',
+        },
         { label: 'Amount', key: 'amount', minWidth: '120px' },
         { label: 'Receipt', key: 'pdfUrl', minWidth: '140px' },
       ],
@@ -97,11 +163,12 @@ export default {
         let invRes = null;
         try {
           const params = {};
-          if (this.subscription && this.subscription.id) params.subscription_id = this.subscription.id;
+          if (this.subscription && this.subscription.id)
+            params.subscription_id = this.subscription.id;
           invRes = await getInvoices(params);
         } catch (e) {
           // Could not fetch invoices for subscription, log and continue with empty
-          console.warn('Could not fetch invoices for subscription:', e);
+          console.debug && console.debug('Could not fetch invoices for subscription:', e);
           invRes = null;
         }
 
@@ -114,19 +181,19 @@ export default {
           this.invoices = [];
         }
       } catch (e) {
-        console.error("Failed to load billing details:", e);
+        console.debug && console.debug('Failed to load billing details:', e);
         this.subscription = null;
         this.invoices = [];
       }
     },
     formatDate(dateStr) {
-      if (!dateStr) return "";
+      if (!dateStr) return '';
       const d = new Date(dateStr);
-      if (Number.isNaN(d)) return "";
-      return d.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
+      if (Number.isNaN(d)) return '';
+      return d.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
       });
     },
     async manageSubscription() {
@@ -138,17 +205,20 @@ export default {
         if (url) {
           globalThis.location.href = url;
         } else {
-          console.warn('Billing portal endpoint did not return a URL:', res);
+          console.debug && console.debug('Billing portal endpoint did not return a URL:', res);
           alert('Billing portal is not available.');
         }
       } catch (err) {
-        console.warn('Failed to create billing portal session', err && err.message ? err.message : err);
+        console.debug &&
+          console.debug(
+            'Failed to create billing portal session',
+            err && err.message ? err.message : err
+          );
         alert('Unable to open billing portal at this time.');
       } finally {
         this.isCreatingPortal = false;
       }
     },
-
   },
   mounted() {
     this.loadBillingDetails();

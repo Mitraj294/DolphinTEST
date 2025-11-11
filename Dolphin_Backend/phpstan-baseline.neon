@@ -1,0 +1,4039 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method App\\Console\\Commands\\CleanupExpiredTokens\:\:handle\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Console/Commands/CleanupExpiredTokens.php
+
+		-
+			message: '#^Method App\\Console\\Commands\\CleanupRoles\:\:handle\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Console/Commands/CleanupRoles.php
+
+		-
+			message: '#^Method App\\Console\\Commands\\ReconcileLeadsWithUsers\:\:handle\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Console/Commands/ReconcileLeadsWithUsers.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/RepairAnnouncementSentAt.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/RepairAnnouncementSentAt.php
+
+		-
+			message: '#^Method App\\Console\\Commands\\RepairAnnouncementSentAt\:\:handle\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Console/Commands/RepairAnnouncementSentAt.php
+
+		-
+			message: '#^Method App\\Console\\Commands\\ScheduleWorkSilent\:\:handle\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Console/Commands/ScheduleWorkSilent.php
+
+		-
+			message: '#^While loop condition is always true\.$#'
+			identifier: while.alwaysTrue
+			count: 1
+			path: app/Console/Commands/ScheduleWorkSilent.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Subscription\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Console/Commands/UpdateSubscriptionStatus.php
+
+		-
+			message: '#^Method App\\Console\\Commands\\UpdateSubscriptionStatus\:\:handle\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Console/Commands/UpdateSubscriptionStatus.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Announcement\:\:\$groups\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Announcement\:\:\$organizations\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Http\\Request\:\:\$end_date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Http\\Request\:\:\$start_date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Announcement\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Announcement\:\:findOrFail\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 3
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Announcement\:\:orderBy\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Announcement\:\:whereBetween\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Announcement\:\:whereDate\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AnnouncementController\:\:byDateRange\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AnnouncementController\:\:destroy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AnnouncementController\:\:getRecipientsForAnnouncement\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AnnouncementController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AnnouncementController\:\:show\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AnnouncementController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AnnouncementController\:\:todayScheduled\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AnnouncementController\:\:update\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/AnnouncementController.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$time\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AssessmentController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/AssessmentController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\OrganizationAssessment\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/AssessmentController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\OrganizationAssessment\:\:findOrFail\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/AssessmentController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\OrganizationAssessment\:\:select\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/AssessmentController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\User\:\:whereIn\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/AssessmentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AssessmentController\:\:resolveOrganizationId\(\) has parameter \$validated with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/AssessmentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AssessmentController\:\:summary\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/AssessmentController.php
+
+		-
+			message: '#^Variable \$responsesQuery might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: app/Http/Controllers/AssessmentController.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AssessmentResponseController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\AssessmentResponse\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/AssessmentResponseController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\AssessmentResponse\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 3
+			path: app/Http/Controllers/AssessmentResponseController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\AssessmentTime\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/AssessmentResponseController.php
+
+		-
+			message: '#^Parameter \#1 \$userId of method App\\Services\\AssessmentCalculationService\:\:calculateResults\(\) expects int, int\<min, \-1\>\|int\<1, max\>\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/AssessmentResponseController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\AssessmentResult\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 3
+			path: app/Http/Controllers/AssessmentResultController.php
+
+		-
+			message: '#^Property App\\Http\\Controllers\\AssessmentResultController\:\:\$calculationService has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Http/Controllers/AssessmentResultController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Requests\\ChangePasswordRequest\:\:\$current_password\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Requests\\ChangePasswordRequest\:\:\$new_password\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Requests\\LoginRequest\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Requests\\LoginRequest\:\:\$password\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Http\\Request\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Http\\Request\:\:\$password\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Role\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\User\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\User\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Call to function is_string\(\) with non\-falsy\-string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Cannot call method tokens\(\) on class\-string\|object\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AuthController\:\:changePassword\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AuthController\:\:deleteAccount\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AuthController\:\:issueToken\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AuthController\:\:login\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AuthController\:\:logout\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AuthController\:\:profile\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AuthController\:\:register\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AuthController\:\:registerUserOnly\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AuthController\:\:resetPassword\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AuthController\:\:resolveClientCredentials\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AuthController\:\:sendResetLinkEmail\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AuthController\:\:tokenStatus\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AuthController\:\:updateProfile\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\AuthController\:\:user\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/AuthController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$cancel_at_period_end\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$current_period_end\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$default_payment_method_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$ends_at\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$invoices\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$is_paused\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$payment_method_brand\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$payment_method_label\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$payment_method_last4\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$payment_method_type\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$plan\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$plan_id\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$started_at\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$trial_ends_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$amount_paid\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$currency\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:find\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Cannot call method hasRole\(\) on class\-string\|object\.$#'
+			identifier: method.nonObject
+			count: 7
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Billing\\BillingController\:\:formatHistoryPayload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Billing\\BillingController\:\:resolveCurrentSubscription\(\) should return App\\Models\\Subscription\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Billing\\BillingController\:\:resolveLatestSubscription\(\) should return App\\Models\\Subscription\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:flatMap\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: \(array\|Illuminate\\Support\\Collection\<int\|string, mixed\>\), Closure\(App\\Models\\Subscription\)\: array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/Billing/BillingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Group\:\:\$users\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/GroupController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/GroupController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$organization_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/GroupController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Group\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/GroupController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Group\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 2
+			path: app/Http/Controllers/GroupController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/GroupController.php
+
+		-
+			message: '#^PHPDoc tag @param for parameter \$request with type App\\Http\\Requests\\StoreGroupRequest is incompatible with native type App\\Http\\Requests\\UpdateGroupRequest\.$#'
+			identifier: parameter.phpDocType
+			count: 1
+			path: app/Http/Controllers/GroupController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\SubscriptionInvoice\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/InvoiceController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\SubscriptionInvoice\:\:findOrFail\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 3
+			path: app/Http/Controllers/InvoiceController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InvoiceController\:\:destroy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InvoiceController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InvoiceController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InvoiceController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InvoiceController\:\:show\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InvoiceController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InvoiceController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InvoiceController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\InvoiceController\:\:update\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/InvoiceController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Lead\>\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Lead\>\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Lead\>\:\:\$organization\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\|stdClass\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\|stdClass\:\:\$deleted_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\|stdClass\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\|stdClass\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\|stdClass\:\:\$notes\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\|stdClass\:\:\$organization\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\|stdClass\:\:\$organization_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\|stdClass\:\:\$phone_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\|stdClass\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\|stdClass\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Http\\Request\:\:\$create_organization\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Access to constant MESSAGE on an unknown class App\\Http\\Controllers\\Message\.$#'
+			identifier: class.notFound
+			count: 3
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Lead\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Lead\:\:find\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 2
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 2
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:find\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 2
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\OrganizationAddress\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\OrganizationAddress\:\:updateOrCreate\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\ReferralSource\:\:orderBy\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Cannot access property \$id on class\-string\|object\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Cannot call method hasRole\(\) on class\-string\|object\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Constant App\\Http\\Controllers\\LeadController\:\:OPTIONAL_INTEGER is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Constant App\\Http\\Controllers\\LeadController\:\:REQUIRED_BOOLEAN is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Constant App\\Http\\Controllers\\LeadController\:\:REQUIRED_DATE is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Constant App\\Http\\Controllers\\LeadController\:\:REQUIRED_INTEGER is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadController\:\:destroy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadController\:\:destroy\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadController\:\:findUsOptions\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadController\:\:leadAgreement\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadController\:\:leadRegistration\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadController\:\:prefill\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadController\:\:show\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadController\:\:show\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadController\:\:update\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadController\:\:update\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{\}\|array\{0\: mixed, 1\?\: mixed, 2\?\: mixed, 3\?\: mixed, 4\?\: mixed, 5\?\: mixed\}\) to function array_filter does not contain falsy values, the array will always stay the same\.$#'
+			identifier: arrayFilter.same
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Parameter \#1 \$lead of method App\\Http\\Controllers\\LeadController\:\:buildDefaultTemplate\(\) expects App\\Models\\Lead, App\\Models\\Lead\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Lead\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Parameter \#1 \$lead of method App\\Http\\Controllers\\LeadController\:\:buildRegistrationLink\(\) expects App\\Models\\Lead, App\\Models\\Lead\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Lead\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function htmlspecialchars expects string, array\|string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function htmlspecialchars expects string, array\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>address_line_1" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>address_line_2" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>city_id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>country_id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>referral_other_text" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>referral_source_id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>size" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>state_id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>zip_code" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Http/Controllers/LeadController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Lead\:\:find\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 2
+			path: app/Http/Controllers/LeadNoteController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\LeadNote\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/LeadNoteController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\LeadNote\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 2
+			path: app/Http/Controllers/LeadNoteController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadNoteController\:\:destroy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LeadNoteController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadNoteController\:\:destroy\(\) has parameter \$leadId with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/LeadNoteController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadNoteController\:\:destroy\(\) has parameter \$noteId with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/LeadNoteController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadNoteController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LeadNoteController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadNoteController\:\:index\(\) has parameter \$leadId with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/LeadNoteController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadNoteController\:\:show\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LeadNoteController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadNoteController\:\:show\(\) has parameter \$leadId with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/LeadNoteController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadNoteController\:\:show\(\) has parameter \$noteId with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/LeadNoteController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadNoteController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LeadNoteController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadNoteController\:\:store\(\) has parameter \$leadId with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/LeadNoteController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadNoteController\:\:update\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LeadNoteController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadNoteController\:\:update\(\) has parameter \$leadId with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/LeadNoteController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LeadNoteController\:\:update\(\) has parameter \$noteId with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/LeadNoteController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\City\:\:find\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\City\:\:orderBy\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\City\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Country\:\:find\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Country\:\:orderBy\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\ReferralSource\:\:orderBy\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\State\:\:find\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\State\:\:orderBy\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\State\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LocationController\:\:cities\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LocationController\:\:countries\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LocationController\:\:getCityById\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LocationController\:\:getCityById\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LocationController\:\:getCountryById\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LocationController\:\:getCountryById\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LocationController\:\:getStateById\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LocationController\:\:getStateById\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LocationController\:\:referralSources\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LocationController\:\:states\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/LocationController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Query\\Builder\:\:findOrFail\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Announcement\:\:findOrFail\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Announcement\:\:orderByDesc\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Announcement\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 4
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Announcement\:\:whereHas\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\AnnouncementRead\:\:updateOrCreate\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 2
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\AnnouncementRead\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 2
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:whereIn\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\User\:\:find\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NotificationController\:\:allAnnouncements\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NotificationController\:\:allNotifications\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NotificationController\:\:createNotification\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NotificationController\:\:markAllAsRead\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NotificationController\:\:markAsRead\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NotificationController\:\:markAsRead\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NotificationController\:\:showAnnouncement\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NotificationController\:\:showAnnouncement\(\) has parameter \$id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NotificationController\:\:unreadAnnouncements\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\NotificationController\:\:userNotifications\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>first_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>last_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/NotificationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$address\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$certified_staff\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$contract_end\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$contract_start\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$last_contacted\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$referralSource\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$referral_other_text\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$referral_source_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$salesPerson\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$sales_person_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$size\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$user_id\.$#'
+			identifier: property.notFound
+			count: 5
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\OrganizationAddress\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\OrganizationAddress\:\:updateOrCreate\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Subscription\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Subscription\:\:whereIn\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\OrganizationController\:\:destroy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\OrganizationController\:\:formatOrganizationPayload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\OrganizationController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\OrganizationController\:\:show\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\OrganizationController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\OrganizationController\:\:update\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Parameter \#1 \$org of method App\\Http\\Controllers\\OrganizationController\:\:formatOrganizationPayload\(\) expects App\\Models\\Organization, App\\Models\\Organization\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/OrganizationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationUserController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model&object\{pivot\: Illuminate\\Database\\Eloquent\\Relations\\Pivot\}\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationUserController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Group\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 3
+			path: app/Http/Controllers/OrganizationUserController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:findOrFail\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 5
+			path: app/Http/Controllers/OrganizationUserController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationUserController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\User\:\:findOrFail\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationUserController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\User\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationUserController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\User\:\:whereHas\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/OrganizationUserController.php
+
+		-
+			message: '#^Cannot access property \$email on App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/OrganizationUserController.php
+
+		-
+			message: '#^Cannot access property \$first_name on App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/OrganizationUserController.php
+
+		-
+			message: '#^Cannot access property \$id on App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/OrganizationUserController.php
+
+		-
+			message: '#^Cannot access property \$last_name on App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/OrganizationUserController.php
+
+		-
+			message: '#^Cannot access property \$roles on App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/OrganizationUserController.php
+
+		-
+			message: '#^Parameter \#2 \$default of method Illuminate\\Http\\Request\:\:query\(\) expects array\|string\|null, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/OrganizationUserController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Plan\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/PlanController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Plan\:\:find\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 3
+			path: app/Http/Controllers/PlanController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Plan\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/PlanController.php
+
+		-
+			message: '#^Cannot call method hasRole\(\) on class\-string\|object\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Http/Controllers/PlanController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PlanController\:\:destroy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/PlanController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PlanController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/PlanController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PlanController\:\:show\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/PlanController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PlanController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/PlanController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PlanController\:\:update\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/PlanController.php
+
+		-
+			message: '#^Binary operation "\." between ''\<\!DOCTYPE html\>…'' and array\<string\>\|string\|null results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Lead\:\:find\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Lead\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Role\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\User\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\User\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Cannot access property \$childNodes on DOMElement\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SendAgreementController\:\:buildPlansUrl\(\) has parameter \$user with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SendAgreementController\:\:buildPlansUrl\(\) has parameter \$validated with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SendAgreementController\:\:createOrFindUser\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SendAgreementController\:\:createOrFindUser\(\) has parameter \$validated with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SendAgreementController\:\:logEmailPreview\(\) has parameter \$validated with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SendAgreementController\:\:prepareEmailBody\(\) has parameter \$validated with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SendAgreementController\:\:prepareEmailBody\(\) should return string but returns array\<string\>\|string\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SendAgreementController\:\:resolveLead\(\) has parameter \$validated with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SendAgreementController\:\:send\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SendAgreementController\:\:splitName\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SendAgreementController\:\:splitName\(\) has parameter \$name with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SendAgreementController\:\:validateGuest\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<non\-falsy\-string\>\) to function array_filter does not contain falsy values, the array will always stay the same\.$#'
+			identifier: arrayFilter.same
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Parameter \#3 \$subject of function str_replace expects array\<string\>\|string, array\<string\>\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/SendAgreementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\:\:\$address\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/SendAssessmentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\:\:\$assessment_sent_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/SendAssessmentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/SendAssessmentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\:\:\$first_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/SendAssessmentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/SendAssessmentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\:\:\$last_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/SendAssessmentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\:\:\$organization_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/SendAssessmentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\:\:\$organization_size\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/SendAssessmentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\:\:\$phone_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/SendAssessmentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\:\:\$registered_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/SendAssessmentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Lead\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/SendAssessmentController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Lead\:\:find\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/SendAssessmentController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Lead\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/SendAssessmentController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\User\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/SendAssessmentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SendAssessmentController\:\:findLead\(\) has parameter \$validated with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/SendAssessmentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SendAssessmentController\:\:prepareEmailBody\(\) has parameter \$validated with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/SendAssessmentController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\SendAssessmentController\:\:send\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/SendAssessmentController.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$customer\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$payment_status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Plan\:\:find\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Plan\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Subscription\:\:updateOrCreate\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Subscription\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 4
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\SubscriptionInvoice\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\SubscriptionInvoice\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\User\:\:find\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\WebhookLog\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 2
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Dead catch \- Throwable is never thrown in the try block\.$#'
+			identifier: catch.neverThrown
+			count: 1
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\StripeWebhookController\:\:convertStripeObjectToArray\(\) has parameter \$object with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\StripeWebhookController\:\:convertStripeObjectToArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\StripeWebhookController\:\:formatAmount\(\) has parameter \$amount with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\StripeWebhookController\:\:timestampToCarbon\(\) has parameter \$value with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Parameter \#1 \$json of function json_decode expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Parameter \#2 \$sigHeader of static method Stripe\\Webhook\:\:constructEvent\(\) expects string, array\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/StripeWebhookController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/SubscriptionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$stripe_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/SubscriptionController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Plan\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/SubscriptionController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Subscription\:\:find\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/SubscriptionController.php
+
+		-
+			message: '#^Cannot call method isActive\(\) on class\-string\|object\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/SubscriptionController.php
+
+		-
+			message: '#^Parameter \#1 \$params of static method Stripe\\Customer\:\:create\(\) expects array\{address\?\: array\{city\?\: string, country\?\: string, line1\?\: string, line2\?\: string, postal_code\?\: string, state\?\: string\}\|null, balance\?\: int, cash_balance\?\: array\{settings\?\: array\{reconciliation_mode\?\: string\}\}, description\?\: string, email\?\: string, expand\?\: array\<string\>, invoice_prefix\?\: string, invoice_settings\?\: array\{custom_fields\?\: array\<array\{name\: string, value\: string\}\>\|null, default_payment_method\?\: string, footer\?\: string, rendering_options\?\: array\{amount_tax_display\?\: string\|null, template\?\: string\}\|null\}, \.\.\.\}\|null, array\{email\: mixed, name\: non\-falsy\-string\|null\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/SubscriptionController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\TestNotificationController\:\:sendReceipt\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/TestNotificationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$deleted_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$first_name\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 14
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$last_name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$roles\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model&object\{pivot\: Illuminate\\Database\\Eloquent\\Relations\\Pivot\}\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Access to an undefined property Laravel\\Passport\\Token\:\:\$expires_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Access to protected property Laravel\\Passport\\PersonalAccessTokenResult\:\:\$token\.$#'
+			identifier: property.protected
+			count: 3
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:updateOrCreate\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Role\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 2
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\User\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:createUserWithRelations\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:formatUserPayload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:impersonate\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:softDelete\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:updateRole\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Http\\Controllers\\UserController\:\:formatUserPayload\(\) expects App\\Models\\User, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Http\\Request\:\:\$type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/WebhookLogController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\WebhookLog\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/WebhookLogController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\WebhookLog\:\:findOrFail\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 4
+			path: app/Http/Controllers/WebhookLogController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\WebhookLog\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/WebhookLogController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\WebhookLogController\:\:destroy\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/WebhookLogController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\WebhookLogController\:\:index\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/WebhookLogController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\WebhookLogController\:\:markAsProcessed\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/WebhookLogController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\WebhookLogController\:\:show\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/WebhookLogController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\WebhookLogController\:\:store\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/WebhookLogController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\WebhookLogController\:\:unprocessed\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/WebhookLogController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\WebhookLogController\:\:update\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Controllers/WebhookLogController.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Kernel\:\:\$middleware is not covariant with PHPDoc type array\<int, string\> of overridden property Illuminate\\Foundation\\Http\\Kernel\:\:\$middleware\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Kernel.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Kernel\:\:\$middlewareGroups is not covariant with PHPDoc type array\<string, array\<int, string\>\> of overridden property Illuminate\\Foundation\\Http\\Kernel\:\:\$middlewareGroups\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Kernel.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Kernel\:\:\$routeMiddleware is not covariant with PHPDoc type array\<string, string\> of overridden property Illuminate\\Foundation\\Http\\Kernel\:\:\$routeMiddleware\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Kernel.php
+
+		-
+			message: '#^Property App\\Http\\Kernel\:\:\$middleware type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Kernel.php
+
+		-
+			message: '#^Property App\\Http\\Kernel\:\:\$middlewareGroups type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Kernel.php
+
+		-
+			message: '#^Property App\\Http\\Kernel\:\:\$routeMiddleware type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Kernel.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/CheckSubscriptionStatus.php
+
+		-
+			message: '#^Call to an undefined method object\:\:update\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Middleware/CheckSubscriptionStatus.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:find\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Middleware/CheckSubscriptionStatus.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Subscription\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Middleware/CheckSubscriptionStatus.php
+
+		-
+			message: '#^Call to function method_exists\(\) with App\\Models\\User and ''hasAnyRole'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Http/Middleware/CheckSubscriptionStatus.php
+
+		-
+			message: '#^Call to function method_exists\(\) with App\\Models\\User and ''hasRole'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Http/Middleware/CheckSubscriptionStatus.php
+
+		-
+			message: '#^Call to function method_exists\(\) with App\\Models\\User and ''subscriptions'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Http/Middleware/CheckSubscriptionStatus.php
+
+		-
+			message: '#^Left side of \|\| is always false\.$#'
+			identifier: booleanOr.leftAlwaysFalse
+			count: 2
+			path: app/Http/Middleware/CheckSubscriptionStatus.php
+
+		-
+			message: '#^Method App\\Http\\Middleware\\CheckSubscriptionStatus\:\:buildBlockPayload\(\) has parameter \$blockContext with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Middleware/CheckSubscriptionStatus.php
+
+		-
+			message: '#^Method App\\Http\\Middleware\\CheckSubscriptionStatus\:\:buildBlockPayload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Middleware/CheckSubscriptionStatus.php
+
+		-
+			message: '#^Method App\\Http\\Middleware\\CheckSubscriptionStatus\:\:evaluateOrganizationSubscription\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Middleware/CheckSubscriptionStatus.php
+
+		-
+			message: '#^Method App\\Http\\Middleware\\CheckSubscriptionStatus\:\:respondBlocked\(\) has parameter \$latest with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Http/Middleware/CheckSubscriptionStatus.php
+
+		-
+			message: '#^Parameter \#1 \$subscription of method App\\Http\\Controllers\\SubscriptionController\:\:hasExpired\(\) expects App\\Models\\Subscription\|int\|null, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Middleware/CheckSubscriptionStatus.php
+
+		-
+			message: '#^Parameter \#1 \$subscription of method App\\Http\\Controllers\\SubscriptionController\:\:hasExpired\(\) expects App\\Models\\Subscription\|int\|null, object given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Middleware/CheckSubscriptionStatus.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>status" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Middleware/CheckSubscriptionStatus.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\ChangePasswordRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/ChangePasswordRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\IndexAssessmentRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/IndexAssessmentRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\LoginRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/LoginRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\RegisterRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/RegisterRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\SendAssessmentLinkRequest\:\:authorize\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Requests/SendAssessmentLinkRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\SendAssessmentLinkRequest\:\:rules\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Requests/SendAssessmentLinkRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\SimpleRegisterRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/SimpleRegisterRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreAnswerRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreAnswerRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreAssessmentRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreAssessmentRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreAssessmentScheduleRequest\:\:authorize\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Requests/StoreAssessmentScheduleRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreAssessmentScheduleRequest\:\:rules\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Http/Requests/StoreAssessmentScheduleRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreGroupRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreGroupRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreLeadRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreLeadRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreMemberRequest\:\:messages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreMemberRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\StoreMemberRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/StoreMemberRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\UpdateLeadRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/UpdateLeadRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\UpdateMemberRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/UpdateMemberRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\UpdateProfileRequest\:\:rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/UpdateProfileRequest.php
+
+		-
+			message: '#^Cannot access property \$map on Illuminate\\Support\\Collection\|null\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: app/Http/Resources/AnnouncementResource.php
+
+		-
+			message: '#^Method App\\Http\\Resources\\AnnouncementResource\:\:toArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Resources/AnnouncementResource.php
+
+		-
+			message: '#^PHPDoc tag @property for property App\\Http\\Resources\\AnnouncementResource\:\:\$admins contains generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Http/Resources/AnnouncementResource.php
+
+		-
+			message: '#^PHPDoc tag @property for property App\\Http\\Resources\\AnnouncementResource\:\:\$groups contains generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Http/Resources/AnnouncementResource.php
+
+		-
+			message: '#^PHPDoc tag @property for property App\\Http\\Resources\\AnnouncementResource\:\:\$organizations contains generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Http/Resources/AnnouncementResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LeadResource\:\:\$assessment_sent_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LeadResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LeadResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LeadResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LeadResource\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LeadResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LeadResource\:\:\$first_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LeadResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LeadResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LeadResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LeadResource\:\:\$last_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LeadResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LeadResource\:\:\$organization_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LeadResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LeadResource\:\:\$phone_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LeadResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LeadResource\:\:\$registered_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LeadResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LeadResource\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LeadResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LeadResource\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LeadResource.php
+
+		-
+			message: '#^Method App\\Http\\Resources\\LeadResource\:\:toArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Resources/LeadResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MemberResource\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MemberResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MemberResource\:\:\$first_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MemberResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MemberResource\:\:\$groups\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MemberResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MemberResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MemberResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MemberResource\:\:\$last_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MemberResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MemberResource\:\:\$memberRoles\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Resources/MemberResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MemberResource\:\:\$member_role\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MemberResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\MemberResource\:\:\$phone\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/MemberResource.php
+
+		-
+			message: '#^Method App\\Http\\Resources\\MemberResource\:\:toArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Resources/MemberResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$first_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$last_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$organization_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$phone_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$roles\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Method App\\Http\\Resources\\UserResource\:\:toArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Property Illuminate\\Notifications\\Events\\NotificationSent\:\:\$channel \(string\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: app/Listeners/UpdateAnnouncementSentTimestamp.php
+
+		-
+			message: '#^Method App\\Mail\\AnnouncementMailable\:\:__construct\(\) has parameter \$actionText with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Mail/AnnouncementMailable.php
+
+		-
+			message: '#^Method App\\Mail\\AnnouncementMailable\:\:__construct\(\) has parameter \$actionUrl with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Mail/AnnouncementMailable.php
+
+		-
+			message: '#^Method App\\Mail\\AnnouncementMailable\:\:__construct\(\) has parameter \$announcement with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Mail/AnnouncementMailable.php
+
+		-
+			message: '#^Method App\\Mail\\AnnouncementMailable\:\:__construct\(\) has parameter \$displayName with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Mail/AnnouncementMailable.php
+
+		-
+			message: '#^Method App\\Mail\\AnnouncementMailable\:\:__construct\(\) has parameter \$subject with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Mail/AnnouncementMailable.php
+
+		-
+			message: '#^Method App\\Mail\\AnnouncementMailable\:\:build\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Mail/AnnouncementMailable.php
+
+		-
+			message: '#^Property App\\Mail\\AnnouncementMailable\:\:\$actionText has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Mail/AnnouncementMailable.php
+
+		-
+			message: '#^Property App\\Mail\\AnnouncementMailable\:\:\$actionUrl has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Mail/AnnouncementMailable.php
+
+		-
+			message: '#^Property App\\Mail\\AnnouncementMailable\:\:\$announcement has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Mail/AnnouncementMailable.php
+
+		-
+			message: '#^Property App\\Mail\\AnnouncementMailable\:\:\$displayName has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Mail/AnnouncementMailable.php
+
+		-
+			message: '#^Property App\\Mail\\AnnouncementMailable\:\:\$subjectLine has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Mail/AnnouncementMailable.php
+
+		-
+			message: '#^Method App\\Mail\\SubscriptionReceipt\:\:__construct\(\) has parameter \$subscription with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Mail/SubscriptionReceipt.php
+
+		-
+			message: '#^Method App\\Mail\\SubscriptionReceipt\:\:build\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Mail/SubscriptionReceipt.php
+
+		-
+			message: '#^Property App\\Mail\\SubscriptionReceipt\:\:\$subscription has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Mail/SubscriptionReceipt.php
+
+		-
+			message: '#^Property App\\Models\\Algorithm\:\:\$casts type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/Algorithm.php
+
+		-
+			message: '#^Method App\\Models\\Announcement\:\:admins\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Announcement.php
+
+		-
+			message: '#^Method App\\Models\\Announcement\:\:getBodyAttribute\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/Announcement.php
+
+		-
+			message: '#^Method App\\Models\\Announcement\:\:getScheduledAtAttribute\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/Announcement.php
+
+		-
+			message: '#^Method App\\Models\\Announcement\:\:groups\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Announcement.php
+
+		-
+			message: '#^Method App\\Models\\Announcement\:\:organizations\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Announcement.php
+
+		-
+			message: '#^Method App\\Models\\Announcement\:\:setBodyAttribute\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/Announcement.php
+
+		-
+			message: '#^Method App\\Models\\Announcement\:\:setBodyAttribute\(\) has parameter \$value with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Models/Announcement.php
+
+		-
+			message: '#^Method App\\Models\\Announcement\:\:setScheduledAtAttribute\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/Announcement.php
+
+		-
+			message: '#^Method App\\Models\\Announcement\:\:setScheduledAtAttribute\(\) has parameter \$value with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Models/Announcement.php
+
+		-
+			message: '#^Property App\\Models\\Announcement\:\:\$casts type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/Announcement.php
+
+		-
+			message: '#^Method App\\Models\\AnnouncementRead\:\:announcement\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/AnnouncementRead.php
+
+		-
+			message: '#^Method App\\Models\\AnnouncementRead\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/AnnouncementRead.php
+
+		-
+			message: '#^Property App\\Models\\AnnouncementRead\:\:\$casts type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/AnnouncementRead.php
+
+		-
+			message: '#^Method App\\Models\\Assessment\:\:responses\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Assessment.php
+
+		-
+			message: '#^Method App\\Models\\AssessmentResponse\:\:assessment\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/AssessmentResponse.php
+
+		-
+			message: '#^Method App\\Models\\AssessmentResponse\:\:attemptTime\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/AssessmentResponse.php
+
+		-
+			message: '#^Method App\\Models\\AssessmentResponse\:\:time\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasOne does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/AssessmentResponse.php
+
+		-
+			message: '#^Method App\\Models\\AssessmentResponse\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/AssessmentResponse.php
+
+		-
+			message: '#^Method App\\Models\\AssessmentResult\:\:organizationAssessment\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/AssessmentResult.php
+
+		-
+			message: '#^Method App\\Models\\AssessmentResult\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/AssessmentResult.php
+
+		-
+			message: '#^Property App\\Models\\AssessmentResult\:\:\$casts type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/AssessmentResult.php
+
+		-
+			message: '#^Method App\\Models\\AssessmentTime\:\:assessmentResponse\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/AssessmentTime.php
+
+		-
+			message: '#^Property App\\Models\\AssessmentTime\:\:\$casts type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/AssessmentTime.php
+
+		-
+			message: '#^Method App\\Models\\City\:\:country\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/City.php
+
+		-
+			message: '#^Method App\\Models\\City\:\:organizationAddresses\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/City.php
+
+		-
+			message: '#^Method App\\Models\\City\:\:state\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/City.php
+
+		-
+			message: '#^Method App\\Models\\Country\:\:cities\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Country.php
+
+		-
+			message: '#^Method App\\Models\\Country\:\:organizationAddresses\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Country.php
+
+		-
+			message: '#^Method App\\Models\\Country\:\:states\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Country.php
+
+		-
+			message: '#^Method App\\Models\\Group\:\:announcements\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Group.php
+
+		-
+			message: '#^Method App\\Models\\Group\:\:assessments\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Group.php
+
+		-
+			message: '#^Method App\\Models\\Group\:\:organization\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Group.php
+
+		-
+			message: '#^Method App\\Models\\Group\:\:users\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Group.php
+
+		-
+			message: '#^Property App\\Models\\Input\:\:\$casts type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/Input.php
+
+		-
+			message: '#^Method App\\Models\\Lead\:\:notes\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Lead.php
+
+		-
+			message: '#^Method App\\Models\\Lead\:\:organization\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Lead.php
+
+		-
+			message: '#^Property App\\Models\\Lead\:\:\$casts type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/Lead.php
+
+		-
+			message: '#^Method App\\Models\\LeadNote\:\:creator\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/LeadNote.php
+
+		-
+			message: '#^Method App\\Models\\LeadNote\:\:lead\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/LeadNote.php
+
+		-
+			message: '#^Property App\\Models\\LeadNote\:\:\$casts type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/LeadNote.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Subscription\>\:\:latestOfMany\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Models/Organization.php
+
+		-
+			message: '#^Class App\\Models\\Organization uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Organization.php
+
+		-
+			message: '#^Method App\\Models\\Organization\:\:activeSubscription\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasOne does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Organization.php
+
+		-
+			message: '#^Method App\\Models\\Organization\:\:address\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasOne does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Organization.php
+
+		-
+			message: '#^Method App\\Models\\Organization\:\:announcements\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Organization.php
+
+		-
+			message: '#^Method App\\Models\\Organization\:\:assessments\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Organization.php
+
+		-
+			message: '#^Method App\\Models\\Organization\:\:groups\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Organization.php
+
+		-
+			message: '#^Method App\\Models\\Organization\:\:leads\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Organization.php
+
+		-
+			message: '#^Method App\\Models\\Organization\:\:members\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Organization.php
+
+		-
+			message: '#^Method App\\Models\\Organization\:\:referralSource\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Organization.php
+
+		-
+			message: '#^Method App\\Models\\Organization\:\:salesPerson\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Organization.php
+
+		-
+			message: '#^Method App\\Models\\Organization\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Organization.php
+
+		-
+			message: '#^Method App\\Models\\Organization\:\:users\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Organization.php
+
+		-
+			message: '#^Property App\\Models\\Organization\:\:\$casts type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/Organization.php
+
+		-
+			message: '#^Method App\\Models\\OrganizationAddress\:\:city\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/OrganizationAddress.php
+
+		-
+			message: '#^Method App\\Models\\OrganizationAddress\:\:country\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/OrganizationAddress.php
+
+		-
+			message: '#^Method App\\Models\\OrganizationAddress\:\:organization\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/OrganizationAddress.php
+
+		-
+			message: '#^Method App\\Models\\OrganizationAddress\:\:state\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/OrganizationAddress.php
+
+		-
+			message: '#^Method App\\Models\\OrganizationAssessment\:\:groups\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/OrganizationAssessment.php
+
+		-
+			message: '#^Method App\\Models\\OrganizationAssessment\:\:members\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/OrganizationAssessment.php
+
+		-
+			message: '#^Method App\\Models\\OrganizationAssessment\:\:organization\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/OrganizationAssessment.php
+
+		-
+			message: '#^Method App\\Models\\OrganizationAssessment\:\:results\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/OrganizationAssessment.php
+
+		-
+			message: '#^Method App\\Models\\OrganizationAssessment\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/OrganizationAssessment.php
+
+		-
+			message: '#^Property App\\Models\\OrganizationAssessment\:\:\$casts type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/OrganizationAssessment.php
+
+		-
+			message: '#^Method App\\Models\\Plan\:\:subscriptions\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Plan.php
+
+		-
+			message: '#^Method App\\Models\\ReferralSource\:\:organizations\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/ReferralSource.php
+
+		-
+			message: '#^Property App\\Models\\Result\:\:\$casts type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/Result.php
+
+		-
+			message: '#^Method App\\Models\\Role\:\:roleUsers\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Role.php
+
+		-
+			message: '#^Method App\\Models\\Role\:\:users\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/Role.php
+
+		-
+			message: '#^Method App\\Models\\RoleUser\:\:role\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/RoleUser.php
+
+		-
+			message: '#^Method App\\Models\\RoleUser\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/RoleUser.php
+
+		-
+			message: '#^Method App\\Models\\State\:\:cities\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/State.php
+
+		-
+			message: '#^Method App\\Models\\State\:\:country\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/State.php
+
+		-
+			message: '#^Method App\\Models\\State\:\:organizationAddresses\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/State.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$cancel_at_period_end\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$current_period_end\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$ends_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Subscription\:\:\$trial_ends_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:invoices\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:plan\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:remainingPeriodDays\(\) should return int\|null but returns float\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:remainingTrialDays\(\) should return int\|null but returns float\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:scopeActive\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:scopeActive\(\) has parameter \$query with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\Subscription\:\:user\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Property App\\Models\\Subscription\:\:\$casts type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/Subscription.php
+
+		-
+			message: '#^Method App\\Models\\SubscriptionInvoice\:\:subscription\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/SubscriptionInvoice.php
+
+		-
+			message: '#^Property App\\Models\\SubscriptionInvoice\:\:\$casts type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/SubscriptionInvoice.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$roles\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Class App\\Models\\User uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:announcementsAsAdmin\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:assessmentResponses\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:assessmentResults\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:city\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:country\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:groups\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:hasAnyRole\(\) has parameter \$roles with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:leadNotes\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:managedOrganizations\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:organizationAssessments\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:organizationMemberships\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:organizations\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:roles\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany does not specify its types\: TRelatedModel, TDeclaringModel, TPivotModel, TAccessor \(2\-4 required\)$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:state\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Method App\\Models\\User\:\:subscriptions\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Trait Laravel\\Passport\\HasApiTokens requires using class to implement Laravel\\Passport\\Contracts\\OAuthenticatable, but App\\Models\\User does not\.$#'
+			identifier: class.missingImplements
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Property App\\Models\\WebhookLog\:\:\$casts type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Models/WebhookLog.php
+
+		-
+			message: '#^Method App\\Notifications\\AssessmentInvitation\:\:toDatabase\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Notifications/AssessmentInvitation.php
+
+		-
+			message: '#^Method App\\Notifications\\AssessmentInvitation\:\:toDatabase\(\) has parameter \$notifiable with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Notifications/AssessmentInvitation.php
+
+		-
+			message: '#^Method App\\Notifications\\AssessmentInvitation\:\:toMail\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Notifications/AssessmentInvitation.php
+
+		-
+			message: '#^Method App\\Notifications\\AssessmentInvitation\:\:toMail\(\) has parameter \$notifiable with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Notifications/AssessmentInvitation.php
+
+		-
+			message: '#^Method App\\Notifications\\AssessmentInvitation\:\:via\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Notifications/AssessmentInvitation.php
+
+		-
+			message: '#^Method App\\Notifications\\AssessmentInvitation\:\:via\(\) has parameter \$notifiable with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Notifications/AssessmentInvitation.php
+
+		-
+			message: '#^Property App\\Notifications\\AssessmentInvitation\:\:\$assessmentId has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Notifications/AssessmentInvitation.php
+
+		-
+			message: '#^Property App\\Notifications\\AssessmentInvitation\:\:\$assessmentLink has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Notifications/AssessmentInvitation.php
+
+		-
+			message: '#^Property App\\Notifications\\AssessmentInvitation\:\:\$assessmentName has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Notifications/AssessmentInvitation.php
+
+		-
+			message: '#^Method App\\Notifications\\GeneralNotification\:\:__construct\(\) has parameter \$announcement with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Notifications/GeneralNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\GeneralNotification\:\:anonymousRouteDisplayName\(\) has parameter \$route with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Notifications/GeneralNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\GeneralNotification\:\:getAnnouncement\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Notifications/GeneralNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\GeneralNotification\:\:hasValidEmail\(\) has parameter \$email with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Notifications/GeneralNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\GeneralNotification\:\:objectDisplayName\(\) has parameter \$notifiable with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Notifications/GeneralNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\GeneralNotification\:\:resolveDisplayName\(\) has parameter \$notifiable with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Notifications/GeneralNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\GeneralNotification\:\:routeHasValidEmail\(\) has parameter \$route with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Notifications/GeneralNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\GeneralNotification\:\:toDatabase\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Notifications/GeneralNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\GeneralNotification\:\:toDatabase\(\) has parameter \$notifiable with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Notifications/GeneralNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\GeneralNotification\:\:toMail\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Notifications/GeneralNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\GeneralNotification\:\:toMail\(\) has parameter \$notifiable with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Notifications/GeneralNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\GeneralNotification\:\:via\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Notifications/GeneralNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\GeneralNotification\:\:via\(\) has parameter \$notifiable with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Notifications/GeneralNotification.php
+
+		-
+			message: '#^Property App\\Notifications\\GeneralNotification\:\:\$announcement has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Notifications/GeneralNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\NewUserInvitation\:\:toMail\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Notifications/NewUserInvitation.php
+
+		-
+			message: '#^Method App\\Notifications\\NewUserInvitation\:\:toMail\(\) has parameter \$notifiable with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Notifications/NewUserInvitation.php
+
+		-
+			message: '#^Method App\\Notifications\\NewUserInvitation\:\:via\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Notifications/NewUserInvitation.php
+
+		-
+			message: '#^Method App\\Notifications\\NewUserInvitation\:\:via\(\) has parameter \$notifiable with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Notifications/NewUserInvitation.php
+
+		-
+			message: '#^Property App\\Notifications\\NewUserInvitation\:\:\$plainPassword has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Notifications/NewUserInvitation.php
+
+		-
+			message: '#^Property App\\Notifications\\NewUserInvitation\:\:\$resetTokenUrl has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Notifications/NewUserInvitation.php
+
+		-
+			message: '#^Method App\\Notifications\\SubscriptionReceiptNotification\:\:__construct\(\) has parameter \$subscription with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Notifications/SubscriptionReceiptNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\SubscriptionReceiptNotification\:\:toArray\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Notifications/SubscriptionReceiptNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\SubscriptionReceiptNotification\:\:toArray\(\) has parameter \$notifiable with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Notifications/SubscriptionReceiptNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\SubscriptionReceiptNotification\:\:toMail\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Notifications/SubscriptionReceiptNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\SubscriptionReceiptNotification\:\:toMail\(\) has parameter \$notifiable with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Notifications/SubscriptionReceiptNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\SubscriptionReceiptNotification\:\:via\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Notifications/SubscriptionReceiptNotification.php
+
+		-
+			message: '#^Method App\\Notifications\\SubscriptionReceiptNotification\:\:via\(\) has parameter \$notifiable with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Notifications/SubscriptionReceiptNotification.php
+
+		-
+			message: '#^Property App\\Notifications\\SubscriptionReceiptNotification\:\:\$subscription has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Notifications/SubscriptionReceiptNotification.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$contract_end\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Observers/OrganizationObserver.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$contract_start\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Observers/OrganizationObserver.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Observers/OrganizationObserver.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Subscription\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Observers/OrganizationObserver.php
+
+		-
+			message: '#^Method App\\Observers\\OrganizationObserver\:\:applyLatestSubscriptionToOrg\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Observers/OrganizationObserver.php
+
+		-
+			message: '#^Method App\\Observers\\OrganizationObserver\:\:created\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Observers/OrganizationObserver.php
+
+		-
+			message: '#^Method App\\Observers\\OrganizationObserver\:\:updated\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Observers/OrganizationObserver.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Observers/SubscriptionObserver.php
+
+		-
+			message: '#^Method App\\Observers\\SubscriptionObserver\:\:created\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Observers/SubscriptionObserver.php
+
+		-
+			message: '#^Method App\\Observers\\SubscriptionObserver\:\:restored\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Observers/SubscriptionObserver.php
+
+		-
+			message: '#^Method App\\Observers\\SubscriptionObserver\:\:updateOrgsFromSubscription\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Observers/SubscriptionObserver.php
+
+		-
+			message: '#^Method App\\Observers\\SubscriptionObserver\:\:updated\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Observers/SubscriptionObserver.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Observers/UserObserver.php
+
+		-
+			message: '#^Method App\\Observers\\UserObserver\:\:deleted\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Observers/UserObserver.php
+
+		-
+			message: '#^Method App\\Observers\\UserObserver\:\:restored\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Observers/UserObserver.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Policies/UserPolicy.php
+
+		-
+			message: '#^Call to function method_exists\(\) with App\\Models\\User and ''hasRole'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: app/Policies/UserPolicy.php
+
+		-
+			message: '#^Cannot access offset ''view'' on Illuminate\\Contracts\\Foundation\\Application\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Providers/AppServiceProvider.php
+
+		-
+			message: '#^Method App\\Providers\\AuthServiceProvider\:\:boot\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: app/Providers/AuthServiceProvider.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AssessmentResult\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/AssessmentCalculationService.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\AssessmentResponse\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Services/AssessmentCalculationService.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\AssessmentResult\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Services/AssessmentCalculationService.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\AssessmentResult\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 2
+			path: app/Services/AssessmentCalculationService.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\User\:\:findOrFail\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Services/AssessmentCalculationService.php
+
+		-
+			message: '#^Method App\\Services\\AssessmentCalculationService\:\:categorizeWords\(\) has parameter \$selectedWords with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/AssessmentCalculationService.php
+
+		-
+			message: '#^Method App\\Services\\AssessmentCalculationService\:\:categorizeWords\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/AssessmentCalculationService.php
+
+		-
+			message: '#^Method App\\Services\\AssessmentCalculationService\:\:extractSelectedWords\(\) has parameter \$responses with generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/AssessmentCalculationService.php
+
+		-
+			message: '#^Method App\\Services\\AssessmentCalculationService\:\:extractSelectedWords\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/AssessmentCalculationService.php
+
+		-
+			message: '#^Method App\\Services\\AssessmentCalculationService\:\:prepareInputData\(\) has parameter \$selectedWords with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/AssessmentCalculationService.php
+
+		-
+			message: '#^Method App\\Services\\AssessmentCalculationService\:\:storeResults\(\) has parameter \$selectedWords with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/AssessmentCalculationService.php
+
+		-
+			message: '#^Property App\\Services\\AssessmentCalculationService\:\:\$dolphinDbConnection has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/AssessmentCalculationService.php
+
+		-
+			message: '#^Property App\\Services\\AssessmentCalculationService\:\:\$dolphinPath has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/AssessmentCalculationService.php
+
+		-
+			message: '#^Property App\\Services\\AssessmentCalculationService\:\:\$pythonPath has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: app/Services/AssessmentCalculationService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$address\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$last_contacted\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$referral_other_text\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$referral_source_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Organization\:\:\$size\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$country_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$first_name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$last_name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$phone_number\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$referral_source_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$roles\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Country\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Lead\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 2
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Organization\:\:find\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\OrganizationAddress\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\OrganizationAddress\:\:updateOrCreate\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\Role\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\User\:\:create\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Method App\\Services\\AuthUserService\:\:buildUserPayload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Method App\\Services\\AuthUserService\:\:createUserAndDetails\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Method App\\Services\\AuthUserService\:\:resolveCountryId\(\) has parameter \$countryInput with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Method App\\Services\\AuthUserService\:\:updateUserDetailsRecord\(\) has parameter \$detailsData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Method App\\Services\\AuthUserService\:\:updateUserRecord\(\) has parameter \$detailsData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Method App\\Services\\AuthUserService\:\:updateUserRecord\(\) has parameter \$userData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/AuthUserService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>organization_id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/AuthUserService.php

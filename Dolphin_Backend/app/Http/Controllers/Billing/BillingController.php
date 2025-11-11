@@ -6,16 +6,32 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Organization;
 use App\Models\Subscription;
+use Illuminate\Support\Collection;
 
 class BillingController extends Controller
 {
-    /** GET /api/subscription */
+    /**
+     * GET /api/subscription
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function current(Request $request)
     {
+        /** @var \Illuminate\Http\Request $request */
         // Enforce role at controller level as a defensive check in case
         // middleware is misapplied. Only organization admins may access billing.
         $user = $request->user();
-        if (! $user || ! method_exists($user, 'hasRole') || ! $user->hasRole('organizationadmin')) {
+        // Allow either organization admins or superadmins to access billing data.
+        // Some requests include an `org_id` query param which lets superadmins
+        // retrieve billing information for another organization. The previous
+        // check only allowed organizationadmin which prevented superadmins
+        // from reaching the resolveUser logic below. Update the check to
+        // accept users with either role.
+        if (
+            ! $user ||
+            ! method_exists($user, 'hasRole') ||
+            (! $user->hasRole('organizationadmin') && ! $user->hasRole('superadmin'))
+        ) {
             return response()->json(['message' => 'Unauthorized.'], 403);
         }
         try {
@@ -67,11 +83,20 @@ class BillingController extends Controller
         }
     }
 
-    /** GET /api/subscription/status */
+    /**
+     * GET /api/subscription/status
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function status(Request $request)
     {
+        /** @var \Illuminate\Http\Request $request */
         $user = $request->user();
-        if (! $user || ! method_exists($user, 'hasRole') || ! $user->hasRole('organizationadmin')) {
+        if (
+            ! $user ||
+            ! method_exists($user, 'hasRole') ||
+            (! $user->hasRole('organizationadmin') && ! $user->hasRole('superadmin'))
+        ) {
             return response()->json(['status' => 'none', 'message' => 'Unauthorized.'], 403);
         }
         try {
@@ -116,11 +141,20 @@ class BillingController extends Controller
         }
     }
 
-    /** GET /api/billing/history */
+    /**
+     * GET /api/billing/history
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function history(Request $request)
     {
+        /** @var \Illuminate\Http\Request $request */
         $user = $request->user();
-        if (! $user || ! method_exists($user, 'hasRole') || ! $user->hasRole('organizationadmin')) {
+        if (
+            ! $user ||
+            ! method_exists($user, 'hasRole') ||
+            (! $user->hasRole('organizationadmin') && ! $user->hasRole('superadmin'))
+        ) {
             return response()->json([], 403);
         }
         try {
@@ -131,7 +165,13 @@ class BillingController extends Controller
 
             $subscriptions = $user->subscriptions()->with(['plan', 'invoices'])->latest('created_at')->get();
 
-            $history = $subscriptions->flatMap(fn (Subscription $subscription) => $this->formatHistoryPayload($subscription));
+            // Use a standard closure rather than an arrow function so static analyzers
+            // that don't fully support `fn` or inferred uses can resolve the variable
+            // types correctly.
+            // Use a callable to avoid closures that capture $this which some static
+            // analyzers (like intelephense) can mis-handle and report false
+            // "undefined variable" errors for $subscription / $request.
+            $history = $subscriptions->flatMap([$this, 'formatHistoryPayload'])->toArray();
 
             return response()->json($history);
         } catch (\Throwable $e) {
@@ -143,9 +183,13 @@ class BillingController extends Controller
      * Resolve the user for the request.
      * If the requester is a superadmin and an org_id is provided, it will
      * return the organization's owner. Otherwise, it returns the authenticated user.
+     *
+     * @param Request $request
+     * @return \App\Models\User|null
      */
     private function resolveUser(Request $request): ?\App\Models\User
     {
+        /** @var \Illuminate\Http\Request $request */
         $authenticatedUser = $request->user();
         if (!$authenticatedUser) {
             return null;
@@ -158,8 +202,13 @@ class BillingController extends Controller
         return $authenticatedUser;
     }
 
+    /**
+     * @param Request $request
+     * @return Subscription|null
+     */
     private function resolveCurrentSubscription(Request $request): ?Subscription
     {
+        /** @var \Illuminate\Http\Request $request */
         $user = $this->resolveUser($request);
         if (! $user) {
             return null;
@@ -173,8 +222,13 @@ class BillingController extends Controller
             ?? $user->subscriptions()->with(['plan', 'invoices'])->latest('created_at')->first();
     }
 
+    /**
+     * @param Request $request
+     * @return Subscription|null
+     */
     private function resolveLatestSubscription(Request $request): ?Subscription
     {
+        /** @var \Illuminate\Http\Request $request */
         $user = $this->resolveUser($request);
         if (! $user) {
             return null;
@@ -183,48 +237,91 @@ class BillingController extends Controller
         return $user->subscriptions()->with(['plan', 'invoices'])->latest('created_at')->first();
     }
 
+    /**
+     * Format a subscription's invoices into the billing history payload.
+     * @param Subscription $subscription
+     * @return array
+     */
     private function formatHistoryPayload(Subscription $subscription): array
     {
-        $invoices = $subscription->invoices;
+        /** @var Subscription $subscription */
+        $invoices = $subscription->invoices instanceof Collection
+            ? $subscription->invoices
+            : Collection::wrap($subscription->invoices ?? []);
         $plan = $subscription->plan;
-        $currency = strtolower($plan->currency ?? 'usd');
-        $symbol = match ($currency) {
+        $symbol = $this->resolveCurrencySymbol($plan?->currency);
+
+        if ($invoices->isEmpty()) {
+            return [$this->formatSubscriptionSummary($subscription, $plan, $symbol)];
+        }
+
+        $history = [];
+        foreach ($invoices as $invoice) {
+            $history[] = $this->formatInvoicePayload($invoice, $subscription, $plan, $symbol);
+        }
+
+        return $history;
+    }
+
+    /**
+     * Helper to format a single invoice payload for history output.
+     * Kept as a separate method to improve static analysis and readability.
+     *
+     * @param mixed $invoice
+     * @param Subscription $subscription
+     * @param mixed $plan
+     * @param string $symbol
+     * @return array
+     */
+    private function formatInvoicePayload($invoice, Subscription $subscription, $plan, string $symbol): array
+    {
+        return [
+            'subscription_id' => $subscription->id,
+            'plan_id' => $subscription->plan_id,
+            'status' => $subscription->status,
+            'subscriptionEnd' => $subscription->ends_at?->toDateTimeString(),
+            'paymentDate' => $invoice->paid_at?->toDateTimeString(),
+            'payment_method' => $subscription->payment_method_label,
+            'amount' => $invoice->amount_paid,
+            'currency' => $invoice->currency,
+            'pdfUrl' => $invoice->hosted_invoice_url,
+            'description' => $plan ? ($plan->name . ' subscription (' . $symbol . ($invoice->amount_paid ?? $plan->amount) . '/' . ($plan->interval ?? '') . ')') : 'Subscription payment',
+            'invoice_id' => $invoice->id,
+            'stripe_invoice_id' => $invoice->stripe_invoice_id,
+        ];
+    }
+
+    /**
+     * @param Subscription $subscription
+     * @param mixed $plan
+     */
+    private function formatSubscriptionSummary(Subscription $subscription, $plan, string $symbol): array
+    {
+        return [
+            'subscription_id' => $subscription->id,
+            'plan_id' => $subscription->plan_id,
+            'status' => $subscription->status,
+            'subscriptionEnd' => $subscription->ends_at?->toDateTimeString(),
+            'paymentDate' => $subscription->started_at?->toDateTimeString(),
+            'payment_method' => $subscription->payment_method_label,
+            'amount' => $plan?->amount,
+            'currency' => $plan?->currency,
+            'pdfUrl' => null,
+            'description' => $plan
+                ? ($plan->name . ' subscription (' . $symbol . $plan->amount . '/' . ($plan->interval ?? '') . ')')
+                : 'Subscription payment',
+        ];
+    }
+
+    private function resolveCurrencySymbol(?string $currency): string
+    {
+        $code = strtolower($currency ?? 'usd');
+
+        return match ($code) {
             'usd' => '$',
             'eur' => 'EUR ',
             'gbp' => 'GBP ',
-            default => strtoupper($currency) . ' ',
+            default => strtoupper($code) . ' ',
         };
-
-        if ($invoices->isEmpty()) {
-            return [[
-                'subscription_id' => $subscription->id,
-                'plan_id' => $subscription->plan_id,
-                'status' => $subscription->status,
-                'subscriptionEnd' => $subscription->ends_at?->toDateTimeString(),
-                'paymentDate' => $subscription->started_at?->toDateTimeString(),
-                'payment_method' => $subscription->payment_method_label,
-                'amount' => $plan?->amount,
-                'currency' => $plan?->currency,
-                'pdfUrl' => null,
-                'description' => $plan ? ($plan->name . ' subscription (' . $symbol . $plan->amount . '/' . ($plan->interval ?? '') . ')') : 'Subscription payment',
-            ]];
-        }
-
-        return $invoices->map(function ($invoice) use ($subscription, $plan, $symbol) {
-            return [
-                'subscription_id' => $subscription->id,
-                'plan_id' => $subscription->plan_id,
-                'status' => $subscription->status,
-                'subscriptionEnd' => $subscription->ends_at?->toDateTimeString(),
-                'paymentDate' => $invoice->paid_at?->toDateTimeString(),
-                'payment_method' => $subscription->payment_method_label,
-                'amount' => $invoice->amount_paid,
-                'currency' => $invoice->currency,
-                'pdfUrl' => $invoice->hosted_invoice_url,
-                'description' => $plan ? ($plan->name . ' subscription (' . $symbol . ($invoice->amount_paid ?? $plan->amount) . '/' . ($plan->interval ?? '') . ')') : 'Subscription payment',
-                'invoice_id' => $invoice->id,
-                'stripe_invoice_id' => $invoice->stripe_invoice_id,
-            ];
-        })->toArray();
     }
 }

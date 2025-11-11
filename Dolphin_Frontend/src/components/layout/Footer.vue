@@ -1,9 +1,6 @@
 <template>
   <footer class="footer-box">
-    <div
-      class="footer-controls"
-      :class="{ 'footer-controls-flex': !withPagination }"
-    >
+    <div class="footer-controls" :class="{ 'footer-controls-flex': !withPagination }">
       <template v-if="withPagination">
         <!-- Removed notifications-page-size-dropdown and notifications-pagination -->
         <div class="footer-logo-text-vertical center-footer-logo-block">
@@ -12,9 +9,7 @@
             alt="Logo"
             class="footer-logo-vertical responsive-footer-logo"
           />
-          <span class="footer-text-vertical"
-            >©2025 Dolphin | All Rights Reserved</span
-          >
+          <span class="footer-text-vertical">©2025 Dolphin | All Rights Reserved</span>
         </div>
       </template>
       <template v-else>
@@ -24,9 +19,7 @@
             alt="Logo"
             class="footer-logo-vertical responsive-footer-logo"
           />
-          <span class="footer-text-vertical"
-            >©2025 Dolphin | All Rights Reserved</span
-          >
+          <span class="footer-text-vertical">©2025 Dolphin | All Rights Reserved</span>
         </div>
       </template>
     </div>
@@ -34,9 +27,9 @@
 </template>
 
 <script>
-import "@/assets/global.css";
+import '@/assets/global.css';
 export default {
-  name: "Footer",
+  name: 'Footer',
   props: {
     withPagination: {
       type: Boolean,
@@ -109,7 +102,7 @@ export default {
   margin-bottom: 0;
 }
 .footer-text-vertical {
-  font-family: "Inter", sans-serif;
+  font-family: 'Inter', sans-serif;
   font-style: normal;
   font-weight: 400;
   font-size: 16px;

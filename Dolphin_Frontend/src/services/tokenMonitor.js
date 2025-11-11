@@ -1,12 +1,22 @@
-import axios from "axios";
-import storage from "./storage";
+import axios from 'axios';
+import storage from './storage';
 
-import { getApiBase } from "@/env";
+import { getApiBase } from '@/env';
 const API_BASE_URL = getApiBase();
 
 let tokenCheckInterval = null;
 let lastExpiryWarning = 0;
 
+// Normalize token shapes in a single helper used across the module
+function normalizeToken(raw) {
+  let token = raw;
+  if (token && typeof token === 'object') {
+    if (token.token) return token.token;
+    if (token.access_token) return token.access_token;
+    return null;
+  }
+  return token;
+}
 const tokenMonitor = {
   /**
    * Start monitoring token expiry
@@ -27,16 +37,6 @@ const tokenMonitor = {
     // Clear any existing interval
     this.stopMonitoring();
 
-    const normalizeToken = (raw) => {
-      let token = raw;
-      if (token && typeof token === "object") {
-        if (token.token) return token.token;
-        if (token.access_token) return token.access_token;
-        return null;
-      }
-      return token;
-    };
-
     const fetchStatus = async (token) => {
       return axios.get(`${API_BASE_URL}/api/token/status`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -44,14 +44,14 @@ const tokenMonitor = {
     };
 
     const handleExpired = () => {
-      console.log("Token has expired");
+      console.debug && console.debug('Token has expired');
       storage.clear();
-      if (onExpired && typeof onExpired === "function") onExpired();
+      if (onExpired && typeof onExpired === 'function') onExpired();
       this.stopMonitoring();
     };
 
     tokenCheckInterval = setInterval(async () => {
-      let authToken = normalizeToken(storage.get("authToken"));
+      let authToken = normalizeToken(storage.get('authToken'));
       if (!authToken) return;
 
       try {
@@ -67,27 +67,24 @@ const tokenMonitor = {
         if (expiresInMs <= warningThreshold) {
           const now = Date.now();
           if (now - lastExpiryWarning > 5 * 60 * 1000) {
-            console.warn(
-              `Token will expire in ${Math.round(
-                expires_in_seconds / 60
-              )} minutes`
-            );
+            console.debug &&
+              console.debug(`Token will expire in ${Math.round(expires_in_seconds / 60)} minutes`);
             lastExpiryWarning = now;
-            if (onExpiringSoon && typeof onExpiringSoon === "function")
+            if (onExpiringSoon && typeof onExpiringSoon === 'function')
               onExpiringSoon(expires_in_seconds);
           }
         }
       } catch (error) {
         if (error.response?.status === 401) {
-          console.log("Token validation failed with 401");
+          console.debug && console.debug('Token validation failed with 401');
           handleExpired();
         } else {
-          console.error("Token status check failed:", error);
+          console.debug && console.debug('Token status check failed:', error);
         }
       }
     }, checkInterval);
 
-    console.log("Token monitoring started");
+    console.debug('Token monitoring started');
   },
 
   /**
@@ -97,7 +94,7 @@ const tokenMonitor = {
     if (tokenCheckInterval) {
       clearInterval(tokenCheckInterval);
       tokenCheckInterval = null;
-      console.log("Token monitoring stopped");
+      console.debug && console.debug('Token monitoring stopped');
     }
   },
 
@@ -107,15 +104,8 @@ const tokenMonitor = {
    */
   async checkTokenNow() {
     try {
-      let authToken = storage.get("authToken");
-      if (!authToken) {
-        return null;
-      }
-      if (authToken && typeof authToken === "object") {
-        if (authToken.token) authToken = authToken.token;
-        else if (authToken.access_token) authToken = authToken.access_token;
-        else authToken = null;
-      }
+      const raw = storage.get('authToken');
+      const authToken = normalizeToken(raw);
       if (!authToken) return null;
 
       const response = await axios.get(`${API_BASE_URL}/api/token/status`, {
@@ -124,7 +114,7 @@ const tokenMonitor = {
 
       return response.data;
     } catch (error) {
-      console.error("Token status check failed:", error);
+      console.debug && console.debug('Token status check failed:', error);
       if (error.response?.status === 401) {
         storage.clear();
       }

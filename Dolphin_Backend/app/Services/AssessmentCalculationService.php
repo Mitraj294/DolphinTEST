@@ -5,14 +5,15 @@ namespace App\Services;
 use App\Models\AssessmentResponse;
 use App\Models\AssessmentResult;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class AssessmentCalculationService
 {
-    protected $dolphinPath;
-    protected $pythonPath;
-    protected $dolphinDbConnection;
+    protected string $dolphinPath;
+    protected string $pythonPath;
+    protected string $dolphinDbConnection;
 
     public function __construct()
     {
@@ -24,14 +25,14 @@ class AssessmentCalculationService
 
     /**
      * Calculate assessment results using C++ algorithm
-     * 
+     *
      * @param int $userId
      * @param int $attemptId
      * @param int|null $organizationAssessmentId
-     * @return object|null
+    * @return AssessmentResult|null
      * @throws \Exception
      */
-    public function calculateResults($userId, $attemptId, $organizationAssessmentId = null)
+    public function calculateResults(int $userId, int $attemptId, ?int $organizationAssessmentId = null): ?AssessmentResult
     {
         try {
             Log::info('Starting assessment calculation', [
@@ -96,7 +97,7 @@ class AssessmentCalculationService
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             // Don't throw exception - return null to allow response saving to continue
             return null;
         }
@@ -104,16 +105,17 @@ class AssessmentCalculationService
 
     /**
      * Extract selected words from assessment responses
-     * 
-     * @param \Illuminate\Support\Collection $responses
-     * @return array
+     *
+     * @param Collection<int, AssessmentResponse> $responses
+     * @return array{self_words: array<int, string>, concept_words: array<int, string>}
      */
-    protected function extractSelectedWords($responses)
+    protected function extractSelectedWords(Collection $responses): array
     {
         $selfWords = [];
         $conceptWords = [];
 
         foreach ($responses as $response) {
+            /** @var AssessmentResponse $response */
             $options = is_array($response->selected_options)
                 ? $response->selected_options
                 : json_decode($response->selected_options, true);
@@ -152,12 +154,15 @@ class AssessmentCalculationService
 
     /**
      * Prepare input data in MySQL for C++ program
-     * 
+     *
      * @param string $email
      * @param array $selectedWords
      * @return void
      */
-    protected function prepareInputData($email, $selectedWords)
+    /**
+     * @param array{self_words: array<int, string>, concept_words: array<int, string>} $selectedWords
+     */
+    protected function prepareInputData(string $email, array $selectedWords): void
     {
         try {
             // Insert into 'input' table that C++ program reads from
@@ -185,12 +190,12 @@ class AssessmentCalculationService
 
     /**
      * Run the C++ dolphin algorithm
-     * 
+     *
      * @param string $email
      * @return object
      * @throws \Exception
      */
-    protected function runDolphinAlgorithm($email)
+    protected function runDolphinAlgorithm(string $email): object
     {
         // Change to dolphin directory and run the algorithm
         $command = sprintf(
@@ -238,7 +243,7 @@ class AssessmentCalculationService
 
     /**
      * Store results in assessment_results table
-     * 
+     *
      * @param int $userId
      * @param int $attemptId
      * @param int|null $organizationAssessmentId
@@ -246,7 +251,10 @@ class AssessmentCalculationService
      * @param array $selectedWords
      * @return AssessmentResult
      */
-    protected function storeResults($userId, $attemptId, $organizationAssessmentId, $result, $selectedWords)
+    /**
+     * @param array{self_words: array<int, string>, concept_words: array<int, string>, adj_words?: array<int, string>} $selectedWords
+     */
+    protected function storeResults(int $userId, int $attemptId, ?int $organizationAssessmentId, object $result, array $selectedWords): AssessmentResult
     {
         // Determine type: 'original' for first test, 'adjust' for retakes
         $existingResults = AssessmentResult::where('user_id', $userId)->count();
@@ -281,7 +289,7 @@ class AssessmentCalculationService
             // Word arrays
             'self_total_words' => $wordCategories['self_words'],
             'conc_total_words' => $wordCategories['concept_words'],
-            'adj_total_words' => $wordCategories['adj_words'] ?? [],
+            'adj_total_words' => $wordCategories['adj_words'],
             // Task scores (if available)
             'task_a' => 0,
             'task_b' => 0,
@@ -308,11 +316,15 @@ class AssessmentCalculationService
 
     /**
      * Categorize words (placeholder - can be enhanced to read from output file)
-     * 
+     *
      * @param array $selectedWords
      * @return array
      */
-    protected function categorizeWords($selectedWords)
+    /**
+     * @param array{self_words: array<int, string>, concept_words: array<int, string>, adj_words?: array<int, string>} $selectedWords
+     * @return array{self_words: array<int, string>, concept_words: array<int, string>, adj_words: array<int, string>}
+     */
+    protected function categorizeWords(array $selectedWords): array
     {
         // For now, return the input words
         // You can enhance this to parse the output file and categorize words into A, B, C, D
@@ -330,10 +342,10 @@ class AssessmentCalculationService
 
     /**
      * Check if the C++ executable exists
-     * 
+     *
      * @return bool
      */
-    public function isDolphinExecutableAvailable()
+    public function isDolphinExecutableAvailable(): bool
     {
         $executablePath = $this->dolphinPath . '/dolphin';
         return file_exists($executablePath) && is_executable($executablePath);
@@ -341,10 +353,10 @@ class AssessmentCalculationService
 
     /**
      * Build the C++ executable if not present
-     * 
+     *
      * @return bool
      */
-    public function buildDolphinExecutable()
+    public function buildDolphinExecutable(): bool
     {
         if ($this->isDolphinExecutableAvailable()) {
             return true;

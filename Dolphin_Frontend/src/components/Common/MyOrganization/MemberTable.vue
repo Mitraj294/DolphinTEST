@@ -16,11 +16,7 @@
                 <td>{{ group.name }}</td>
                 <td>
                   <button class="btn-view" @click="viewGroup(group)">
-                    <img
-                      src="@/assets/images/Notes.svg"
-                      alt="View"
-                      class="btn-view-icon"
-                    />
+                    <img src="@/assets/images/Notes.svg" alt="View" class="btn-view-icon" />
                     <span class="view-label">View</span>
                   </button>
                 </td>
@@ -37,10 +33,10 @@
 </template>
 
 <script>
-import TableHeader from "@/components/Common/Common_UI/TableHeader.vue";
+import TableHeader from '@/components/Common/Common_UI/TableHeader.vue';
 
 export default {
-  name: "MemberTable",
+  name: 'MemberTable',
   components: { TableHeader },
   props: {
     groups: {
@@ -50,7 +46,7 @@ export default {
   },
   methods: {
     viewGroup(group) {
-      this.$emit("view-group", group);
+      this.$emit('view-group', group);
     },
   },
 };

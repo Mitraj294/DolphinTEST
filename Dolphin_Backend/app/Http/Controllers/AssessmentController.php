@@ -14,7 +14,6 @@ use Carbon\Carbon;
 
 class AssessmentController extends Controller
 {
-
     // Display a listing of the resource.
     // @param  IndexAssessmentRequest  $request
     // @return JsonResponse

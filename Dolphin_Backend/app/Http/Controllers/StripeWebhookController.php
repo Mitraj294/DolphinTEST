@@ -293,9 +293,9 @@ class StripeWebhookController extends Controller
     {
         // Convert Stripe objects/collections to arrays safely.
         // Limit recursion depth and avoid expensive json_encode on huge nested structures.
-    $initialDepth = 3;
+        $initialDepth = 3;
 
-    $convert = function ($value, $depth) use (&$convert) {
+        $convert = function ($value, $depth) use (&$convert) {
             if ($depth < 0) {
                 return null;
             }

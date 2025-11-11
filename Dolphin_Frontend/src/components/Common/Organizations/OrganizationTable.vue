@@ -3,11 +3,7 @@
     <Toast />
     <div class="table-card">
       <div class="table-search-bar">
-        <input
-          class="org-search"
-          placeholder="Search Organization Name"
-          v-model="search"
-        />
+        <input class="org-search" placeholder="Search Organization Name" v-model="search" />
       </div>
       <div class="table-container">
         <div class="table-scroll">
@@ -51,17 +47,13 @@
                 <td>{{ org.name }}</td>
                 <td>{{ org.size }}</td>
                 <td>{{ org.main_contact }}</td>
-                <td>{{ formatDate(org.contractStart) || "-" }}</td>
-                <td>{{ formatDate(org.contractEnd) || "-" }}</td>
-                <td>{{ formatDateTime(org.last_contacted) || "-" }}</td>
+                <td>{{ formatDate(org.contractStart) || '-' }}</td>
+                <td>{{ formatDate(org.contractEnd) || '-' }}</td>
+                <td>{{ formatDateTime(org.last_contacted) || '-' }}</td>
 
                 <td>
                   <button class="btn-view" @click="goToDetail(org)">
-                    <img
-                      src="@/assets/images/Detail.svg"
-                      alt="View"
-                      class="btn-view-icon"
-                    />
+                    <img src="@/assets/images/Detail.svg" alt="View" class="btn-view-icon" />
                     View Detail
                   </button>
                 </td>
@@ -87,21 +79,21 @@
 </template>
 
 <script>
-import TableHeader from "@/components/Common/Common_UI/TableHeader.vue";
-import Pagination from "@/components/layout/Pagination.vue";
-import Toast from "primevue/toast";
+import TableHeader from '@/components/Common/Common_UI/TableHeader.vue';
+import Pagination from '@/components/layout/Pagination.vue';
+import Toast from 'primevue/toast';
 // Import the organization service
 
 export default {
-  name: "OrganizationTable",
+  name: 'OrganizationTable',
   components: { Pagination, TableHeader, Toast },
   data() {
     return {
-      search: "",
+      search: '',
       showPageDropdown: false,
       pageSize: 10,
       currentPage: 1,
-      sortKey: "",
+      sortKey: '',
       sortAsc: true,
       organizations: [], // This is correctly initialized here
     };
@@ -110,9 +102,7 @@ export default {
     filteredOrganizations() {
       let orgs = this.organizations;
       if (this.search) {
-        orgs = orgs.filter((org) =>
-          org.name.toLowerCase().includes(this.search.toLowerCase())
-        );
+        orgs = orgs.filter((org) => org.name.toLowerCase().includes(this.search.toLowerCase()));
       }
       if (this.sortKey) {
         orgs = orgs.slice().sort((a, b) => {
@@ -120,17 +110,14 @@ export default {
           let bVal = b[this.sortKey];
           // For contractStart, contractEnd and last_contacted, sort as dates
           if (
-            this.sortKey === "contractStart" ||
-            this.sortKey === "contractEnd" ||
-            this.sortKey === "last_contacted"
+            this.sortKey === 'contractStart' ||
+            this.sortKey === 'contractEnd' ||
+            this.sortKey === 'last_contacted'
           ) {
             // Try to parse as Date, fallback to string compare
             const aDate = new Date(aVal);
             const bDate = new Date(bVal);
-            if (
-              !Number.isNaN(aDate.getTime()) &&
-              !Number.isNaN(bDate.getTime())
-            ) {
+            if (!Number.isNaN(aDate.getTime()) && !Number.isNaN(bDate.getTime())) {
               return this.sortAsc ? aDate - bDate : bDate - aDate;
             }
           }
@@ -151,10 +138,12 @@ export default {
     },
     paginationPages() {
       const pages = [];
-      if (10 <= 7) {
-        for (let i = 1; i <= 10; i++) pages.push(i);
+      const tp = this.totalPages;
+      if (tp <= 7) {
+        for (let i = 1; i <= tp; i++) pages.push(i);
       } else {
-        pages.push(1, 2, 3, "...", 8, 9, 10);
+        // Show a compact pagination: first 3, ellipsis, last 3
+        pages.push(1, 2, 3, '...', tp - 2, tp - 1, tp);
       }
       return pages;
     },
@@ -184,23 +173,23 @@ export default {
     // --- Helpers ---
 
     async getAuthToken() {
-      const storage = (await import("@/services/storage.js")).default;
-      return storage.get("authToken");
+      const storage = (await import('@/services/storage.js')).default;
+      return storage.get('authToken');
     },
 
     handleAuthRequired() {
       this.$toast.add({
-        severity: "warn",
-        summary: "Authentication Required",
-        detail: "Please log in to view organizations.",
+        severity: 'warn',
+        summary: 'Authentication Required',
+        detail: 'Please log in to view organizations.',
         sticky: true,
       });
-      this.$router.push({ name: "Login" });
+      this.$router.push({ name: 'Login' });
     },
 
     async fetchOrganizationsFromAPI(authToken) {
       const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-      const axios = (await import("axios")).default;
+      const axios = (await import('axios')).default;
       const headers = { Authorization: `Bearer ${authToken}` };
       return axios.get(`${API_BASE_URL}/api/organizations`, { headers });
     },
@@ -208,11 +197,11 @@ export default {
     normalizeOrganizations(data) {
       return data.map((org) => ({
         name: org.name,
-        size: org.size || "",
-        main_contact: org.main_contact || "",
-        contractStart: org.contract_start || "",
-        contractEnd: org.contract_end || "",
-        last_contacted: org.last_contacted || "",
+        size: org.size || '',
+        main_contact: org.main_contact || '',
+        contractStart: org.contract_start || '',
+        contractEnd: org.contract_end || '',
+        last_contacted: org.last_contacted || '',
         id: org.id,
       }));
     },
@@ -220,7 +209,7 @@ export default {
     async handleFetchError(e) {
       if (e.response?.status === 401) {
         this.handleUnauthorized();
-      } else if (e.message === "Token expired") {
+      } else if (e.message === 'Token expired') {
         this.handleTokenExpired();
       } else {
         this.handleGenericError(e);
@@ -230,35 +219,35 @@ export default {
     async handleUnauthorized() {
       if (this.$toast?.add) {
         this.$toast.add({
-          severity: "warn",
-          summary: "Session expired",
-          detail: "Session expired or unauthorized. Please log in again.",
+          severity: 'warn',
+          summary: 'Session expired',
+          detail: 'Session expired or unauthorized. Please log in again.',
           sticky: true,
         });
       }
-      const storage = (await import("@/services/storage.js")).default;
+      const storage = (await import('@/services/storage.js')).default;
       storage.clear();
-      this.$router.push({ name: "Login" });
+      this.$router.push({ name: 'Login' });
     },
 
     handleTokenExpired() {
       if (this.$toast?.add) {
         this.$toast.add({
-          severity: "warn",
-          summary: "Session expired",
-          detail: "Your session has expired. Please log in again.",
+          severity: 'warn',
+          summary: 'Session expired',
+          detail: 'Your session has expired. Please log in again.',
           sticky: true,
         });
       }
     },
 
     handleGenericError(e) {
-      console.error("Error fetching organizations:", e);
+      console.debug && console.debug('Error fetching organizations:', e);
       if (this.$toast?.add) {
         this.$toast.add({
-          severity: "error",
-          summary: "Error",
-          detail: "Failed to load organizations. Please try again.",
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load organizations. Please try again.',
           life: 5000,
         });
       }
@@ -269,7 +258,7 @@ export default {
       // so Vue Router won't discard it as an unknown route param. The
       // layout/navbar reads `orgName` from `this.$route.query.orgName`.
       this.$router.push({
-        name: "OrganizationDetail",
+        name: 'OrganizationDetail',
         params: { id: org.id },
         query: { orgName: org.name },
       });
@@ -296,20 +285,20 @@ export default {
       if (Number.isNaN(d.getTime())) {
         return null;
       }
-      const day = String(d.getDate()).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, '0');
       const months = [
-        "JAN",
-        "FEB",
-        "MAR",
-        "APR",
-        "MAY",
-        "JUN",
-        "JUL",
-        "AUG",
-        "SEP",
-        "OCT",
-        "NOV",
-        "DEC",
+        'JAN',
+        'FEB',
+        'MAR',
+        'APR',
+        'MAY',
+        'JUN',
+        'JUL',
+        'AUG',
+        'SEP',
+        'OCT',
+        'NOV',
+        'DEC',
       ];
       const mon = months[d.getMonth()];
       const yr = d.getFullYear();
@@ -338,27 +327,27 @@ export default {
         return null;
       }
 
-      const day = String(d.getDate()).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, '0');
       const months = [
-        "JAN",
-        "FEB",
-        "MAR",
-        "APR",
-        "MAY",
-        "JUN",
-        "JUL",
-        "AUG",
-        "SEP",
-        "OCT",
-        "NOV",
-        "DEC",
+        'JAN',
+        'FEB',
+        'MAR',
+        'APR',
+        'MAY',
+        'JUN',
+        'JUL',
+        'AUG',
+        'SEP',
+        'OCT',
+        'NOV',
+        'DEC',
       ];
       const mon = months[d.getMonth()];
       const yr = d.getFullYear();
 
       let hr = d.getHours();
-      const min = String(d.getMinutes()).padStart(2, "0");
-      const ampm = hr >= 12 ? "PM" : "AM";
+      const min = String(d.getMinutes()).padStart(2, '0');
+      const ampm = hr >= 12 ? 'PM' : 'AM';
       hr = hr % 12;
       hr = hr ?? 12;
       const strTime = `${hr}:${min} ${ampm}`;
@@ -366,7 +355,7 @@ export default {
       return `${day} ${mon},${yr} ${strTime}`;
     },
     goToPage(page) {
-      if (page === "..." || page < 1 || page > this.totalPages) return;
+      if (page === '...' || page < 1 || page > this.totalPages) return;
       this.currentPage = page;
     },
     selectPageSize(size) {
@@ -397,7 +386,7 @@ export default {
   background: #f8f8f8;
   font-size: 14px;
   outline: none;
-  background-image: url("@/assets/images/Search.svg");
+  background-image: url('@/assets/images/Search.svg');
   background-repeat: no-repeat;
   background-position: 8px center;
   background-size: 16px 16px;

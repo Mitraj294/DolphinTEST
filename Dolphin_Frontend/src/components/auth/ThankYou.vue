@@ -21,8 +21,8 @@
           </div>
           <h2 class="thankyou-title">Thank You for your interest!</h2>
           <div class="thankyou-desc">
-            Lorem Ipsum is simply dummy text of the printing and typesetting
-            industry. Lorem Ipsum has been the industry's standard.
+            Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum
+            has been the industry's standard.
           </div>
           <div class="thankyou-touch">We will be in touch.</div>
           <div class="thankyou-footer">
@@ -41,10 +41,10 @@
 </template>
 
 <script>
-import Navbar from "@/components/layout/Navbar.vue";
-import Sidebar from "@/components/layout/Sidebar.vue";
+import Navbar from '@/components/layout/Navbar.vue';
+import Sidebar from '@/components/layout/Sidebar.vue';
 export default {
-  name: "ThankYou",
+  name: 'ThankYou',
   components: { Sidebar, Navbar },
 };
 </script>
@@ -92,19 +92,19 @@ export default {
   color: #111;
   margin-bottom: 16px;
   margin-top: 0;
-  font-family: "Helvetica Neue LT Std", Arial, sans-serif;
+  font-family: 'Helvetica Neue LT Std', Arial, sans-serif;
 }
 .thankyou-desc {
   color: #888;
   font-size: 1.08rem;
   margin-bottom: 18px;
-  font-family: "Helvetica Neue LT Std", Arial, sans-serif;
+  font-family: 'Helvetica Neue LT Std', Arial, sans-serif;
 }
 .thankyou-touch {
   color: #444;
   font-size: 1.08rem;
   margin-bottom: 24px;
-  font-family: "Helvetica Neue LT Std", Arial, sans-serif;
+  font-family: 'Helvetica Neue LT Std', Arial, sans-serif;
 }
 .thankyou-footer {
   display: flex;
@@ -123,7 +123,7 @@ export default {
 .copyright {
   color: #787878;
   font-size: 14px;
-  font-family: "Inter", Arial, sans-serif;
+  font-family: 'Inter', Arial, sans-serif;
   text-align: center;
   margin-top: 2px;
 }

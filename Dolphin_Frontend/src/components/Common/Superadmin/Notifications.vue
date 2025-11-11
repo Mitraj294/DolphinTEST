@@ -27,33 +27,66 @@
                 />
 
                 <tbody>
-                  <tr v-for="item in paginatedNotifications" :key="(item.id || (item.announcement && item.announcement.id))">
+                  <tr
+                    v-for="item in paginatedNotifications"
+                    :key="item.id || (item.announcement && item.announcement.id)"
+                  >
                     <td class="notification-body-cell">
                       <span
                         class="notification-body-truncate"
-                        :title="(item.announcement && (item.announcement.body || item.announcement.title || item.announcement.message)) || item.body || item.title || item.message || ''"
+                        :title="
+                          (item.announcement &&
+                            (item.announcement.body ||
+                              item.announcement.title ||
+                              item.announcement.message)) ||
+                          item.body ||
+                          item.title ||
+                          item.message ||
+                          ''
+                        "
                         @click.stop="openDetail(item.announcement || item)"
                       >
-                        {{ (item.announcement && (item.announcement.body || item.announcement.title || item.announcement.message)) || item.body || item.title || item.message || '—' }}
+                        {{
+                          (item.announcement &&
+                            (item.announcement.body ||
+                              item.announcement.title ||
+                              item.announcement.message)) ||
+                          item.body ||
+                          item.title ||
+                          item.message ||
+                          '—'
+                        }}
                       </span>
                     </td>
                     <td>
-                      {{ formatLocalDateTime(
-                        (item.announcement && (item.announcement.scheduled_at || item.announcement.schedule_date || item.announcement.schedule_time)) || item.scheduled_at || item.schedule_date || item.schedule_time
-                      ) || "-" }}
+                      {{
+                        formatLocalDateTime(
+                          (item.announcement &&
+                            (item.announcement.scheduled_at ||
+                              item.announcement.schedule_date ||
+                              item.announcement.schedule_time)) ||
+                            item.scheduled_at ||
+                            item.schedule_date ||
+                            item.schedule_time
+                        ) || '-'
+                      }}
                     </td>
                     <td>
-                      {{ formatLocalDateTime(
-                        (item.announcement && (item.announcement.sent_at || item.announcement.updated_at || item.announcement.created_at)) || item.sent_at || item.updated_at || item.created_at
-                      ) || "-" }}
+                      {{
+                        formatLocalDateTime(
+                          (item.announcement &&
+                            (item.announcement.sent_at ||
+                              item.announcement.updated_at ||
+                              item.announcement.created_at)) ||
+                            item.sent_at ||
+                            item.updated_at ||
+                            item.created_at
+                        ) || '-'
+                      }}
                     </td>
                     <td>
                       <button class="btn-view" @click="openDetail(item.announcement || item)">
-                        <img
-                          src="@/assets/images/Detail.svg"
-                          alt="View"
-                          class="btn-view-icon"
-                        />
+                        <img src="@/assets/images/Detail.svg" alt="View" class="btn-view-icon" />
                         View Detail
                       </button>
                     </td>
@@ -87,14 +120,12 @@
     <!-- Send Notification Modal -->
     <div v-if="showSendModal" class="modal-overlay">
       <div class="modal-card">
-        <button class="modal-close-btn" @click="showSendModal = false">
-          &times;
-        </button>
+        <button class="modal-close-btn" @click="showSendModal = false">&times;</button>
 
         <div class="modal-title">Send Notifications</div>
         <div class="modal-desc">
-          Send a notification to selected organizations, admins, or groups. You
-          can also schedule it for later.
+          Send a notification to selected organizations, admins, or groups. You can also schedule it
+          for later.
         </div>
 
         <!-- Message input -->
@@ -114,49 +145,60 @@
               <div class="modal-field">
                 <div class="subscription-filters" @click.stop @mousedown.stop>
                   <label class="subscription-option" @click.stop>
-                  <input
-                    type="radio"
-                    name="subscriptionFilter"
-                    value="active"
-                    v-model="subscriptionFilter"
-                    @mousedown.stop
-                  />
-                  <span class="label-text">Active Subscription</span>
+                    <input
+                      type="radio"
+                      name="subscriptionFilter"
+                      value="active"
+                      v-model="subscriptionFilter"
+                      @mousedown.stop
+                    />
+                    <span class="label-text">Active Subscription</span>
                   </label>
 
                   <label class="subscription-option" @click.stop>
-                  <input
-                    type="radio"
-                    name="subscriptionFilter"
-                    value="expired"
-                    v-model="subscriptionFilter"
-                    @mousedown.stop
-                  />
-                  <span class="label-text">Expired Subscription</span>
+                    <input
+                      type="radio"
+                      name="subscriptionFilter"
+                      value="expired"
+                      v-model="subscriptionFilter"
+                      @mousedown.stop
+                    />
+                    <span class="label-text">Expired Subscription</span>
                   </label>
 
                   <label class="subscription-option" @click.stop>
-                  <input
-                    type="radio"
-                    name="subscriptionFilter"
-                    value="none"
-                    v-model="subscriptionFilter"
-                    @mousedown.stop
-                  />
-                  <span class="label-text">No Subscription</span>
+                    <input
+                      type="radio"
+                      name="subscriptionFilter"
+                      value="none"
+                      v-model="subscriptionFilter"
+                      @mousedown.stop
+                    />
+                    <span class="label-text">No Subscription</span>
                   </label>
 
                   <!-- Red cross to clear the selected filter -->
                   <button
-                  v-if="subscriptionFilter"
-                  type="button"
-                  class="subscription-option"
-                  title="Clear filter"
-                  @click.stop="subscriptionFilter = ''"
-                  @mousedown.stop
-                  style="background:#fff0f0;border:1px solid #f5c6cb;color:#c82333;padding:6px 10px;border-radius:18px;min-width:0;height:36px;display:inline-flex;align-items:center;justify-content:center;"
+                    v-if="subscriptionFilter"
+                    type="button"
+                    class="subscription-option"
+                    title="Clear filter"
+                    @click.stop="subscriptionFilter = ''"
+                    @mousedown.stop
+                    style="
+                      background: #fff0f0;
+                      border: 1px solid #f5c6cb;
+                      color: #c82333;
+                      padding: 6px 10px;
+                      border-radius: 18px;
+                      min-width: 0;
+                      height: 36px;
+                      display: inline-flex;
+                      align-items: center;
+                      justify-content: center;
+                    "
                   >
-                  &times;
+                    &times;
                   </button>
                 </div>
               </div>
@@ -212,30 +254,20 @@
             <div class="modal-row">
               <div class="modal-field">
                 <div class="form-box">
-                  <FormInput
-                    v-model="scheduledDate"
-                    type="date"
-                    placeholder="MM/DD/YYYY"
-                  />
+                  <FormInput v-model="scheduledDate" type="date" placeholder="MM/DD/YYYY" />
                 </div>
               </div>
 
               <div class="modal-field">
                 <div class="form-box">
-                  <FormInput
-                    v-model="scheduledTime"
-                    type="time"
-                    placeholder="00:00"
-                  />
+                  <FormInput v-model="scheduledTime" type="time" placeholder="00:00" />
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <button class="btn btn-primary" @click="sendNotification">
-          Send Notification
-        </button>
+        <button class="btn btn-primary" @click="sendNotification">Send Notification</button>
       </div>
     </div>
 
@@ -253,21 +285,21 @@
 
 <script>
 // Organized imports: external libraries first, then services, then local components
-import storage from "@/services/storage";
-import axios from "axios";
+import storage from '@/services/storage';
+import axios from 'axios';
 
-import TableHeader from "@/components/Common/Common_UI/TableHeader.vue";
-import MainLayout from "../../layout/MainLayout.vue";
-import Pagination from "../../layout/Pagination.vue";
-import NotificationDetail from "./NotificationDetail.vue";
+import TableHeader from '@/components/Common/Common_UI/TableHeader.vue';
+import MainLayout from '../../layout/MainLayout.vue';
+import Pagination from '../../layout/Pagination.vue';
+import NotificationDetail from './NotificationDetail.vue';
 
-import { FormLabel } from "@/components/Common/Common_UI/Form";
-import Toast from "primevue/toast";
-import FormInput from "../Common_UI/Form/FormInput.vue";
-import MultiSelectDropdown from "../Common_UI/Form/MultiSelectDropdown.vue";
+import { FormLabel } from '@/components/Common/Common_UI/Form';
+import Toast from 'primevue/toast';
+import FormInput from '../Common_UI/Form/FormInput.vue';
+import MultiSelectDropdown from '../Common_UI/Form/MultiSelectDropdown.vue';
 
 export default {
-  name: "Notifications",
+  name: 'Notifications',
 
   // Register components used in the template
   components: {
@@ -294,22 +326,22 @@ export default {
       // Table state
       pageSize: 10,
       currentPage: 1,
-      sortKey: "",
+      sortKey: '',
       sortAsc: true,
 
       // Form selections
       selectedOrganizations: [],
-      selectedAdmin: "",
+      selectedAdmin: '',
       selectedAdmins: [],
       selectedGroups: [],
       // UI-only binding for subscription filter radios (no logic implemented)
-      subscriptionFilter: "",
+      subscriptionFilter: '',
 
       // Scheduling
-      scheduledDate: "",
-  scheduledTime: "",
-  // Bound message for send modal
-  messageBody: "",
+      scheduledDate: '',
+      scheduledTime: '',
+      // Bound message for send modal
+      messageBody: '',
 
       // Data collections from API
       organizations: [],
@@ -329,24 +361,24 @@ export default {
     tableColumns() {
       return [
         {
-          label: "Notification Title",
-          key: "body",
-          minWidth: "225px",
+          label: 'Notification Title',
+          key: 'body',
+          minWidth: '225px',
           sortable: true,
         },
         {
-          label: "Scheduled Date & Time",
-          key: "scheduled_at",
-          minWidth: "225px",
+          label: 'Scheduled Date & Time',
+          key: 'scheduled_at',
+          minWidth: '225px',
           sortable: true,
         },
         {
-          label: "Sent Date & Time",
-          key: "sent_at",
-          minWidth: "225px",
+          label: 'Sent Date & Time',
+          key: 'sent_at',
+          minWidth: '225px',
           sortable: true,
         },
-        { label: "Action", key: "action", minWidth: "200px" },
+        { label: 'Action', key: 'action', minWidth: '200px' },
       ];
     },
 
@@ -356,9 +388,9 @@ export default {
       if (!this.subscriptionFilter) return all;
 
       const keyMap = {
-        active: "active_subscription",
-        expired: "expired_subscription",
-        none: "no_subscription",
+        active: 'active_subscription',
+        expired: 'expired_subscription',
+        none: 'no_subscription',
       };
       const key = keyMap[this.subscriptionFilter];
       if (!key) return all;
@@ -367,7 +399,7 @@ export default {
         if (!o) return false;
         const v = o[key];
         // normalize truthy values (1, '1', true)
-        return v === 1 || v === "1" || v === true;
+        return v === 1 || v === '1' || v === true;
       });
     },
 
@@ -381,8 +413,8 @@ export default {
       const list = [...this.notifications];
       if (this.sortKey) {
         list.sort((a, b) => {
-          const aVal = a[this.sortKey] || "";
-          const bVal = b[this.sortKey] || "";
+          const aVal = a[this.sortKey] || '';
+          const bVal = b[this.sortKey] || '';
           if (aVal < bVal) return this.sortAsc ? -1 : 1;
           if (aVal > bVal) return this.sortAsc ? 1 : -1;
           return 0;
@@ -398,7 +430,7 @@ export default {
       if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
 
       const pages = [1];
-      if (this.currentPage > 4) pages.push("...");
+      if (this.currentPage > 4) pages.push('...');
       for (
         let i = Math.max(2, this.currentPage - 1);
         i <= Math.min(total - 1, this.currentPage + 1);
@@ -406,7 +438,7 @@ export default {
       ) {
         pages.push(i);
       }
-      if (this.currentPage < total - 3) pages.push("...");
+      if (this.currentPage < total - 3) pages.push('...');
       pages.push(total);
       return pages;
     },
@@ -418,14 +450,10 @@ export default {
       const allGroups = Array.isArray(this.groups) ? this.groups : [];
 
       // Quick lookup of organization ids that are organization-admins (from organizations list)
-      const orgAdminOrgIds = new Set(
-        (this.organizations || []).map((o) => o.id)
-      );
+      const orgAdminOrgIds = new Set((this.organizations || []).map((o) => o.id));
 
       // Quick lookup of user ids that have organizationadmin role
-      const orgAdminUserIds = new Set(
-        (this.organizationAdmins || []).map((u) => u.id)
-      );
+      const orgAdminUserIds = new Set((this.organizationAdmins || []).map((u) => u.id));
 
       // small helper to safely check role-like properties
       const hasOrganizationAdminRoleProp = (obj) => {
@@ -433,10 +461,9 @@ export default {
         for (const rp of roleProps) {
           if (!rp) return false;
           try {
-            if (rp.toString().toLowerCase().includes("organizationadmin"))
-              return true;
+            if (rp.toString().toLowerCase().includes('organizationadmin')) return true;
           } catch (e) {
-            console.warn("filteredGroups: unable to parse role prop", e, rp);
+            console.debug && console.debug('filteredGroups: unable to parse role prop', e, rp);
           }
         }
         return false;
@@ -446,8 +473,7 @@ export default {
         if (!g) return false;
 
         // 1) Organization match
-        if (g.organization_id && orgAdminOrgIds.has(g.organization_id))
-          return true;
+        if (g.organization_id && orgAdminOrgIds.has(g.organization_id)) return true;
 
         // 2) Associated user/admin ids
         const possibleUserIds = [g.admin_id, g.user_id, g.owner_id, g.userId];
@@ -467,20 +493,16 @@ export default {
     // When organizations selection changes, ensure selected groups remain valid
     selectedOrganizations() {
       const allowedGroupIds = new Set(this.filteredGroups.map((g) => g.id));
-      this.selectedGroups = (this.selectedGroups || []).filter((g) =>
-        allowedGroupIds.has(g.id)
-      );
+      this.selectedGroups = (this.selectedGroups || []).filter((g) => allowedGroupIds.has(g.id));
     },
 
     // When subscription filter changes, remove any selected organizations that
     // don't match the current filter so selectedOrganizations always reflects
     // visible dropdown choices.
     subscriptionFilter() {
-      const allowedIds = new Set(
-        (this.filteredOrganizations || []).map((o) => o.id)
-      );
-      this.selectedOrganizations = (this.selectedOrganizations || []).filter(
-        (s) => allowedIds.has(typeof s === "object" ? s.id : s)
+      const allowedIds = new Set((this.filteredOrganizations || []).map((o) => o.id));
+      this.selectedOrganizations = (this.selectedOrganizations || []).filter((s) =>
+        allowedIds.has(typeof s === 'object' ? s.id : s)
       );
     },
   },
@@ -490,7 +512,7 @@ export default {
     // UI helpers
     // --------------------
     goToPage(page) {
-      if (page === "..." || page < 1 || page > this.totalPages) return;
+      if (page === '...' || page < 1 || page > this.totalPages) return;
       this.currentPage = page;
     },
 
@@ -510,7 +532,7 @@ export default {
 
     // Nicely format various date string shapes into a human readable, local-time string.
     formatLocalDateTime(dateStr) {
-      if (!dateStr) return "";
+      if (!dateStr) return '';
       let d = null;
       try {
         // If ISO with timezone, use Date parser
@@ -518,7 +540,7 @@ export default {
           d = new Date(dateStr);
         } else {
           // Try to parse common 'YYYY-MM-DD HH:MM:SS' format as UTC
-          const m = (dateStr || "").match(
+          const m = (dateStr || '').match(
             /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/
           );
           if (m) {
@@ -533,34 +555,34 @@ export default {
           } else d = new Date(dateStr);
         }
       } catch (e) {
-        console.warn("Date parse error:", e);
+        console.debug && console.debug('Date parse error:', e);
         d = new Date(dateStr);
       }
       if (!d || Number.isNaN(d.getTime())) {
-        return dateStr || "";
+        return dateStr || '';
       }
 
-      const dayOfMonth = String(d.getDate()).padStart(2, "0");
+      const dayOfMonth = String(d.getDate()).padStart(2, '0');
       const months = [
-        "JAN",
-        "FEB",
-        "MAR",
-        "APR",
-        "MAY",
-        "JUN",
-        "JUL",
-        "AUG",
-        "SEP",
-        "OCT",
-        "NOV",
-        "DEC",
+        'JAN',
+        'FEB',
+        'MAR',
+        'APR',
+        'MAY',
+        'JUN',
+        'JUL',
+        'AUG',
+        'SEP',
+        'OCT',
+        'NOV',
+        'DEC',
       ];
       const mon = months[d.getMonth()];
       const yr = d.getFullYear();
 
       let hr = d.getHours();
-      const min = String(d.getMinutes()).padStart(2, "0");
-      const ampm = hr >= 12 ? "PM" : "AM";
+      const min = String(d.getMinutes()).padStart(2, '0');
+      const ampm = hr >= 12 ? 'PM' : 'AM';
       hr = hr % 12;
       if (hr === 0) hr = 12; // display 12 instead of 0
 
@@ -574,9 +596,9 @@ export default {
     // --------------------
     async fetchOrganizations() {
       try {
-        const apiUrl = process.env.VUE_APP_API_URL || "/api";
-        const token = storage.get("authToken");
-        const res = await axios.get(apiUrl + "/organizations", {
+        const apiUrl = process.env.VUE_APP_API_URL || '/api';
+        const token = storage.get('authToken');
+        const res = await axios.get(apiUrl + '/organizations', {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!this.isAlive) return;
@@ -597,37 +619,35 @@ export default {
         // `organizationAdmins` (populated by fetchAdmins) for that purpose.
         this.organizations = orgs;
       } catch (err) {
-        console.error("Error fetching organizations:", err);
+        console.debug && console.debug('Error fetching organizations:', err);
         if (this.isAlive) this.organizations = [];
       }
     },
 
     async fetchGroups() {
       try {
-        const apiUrl = process.env.VUE_APP_API_URL || "/api";
-        const token = storage.get("authToken");
-        const res = await axios.get(apiUrl + "/groups", {
+        const apiUrl = process.env.VUE_APP_API_URL || '/api';
+        const token = storage.get('authToken');
+        const res = await axios.get(apiUrl + '/groups', {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!this.isAlive) return;
 
         if (Array.isArray(res.data)) this.groups = res.data;
-        else if (res.data && Array.isArray(res.data.data))
-          this.groups = res.data.data;
-        else if (res.data && Array.isArray(res.data.groups))
-          this.groups = res.data.groups;
+        else if (res.data && Array.isArray(res.data.data)) this.groups = res.data.data;
+        else if (res.data && Array.isArray(res.data.groups)) this.groups = res.data.groups;
         else this.groups = [];
       } catch (err) {
-        console.error("Error fetching groups:", err);
+        console.debug && console.debug('Error fetching groups:', err);
         if (this.isAlive) this.groups = [];
       }
     },
 
     async fetchAdmins() {
       try {
-        const apiUrl = process.env.VUE_APP_API_URL || "/api";
-        const token = storage.get("authToken");
-        const res = await axios.get(apiUrl + "/users", {
+        const apiUrl = process.env.VUE_APP_API_URL || '/api';
+        const token = storage.get('authToken');
+        const res = await axios.get(apiUrl + '/users', {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!this.isAlive) return;
@@ -645,20 +665,18 @@ export default {
           if (!user) return false;
           if (Array.isArray(user.roles)) {
             return user.roles.some(
-              (r) =>
-                (r && (r.name || r)).toString().toLowerCase() === "dolphinadmin"
+              (r) => (r && (r.name || r)).toString().toLowerCase() === 'dolphinadmin'
             );
           }
           if (Array.isArray(user.user_roles)) {
             return user.user_roles.some(
-              (r) =>
-                (r && (r.name || r)).toString().toLowerCase() === "dolphinadmin"
+              (r) => (r && (r.name || r)).toString().toLowerCase() === 'dolphinadmin'
             );
           }
-          const roleStr = (user.role || user.role_name || user.user_role || "")
+          const roleStr = (user.role || user.role_name || user.user_role || '')
             .toString()
             .toLowerCase();
-          if (roleStr) return roleStr.includes("dolphinadmin");
+          if (roleStr) return roleStr.includes('dolphinadmin');
           return false;
         };
 
@@ -667,32 +685,26 @@ export default {
           if (!user) return false;
           if (Array.isArray(user.roles)) {
             return user.roles.some(
-              (r) =>
-                (r && (r.name || r)).toString().toLowerCase() ===
-                "organizationadmin"
+              (r) => (r && (r.name || r)).toString().toLowerCase() === 'organizationadmin'
             );
           }
           if (Array.isArray(user.user_roles)) {
             return user.user_roles.some(
-              (r) =>
-                (r && (r.name || r)).toString().toLowerCase() ===
-                "organizationadmin"
+              (r) => (r && (r.name || r)).toString().toLowerCase() === 'organizationadmin'
             );
           }
-          const roleStr = (user.role || user.role_name || user.user_role || "")
+          const roleStr = (user.role || user.role_name || user.user_role || '')
             .toString()
             .toLowerCase();
-          if (roleStr) return roleStr.includes("organizationadmin");
+          if (roleStr) return roleStr.includes('organizationadmin');
           return false;
         };
 
         // Populate organizationAdmins lookup used by filteredGroups
-        this.organizationAdmins = adminsArray
-          .filter(isOrganizationAdmin)
-          .map((u) => {
-            const id = u.id || u.user_id || u._id || null;
-            return { ...u, id };
-          });
+        this.organizationAdmins = adminsArray.filter(isOrganizationAdmin).map((u) => {
+          const id = u.id || u.user_id || u._id || null;
+          return { ...u, id };
+        });
 
         // Keep existing dolphinadmin transformation for the admin selector
         this.admins = adminsArray.filter(isDolphinAdmin).map((u) => {
@@ -701,36 +713,35 @@ export default {
             u.name ||
             (u.first_name || u.firstName || u.firstname
               ? `${u.first_name || u.firstName || u.firstname} ${
-                  u.last_name || u.lastName || u.lastname || ""
+                  u.last_name || u.lastName || u.lastname || ''
                 }`.trim()
               : null) ||
             u.email ||
-            (u.username || "").toString();
+            (u.username || '').toString();
           return { ...u, id, name };
         });
       } catch (err) {
-        console.error("Error fetching admins:", err);
+        console.debug && console.debug('Error fetching admins:', err);
         if (this.isAlive) this.admins = [];
       }
     },
 
     async fetchNotifications() {
       try {
-        const apiUrl = process.env.VUE_APP_API_URL || "/api";
-        const token = storage.get("authToken");
-        const res = await axios.get(apiUrl + "/announcements", {
+        const apiUrl = process.env.VUE_APP_API_URL || '/api';
+        const token = storage.get('authToken');
+        const res = await axios.get(apiUrl + '/announcements', {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!this.isAlive) return;
 
         if (Array.isArray(res.data)) this.notifications = res.data;
-        else if (res.data && Array.isArray(res.data.data))
-          this.notifications = res.data.data;
+        else if (res.data && Array.isArray(res.data.data)) this.notifications = res.data.data;
         else if (res.data && Array.isArray(res.data.notifications))
           this.notifications = res.data.notifications;
         else this.notifications = [];
       } catch (err) {
-        console.error("Error fetching notifications:", err);
+        console.debug && console.debug('Error fetching notifications:', err);
         if (this.isAlive) this.notifications = [];
       }
     },
@@ -738,17 +749,17 @@ export default {
     // Fetch detail for a single notification and open detail modal
     async openDetail(item) {
       if (!item || !item.id) {
-        console.error("Invalid item for detail view:", item);
+        console.debug && console.debug('Invalid item for detail view:', item);
         this.$toast.add({
-          severity: "error",
-          summary: "Error",
-          detail: "Cannot load details for invalid item.",
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Cannot load details for invalid item.',
           life: 3000,
         });
         return;
       }
       try {
-        const token = storage.get("authToken");
+        const token = storage.get('authToken');
         const res = await axios.get(
           `${process.env.VUE_APP_API_BASE_URL}/api/announcements/${item.id}`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -759,11 +770,11 @@ export default {
           this.showDetailModal = true;
         }
       } catch (error) {
-        console.error("Failed to fetch notification details", error);
+        console.debug && console.debug('Failed to fetch notification details', error);
         this.$toast.add({
-          severity: "error",
-          summary: "Error",
-          detail: "Failed to fetch notification details. Please try again.",
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to fetch notification details. Please try again.',
           life: 3000,
         });
       }
@@ -778,16 +789,16 @@ export default {
     // Build payload and send notification(s) to backend
     async sendNotification() {
       try {
-        const apiUrl = process.env.VUE_APP_API_URL || "/api";
-        const token = storage.get("authToken");
+        const apiUrl = process.env.VUE_APP_API_URL || '/api';
+        const token = storage.get('authToken');
 
         // Build scheduled_at in UTC from selected local date/time
         let scheduled_at;
         if (this.scheduledDate && this.scheduledTime) {
           let time = this.scheduledTime;
-          if (time.length === 5) time += ":00";
+          if (time.length === 5) time += ':00';
           const local = new Date(`${this.scheduledDate}T${time}`);
-          const pad = (n) => String(n).padStart(2, "0");
+          const pad = (n) => String(n).padStart(2, '0');
           const YYYY = local.getUTCFullYear();
           const MM = pad(local.getUTCMonth() + 1);
           const DD = pad(local.getUTCDate());
@@ -803,24 +814,30 @@ export default {
           organization_ids: this.selectedOrganizations.map((org) => org.id),
           group_ids: this.selectedGroups.map((group) => group.id),
           admin_ids: this.selectedAdmins.map((admin) => admin.id),
-          message: this.messageBody || "",
-          body: this.messageBody || "",
+          message: this.messageBody || '',
+          body: this.messageBody || '',
         };
         if (scheduled_at) payload.scheduled_at = scheduled_at;
 
         // Endpoint consolidated: POST /api/announcements now both creates and dispatches
-        const res = await axios.post(apiUrl + "/announcements", payload, {
+        const res = await axios.post(apiUrl + '/announcements', payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         // Respect server's success flag when present. Older endpoints may still
         // return success:false with a helpful error message in `res.data.error`.
-  const serverSuccess = res && res.data && (res.status === 201 || res.data.success === true) && !res.data.error;
+        const serverSuccess =
+          res && res.data && (res.status === 201 || res.data.success === true) && !res.data.error;
 
         if (!serverSuccess) {
-          const errMsg = (res && res.data && res.data.error) || "Failed to send announcement";
+          const errMsg = (res && res.data && res.data.error) || 'Failed to send announcement';
           if (this.isAlive && this.$toast && this.$toast.add) {
-            this.$toast.add({ severity: "error", summary: "Error", detail: errMsg, life: 5000 });
+            this.$toast.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: errMsg,
+              life: 5000,
+            });
           }
           // keep modal open so user can retry or adjust
           return;
@@ -832,19 +849,19 @@ export default {
           this.$toast &&
             this.$toast.add &&
             this.$toast.add({
-              severity: "success",
-              summary: "Success",
-              detail: "Announcement created & dispatched!",
+              severity: 'success',
+              summary: 'Success',
+              detail: 'Announcement created & dispatched!',
               life: 3000,
             });
         }
       } catch (err) {
-        console.error("Error sending announcement:", err);
+        console.debug && console.debug('Error sending announcement:', err);
         if (this.isAlive && this.$toast && this.$toast.add) {
           this.$toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: "Failed to send announcement",
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to send announcement',
             life: 4000,
           });
         }
@@ -856,9 +873,9 @@ export default {
       this.selectedOrganizations = [];
       this.selectedAdmins = [];
       this.selectedGroups = [];
-      this.scheduledDate = "";
-      this.scheduledTime = "";
-      this.messageBody = "";
+      this.scheduledDate = '';
+      this.scheduledTime = '';
+      this.messageBody = '';
     },
   },
 
@@ -878,8 +895,8 @@ export default {
 </script>
 
 <style>
-@import "@/assets/global.css";
-@import "@/assets/modelcssnotificationandassesment.css";
+@import '@/assets/global.css';
+@import '@/assets/modelcssnotificationandassesment.css';
 </style>
 
 <!-- Unified modal styles for consistency across components -->
@@ -1207,7 +1224,7 @@ export default {
   color: #111;
 }
 
-.subscription-option input[type="radio"] {
+.subscription-option input[type='radio'] {
   appearance: none;
   -webkit-appearance: none;
   width: 16px;
@@ -1219,7 +1236,7 @@ export default {
   position: relative;
 }
 
-.subscription-option input[type="radio"]:checked {
+.subscription-option input[type='radio']:checked {
   border-color: #2196f3;
   background: radial-gradient(circle at center, #2196f3 0 60%, transparent 61%);
 }

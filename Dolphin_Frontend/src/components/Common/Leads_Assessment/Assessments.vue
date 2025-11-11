@@ -10,23 +10,28 @@
 </template>
 
 <script>
-import MainLayout from "@/components/layout/MainLayout.vue";
-import OrganizationAdminAssessmentsCard from "./OrganizationAdminAssessmentsCard.vue";
-import UserAssessment from "./UserAssessment.vue";
+import MainLayout from '@/components/layout/MainLayout.vue';
+import OrganizationAdminAssessmentsCard from './OrganizationAdminAssessmentsCard.vue';
+import UserAssessment from './UserAssessment.vue';
+import storage from '@/services/storage';
 
 export default {
-  name: "Assessments",
+  name: 'Assessments',
   components: { MainLayout, OrganizationAdminAssessmentsCard, UserAssessment },
   computed: {
+    role() {
+      try {
+        return (storage.get('role') || 'user').toString().toLowerCase();
+      } catch (e) {
+        console.debug && console.debug('Assessments: failed to read role from storage', e);
+        return 'user';
+      }
+    },
     isOrganizationAdmin() {
-      const storage = require("@/services/storage").default;
-      const role = storage.get("role") || "user";
-      return role === "organizationadmin";
+      return this.role === 'organizationadmin';
     },
     isUser() {
-      const storage = require("@/services/storage").default;
-      const role = storage.get("role") || "user";
-      return role === "user";
+      return this.role === 'user';
     },
   },
 };

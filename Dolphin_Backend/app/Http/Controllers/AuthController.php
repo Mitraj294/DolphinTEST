@@ -272,7 +272,6 @@ class AuthController extends Controller
 
 
     private function issueToken(Request $request)
-
     {
         // Resolve client id/secret (prefer env, fall back to DB). Helpers keep logic small.
         [$clientId, $clientSecret] = $this->resolveClientCredentials();

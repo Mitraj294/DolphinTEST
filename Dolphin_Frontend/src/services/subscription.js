@@ -1,55 +1,64 @@
-import axios from "axios";
-import storage from "./storage";
+import axios from 'axios';
+import storage from './storage';
+import { getApiBase } from '@/env';
 
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || "";
+const API_BASE_URL = getApiBase();
+
+function normalizeToken(raw) {
+  if (!raw) return null;
+  if (typeof raw === 'string') return raw;
+  if (raw.token) return raw.token;
+  if (raw.access_token) return raw.access_token;
+  return null;
+}
 
 function authHeaders() {
-  const authToken = storage.get("authToken");
-  if (!authToken) return {};
-  let token = authToken;
-  if (typeof token === "object") {
-    if (token?.token) token = token.token;
-    else if (token?.access_token) token = token.access_token;
-    else token = null;
-  }
-  if (!token) return {};
-  return { Authorization: `Bearer ${token}` };
+  const token = normalizeToken(storage.get('authToken'));
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export async function getPlans() {
-  const headers = authHeaders();
-  const res = await axios.get(`${API_BASE_URL}/api/plans`, { headers });
-  // Backend returns { plans: [...] }
-  return res.data?.plans ?? res.data;
+  try {
+    const headers = authHeaders();
+    const res = await axios.get(`${API_BASE_URL}/api/plans`, { headers });
+    // Backend returns { plans: [...] }
+    return res.data?.plans ?? res.data;
+  } catch (err) {
+    console.debug?.('getPlans failed:', err?.message || err);
+    return [];
+  }
 }
 
 export async function createCheckoutSession(priceId, opts = {}) {
-  const headers = authHeaders();
-  const payload = { price_id: priceId, ...opts };
-  const res = await axios.post(`${API_BASE_URL}/api/subscription/create-checkout-session`, payload, { headers });
-  // Stripe Session endpoint returns { id, url }
-  return res.data;
+  try {
+    const headers = authHeaders();
+    const payload = { price_id: priceId, ...opts };
+    const res = await axios.post(
+      `${API_BASE_URL}/api/subscription/create-checkout-session`,
+      payload,
+      { headers }
+    );
+    // Stripe Session endpoint returns { id, url }
+    return res.data;
+  } catch (err) {
+    console.debug?.('createCheckoutSession failed:', err?.message || err);
+   return [];
+  }
 }
 
-// Backwards-compatibility wrapper used throughout the app.
-// Many components import `fetchSubscriptionStatus` so keep it available.
 export async function fetchSubscriptionStatus(orgId = null) {
-  // If the current user is not an organization admin, do not call the
-  // subscription status endpoint — it's intentionally restricted server-side
-  // and will return 403. Return a safe default instead to avoid noisy 403s
-  // in the browser and to keep frontend logic simple.
   try {
-    const role = storage.get("role") || "";
-    if (String(role).toLowerCase() !== "organizationadmin") {
-      return { status: "none" };
-    }
+    const role = (storage.get('role') || '').toString().toLowerCase();
+    if (role !== 'organizationadmin') return { status: 'none' };
   } catch (e) {
-    // if storage access fails for any reason, fall back to calling the API
-    console.debug('fetchSubscriptionStatus: could not read role from storage, attempting API call', e);
+    console.debug(
+      'fetchSubscriptionStatus: could not read role from storage, attempting API call',
+      e
+    );
   }
 
-  const headers = authHeaders();
   try {
+    const headers = authHeaders();
     const url = orgId
       ? `${API_BASE_URL}/api/subscription/status?org_id=${encodeURIComponent(orgId)}`
       : `${API_BASE_URL}/api/subscription/status`;
@@ -57,7 +66,7 @@ export async function fetchSubscriptionStatus(orgId = null) {
     const data = res.data || {};
 
     return {
-      status: data.status || "none",
+      status: data.status || 'none',
       plan_id: data.plan_id || null,
       plan_name: data.plan_name || data?.plan?.name || null,
       plan: data.plan || null,
@@ -72,35 +81,48 @@ export async function fetchSubscriptionStatus(orgId = null) {
       payment_method: data.payment_method || null,
     };
   } catch (err) {
-    // Unauthorized or other error -> safe default
-    // Log for debugging while returning a safe default
-    console.warn('fetchSubscriptionStatus: failed to get subscription status', err?.message || err);
-    return { status: "none" };
+    console.debug &&
+      console.debug(
+        'fetchSubscriptionStatus: failed to get subscription status',
+        err?.message || err
+      );
+    return { status: 'none' };
   }
 }
 
 export async function getActiveSubscription() {
-  const headers = authHeaders();
-  const res = await axios.get(`${API_BASE_URL}/api/subscription`, { headers });
-  return res.data;
+  try {
+    const headers = authHeaders();
+    const res = await axios.get(`${API_BASE_URL}/api/subscription`, { headers });
+    return res.data;
+  } catch (err) {
+    console.debug && console.debug('getActiveSubscription failed:', err?.message || err);
+    return null;
+  }
 }
 
 export async function getInvoices(params = {}) {
-  const headers = authHeaders();
-  // Backend exposes billing history at /api/billing/history
-  // It returns an array of history records for the authenticated user (or organization owner when org_id provided)
   try {
+    const headers = authHeaders();
     const res = await axios.get(`${API_BASE_URL}/api/billing/history`, { headers, params });
     return res.data || [];
   } catch (err) {
-    // Return empty array on error to avoid breaking callers
-    console.warn('getInvoices: failed to fetch billing history', err?.message || err);
+    console.debug?.('getInvoices: failed to fetch billing history', err?.message || err);
     return [];
   }
 }
 
 export async function createBillingPortalSession() {
-  const headers = authHeaders();
-  const res = await axios.post(`${API_BASE_URL}/api/subscription/billing-portal`, {}, { headers });
-  return res.data;
+  try {
+    const headers = authHeaders();
+    const res = await axios.post(
+      `${API_BASE_URL}/api/subscription/billing-portal`,
+      {},
+      { headers }
+    );
+    return res.data;
+  } catch (err) {
+    console.debug && console.debug('createBillingPortalSession failed:', err?.message || err);
+    throw err;
+  }
 }

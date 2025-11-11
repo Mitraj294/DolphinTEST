@@ -26,7 +26,7 @@ class NewUserInvitation extends Notification
 
     public function toMail($notifiable)
     {
-        $mail = (new MailMessage)
+        $mail = (new MailMessage())
             ->subject('Your Dolphin account has been created')
             ->greeting('Hello ' . ($notifiable->first_name ?? $notifiable->email) . ',')
             ->line('An account has been created for you on Dolphin.')

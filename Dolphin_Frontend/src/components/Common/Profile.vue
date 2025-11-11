@@ -17,9 +17,7 @@
             </button>
           </div>
 
-          <div v-if="isLoading" class="profile-info-table">
-            Loading profile...
-          </div>
+          <div v-if="isLoading" class="profile-info-table">Loading profile...</div>
           <div v-else-if="error" class="profile-info-table" style="color: red">
             {{ error }}
           </div>
@@ -60,17 +58,14 @@
           @click.self="isEditModalVisible = false"
         >
           <div class="modal-card" style="max-width: 550px">
-            <button class="modal-close-btn" @click="isEditModalVisible = false">
-              &times;
-            </button>
+            <button class="modal-close-btn" @click="isEditModalVisible = false">&times;</button>
             <div class="modal-title">Edit Profile</div>
             <div class="modal-desc" style="font-size: 1.5rem !important">
               Update your profile information.
             </div>
             <form class="modal-form" @submit.prevent="handleUpdateProfile">
               <FormRow style="margin-bottom: 0 !important">
-                <FormLabel
-                  style="font-size: 1rem !important; margin: 0 !important"
+                <FormLabel style="font-size: 1rem !important; margin: 0 !important"
                   >First Name</FormLabel
                 >
                 <FormInput
@@ -82,8 +77,7 @@
                 />
               </FormRow>
               <FormRow style="margin-bottom: 0 !important">
-                <FormLabel
-                  style="font-size: 1rem !important; margin: 0 !important"
+                <FormLabel style="font-size: 1rem !important; margin: 0 !important"
                   >Last Name</FormLabel
                 >
                 <FormInput
@@ -95,8 +89,7 @@
                 />
               </FormRow>
               <FormRow style="margin-bottom: 0 !important">
-                <FormLabel
-                  style="font-size: 1rem !important; margin: 0 !important"
+                <FormLabel style="font-size: 1rem !important; margin: 0 !important"
                   >Email</FormLabel
                 >
                 <FormInput
@@ -108,8 +101,7 @@
                 />
               </FormRow>
               <FormRow style="margin-bottom: 0 !important">
-                <FormLabel
-                  style="font-size: 1rem !important; margin: 0 !important"
+                <FormLabel style="font-size: 1rem !important; margin: 0 !important"
                   >Phone</FormLabel
                 >
                 <FormInput
@@ -121,19 +113,11 @@
               </FormRow>
 
               <div class="modal-form-actions">
-                <button
-                  type="submit"
-                  class="btn btn-primary"
-                  :disabled="isUpdating"
-                >
+                <button type="submit" class="btn btn-primary" :disabled="isUpdating">
                   <i class="fas fa-save"></i>
-                  {{ isUpdating ? "Saving..." : "Save" }}
+                  {{ isUpdating ? 'Saving...' : 'Save' }}
                 </button>
-                <button
-                  type="button"
-                  class="org-edit-cancel"
-                  @click="isEditModalVisible = false"
-                >
+                <button type="button" class="org-edit-cancel" @click="isEditModalVisible = false">
                   Cancel
                 </button>
               </div>
@@ -143,10 +127,7 @@
 
         <div class="profile-card">
           <div class="profile-section-title">Change Password</div>
-          <form
-            class="profile-password-form"
-            @submit.prevent="handleChangePassword"
-          >
+          <form class="profile-password-form" @submit.prevent="handleChangePassword">
             <div class="profile-info-row">
               <div class="profile-label">Current Password*</div>
               <div class="profile-value">
@@ -168,9 +149,7 @@
                     "
                     @click="togglePassword"
                   >
-                    <i
-                      :class="showPassword ? 'fas fa-eye' : 'fas fa-eye-slash'"
-                    ></i>
+                    <i :class="showPassword ? 'fas fa-eye' : 'fas fa-eye-slash'"></i>
                   </span>
                 </div>
               </div>
@@ -197,9 +176,7 @@
                     "
                     @click="togglePassword"
                   >
-                    <i
-                      :class="showPassword ? 'fas fa-eye' : 'fas fa-eye-slash'"
-                    ></i>
+                    <i :class="showPassword ? 'fas fa-eye' : 'fas fa-eye-slash'"></i>
                   </span>
                 </div>
               </div>
@@ -226,22 +203,16 @@
                     "
                     @click="togglePassword"
                   >
-                    <i
-                      :class="showPassword ? 'fas fa-eye' : 'fas fa-eye-slash'"
-                    ></i>
+                    <i :class="showPassword ? 'fas fa-eye' : 'fas fa-eye-slash'"></i>
                   </span>
                 </div>
               </div>
             </div>
 
             <div class="profile-save-btn-row">
-              <button
-                type="submit"
-                class="btn btn-primary"
-                :disabled="isPasswordChanging"
-              >
+              <button type="submit" class="btn btn-primary" :disabled="isPasswordChanging">
                 <i class="fas fa-key"></i>
-                {{ isPasswordChanging ? "Changing..." : "Change Password" }}
+                {{ isPasswordChanging ? 'Changing...' : 'Change Password' }}
               </button>
             </div>
           </form>
@@ -252,23 +223,22 @@
 </template>
 
 <script setup>
-import axios from "axios";
-import { useConfirm } from "primevue/useconfirm";
-import { useToast } from "primevue/usetoast";
-import { computed, onMounted, reactive, ref } from "vue";
+import axios from 'axios';
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 // Component Imports
-import FormInput from "@/components/Common/Common_UI/Form/FormInput.vue";
-import FormLabel from "@/components/Common/Common_UI/Form/FormLabel.vue";
-import FormRow from "@/components/Common/Common_UI/Form/FormRow.vue";
-import MainLayout from "@/components/layout/MainLayout.vue";
-import ConfirmDialog from "primevue/confirmdialog";
-import Toast from "primevue/toast";
-
+import FormInput from '@/components/Common/Common_UI/Form/FormInput.vue';
+import FormLabel from '@/components/Common/Common_UI/Form/FormLabel.vue';
+import FormRow from '@/components/Common/Common_UI/Form/FormRow.vue';
+import MainLayout from '@/components/layout/MainLayout.vue';
+import ConfirmDialog from 'primevue/confirmdialog';
+import Toast from 'primevue/toast';
 
 // Services & Utils
-import storage from "@/services/storage";
-import { formatRole } from "@/utils/roles";
+import storage from '@/services/storage';
+import { formatRole } from '@/utils/roles';
 
 // Composables
 const toast = useToast();
@@ -286,16 +256,16 @@ const isEditModalVisible = ref(false);
 const showPassword = ref(false);
 
 const editForm = reactive({
-  first_name: "",
-  last_name: "",
-  email: "",
-  phone_number: "",
+  first_name: '',
+  last_name: '',
+  email: '',
+  phone_number: '',
 });
 
 const passwordForm = reactive({
-  current_password: "",
-  new_password: "",
-  new_password_confirmation: "",
+  current_password: '',
+  new_password: '',
+  new_password_confirmation: '',
 });
 /** Toggle new password visibility */
 function togglePassword() {
@@ -305,13 +275,13 @@ function togglePassword() {
 // --- COMPUTED PROPERTIES ---
 
 const formattedRole = computed(() => {
-  return profile.value?.role ? formatRole(profile.value.role) : "";
+  return profile.value?.role ? formatRole(profile.value.role) : '';
 });
 
 // --- API & BUSINESS LOGIC ---
 
 const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-const authToken = storage.get("authToken");
+const authToken = storage.get('authToken');
 
 const fetchProfile = async () => {
   isLoading.value = true;
@@ -322,11 +292,11 @@ const fetchProfile = async () => {
     });
     profile.value = response.data;
   } catch (err) {
-    console.log(err);
-    error.value = "Failed to fetch profile information.";
+    console.debug && console.debug(err);
+    error.value = 'Failed to fetch profile information.';
     toast.add({
-      severity: "error",
-      summary: "Error",
+      severity: 'error',
+      summary: 'Error',
       detail: error.value,
       life: 3000,
     });
@@ -364,17 +334,16 @@ const handleUpdateProfile = async () => {
     profile.value = response.data.user; // Update local state
     isEditModalVisible.value = false;
     toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Profile updated successfully!",
+      severity: 'success',
+      summary: 'Success',
+      detail: 'Profile updated successfully!',
       life: 3000,
     });
   } catch (err) {
-    const errorMessage =
-      err.response?.data?.message || "Failed to update profile.";
+    const errorMessage = err.response?.data?.message || 'Failed to update profile.';
     toast.add({
-      severity: "error",
-      summary: "Update Error",
+      severity: 'error',
+      summary: 'Update Error',
       detail: errorMessage,
       life: 3000,
     });
@@ -386,9 +355,9 @@ const handleUpdateProfile = async () => {
 const handleChangePassword = async () => {
   if (passwordForm.new_password !== passwordForm.new_password_confirmation) {
     toast.add({
-      severity: "error",
-      summary: "Password Error",
-      detail: "New passwords do not match.",
+      severity: 'error',
+      summary: 'Password Error',
+      detail: 'New passwords do not match.',
       life: 3000,
     });
     return;
@@ -399,21 +368,20 @@ const handleChangePassword = async () => {
       headers: { Authorization: `Bearer ${authToken}` },
     });
     toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Password changed successfully!",
+      severity: 'success',
+      summary: 'Success',
+      detail: 'Password changed successfully!',
       life: 3000,
     });
     // Reset form
     for (const key of Object.keys(passwordForm)) {
-      passwordForm[key] = "";
+      passwordForm[key] = '';
     }
   } catch (err) {
-    const errorMessage =
-      err.response?.data?.error || "Failed to change password.";
+    const errorMessage = err.response?.data?.error || 'Failed to change password.';
     toast.add({
-      severity: "error",
-      summary: "Password Error",
+      severity: 'error',
+      summary: 'Password Error',
       detail: errorMessage,
       life: 3000,
     });
@@ -424,29 +392,28 @@ const handleChangePassword = async () => {
 
 const confirmDeleteAccount = () => {
   confirm.require({
-    message:
-      "Are you sure you want to delete your account? This action is permanent.",
-    header: "Confirm Account Deletion",
-    icon: "pi pi-exclamation-triangle",
+    message: 'Are you sure you want to delete your account? This action is permanent.',
+    header: 'Confirm Account Deletion',
+    icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try {
         await axios.delete(`${API_BASE_URL}/api/profile`, {
           headers: { Authorization: `Bearer ${authToken}` },
         });
         toast.add({
-          severity: "success",
-          summary: "Success",
-          detail: "Account deleted.",
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Account deleted.',
           life: 3000,
         });
         storage.clear();
-        setTimeout(() => (globalThis.location.href = "/login"), 1500);
+        setTimeout(() => (globalThis.location.href = '/login'), 1500);
       } catch (err) {
-        console.log(err);
+        console.debug && console.debug(err);
         toast.add({
-          severity: "error",
-          summary: "Error",
-          detail: "Failed to delete account.",
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to delete account.',
           life: 3000,
         });
       }
@@ -462,7 +429,7 @@ onMounted(() => {
 
 <style scoped>
 /* Scoped styles from the original file */
-@import "@/assets/modelcssnotificationandassesment.css";
+@import '@/assets/modelcssnotificationandassesment.css';
 
 .profile-outer {
   width: 100%;
