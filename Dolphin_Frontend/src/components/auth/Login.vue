@@ -96,6 +96,7 @@ import axios from "axios";
 import { FormLabel } from "@/components/Common/Common_UI/Form";
 import storage from "@/services/storage";
 import { fetchCurrentUser } from "@/services/user";
+import { fetchSubscriptionStatus } from "@/services/subscription";
 import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
 // NOTE: resolve runtime env values at call-time (when the methods run)
@@ -233,7 +234,7 @@ export default {
         let redirectTo = "/dashboard";
         try {
           const orgId = userObj.organization_id || userObj.org_id || null;
-          const subStatus = await this.checkSubscriptionStatus(orgId);
+          const subStatus = await fetchSubscriptionStatus(orgId);
           if (subStatus) {
             storage.set("subscription_status", subStatus.status || null);
             storage.set("subscription_end", subStatus.subscription_end || null);
@@ -315,16 +316,12 @@ export default {
       }
     },
     async checkSubscriptionStatus(orgId = null) {
+      // Delegate to shared service which applies role-based guard and
+      // builds the correct URL (including org_id when provided).
       try {
-        const url = orgId
-          ? `${API_BASE_URL}/api/subscription/status?org_id=${encodeURIComponent(
-              orgId
-            )}`
-          : `${API_BASE_URL}/api/subscription/status`;
-        const response = await axios.get(url);
-        return response.data;
-      } catch (error) {
-        console.error("Error checking subscription status:", error);
+        return await fetchSubscriptionStatus(orgId);
+      } catch (e) {
+        console.error("checkSubscriptionStatus: delegated service call failed", e);
         return null;
       }
     },

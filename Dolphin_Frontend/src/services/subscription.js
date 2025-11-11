@@ -33,7 +33,7 @@ export async function createCheckoutSession(priceId, opts = {}) {
 
 // Backwards-compatibility wrapper used throughout the app.
 // Many components import `fetchSubscriptionStatus` so keep it available.
-export async function fetchSubscriptionStatus() {
+export async function fetchSubscriptionStatus(orgId = null) {
   // If the current user is not an organization admin, do not call the
   // subscription status endpoint — it's intentionally restricted server-side
   // and will return 403. Return a safe default instead to avoid noisy 403s
@@ -50,7 +50,10 @@ export async function fetchSubscriptionStatus() {
 
   const headers = authHeaders();
   try {
-    const res = await axios.get(`${API_BASE_URL}/api/subscription/status`, { headers });
+    const url = orgId
+      ? `${API_BASE_URL}/api/subscription/status?org_id=${encodeURIComponent(orgId)}`
+      : `${API_BASE_URL}/api/subscription/status`;
+    const res = await axios.get(url, { headers });
     const data = res.data || {};
 
     return {

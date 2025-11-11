@@ -59,7 +59,7 @@
           ></span>
         </div>
         <div
-          v-for="(item, index) in filteredItems"
+          v-for="(item, index) in displayItems"
           :key="item[optionValue]"
           :ref="`dropdownItem${index}`"
           class="dropdown-item"
@@ -73,9 +73,11 @@
           <span
             class="dropdown-checkbox"
             :class="{
-              checked: selectedItems.some(
-                (i) => i[optionValue] === item[optionValue]
-              ),
+              checked: selectedItems.some((i) => {
+                const a = typeof i === 'object' ? i[optionValue] : i;
+                const b = typeof item === 'object' ? item[optionValue] : item;
+                return a === b;
+              }),
             }"
           ></span>
         </div>
@@ -117,6 +119,26 @@ export default {
           .toLowerCase()
           .includes(this.search.toLowerCase())
       );
+    },
+    // If there are no filtered options but there are selected items, show the
+    // selected items in the dropdown so they appear checked when reopening.
+    displayItems() {
+      if (this.filteredItems && this.filteredItems.length) return this.filteredItems;
+      // If no options match (or options array empty), but user has selected items,
+      // show those selected items in the dropdown so they appear marked.
+      if (Array.isArray(this.selectedItems) && this.selectedItems.length) {
+        return this.selectedItems.map((s) => {
+          // If selected item is primitive, wrap it into an object shape so template
+          // can access optionValue/optionLabel safely. For primitive values we keep
+          // value under the optionValue key and leave optionLabel undefined so
+          // label helpers will resolve it.
+          if (typeof s === "string" || typeof s === "number") {
+            return { [this.optionValue]: s };
+          }
+          return s;
+        });
+      }
+      return [];
     },
     isAllSelected() {
       if (!this.filteredItems.length) return false;

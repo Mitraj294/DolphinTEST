@@ -64,8 +64,8 @@ class OrganizationUserController extends Controller
     }
 
     /**
-     * Get available users to add as organization members
-     * Returns users with 'user' or 'salesperson' roles who are NOT already members
+    * Get available users to add as organization members
+    * Returns users with only the 'user' role who are NOT already members
      */
     public function availableUsers(Request $request): JsonResponse
     {
@@ -81,9 +81,9 @@ class OrganizationUserController extends Controller
             // Get existing member IDs (ensure users.id is selected to avoid ambiguous `id` from pivot table)
             $existingMemberIds = $organization->members()->pluck('users.id')->toArray();
 
-            // Get users with 'user' or 'salesperson' roles who are not already members
+            // Get users with only the 'user' role who are not already members
             $users = User::whereHas('roles', function ($query) {
-                $query->whereIn('name', ['user', 'salesperson']);
+                $query->where('name', 'user');
             })
                 ->whereNotIn('id', $existingMemberIds)
                 ->select('id', 'first_name', 'last_name', 'email')
@@ -264,8 +264,8 @@ class OrganizationUserController extends Controller
     // addOrganizationUser() removed: unused; prefer addOrganizationMember()/organization member flows.
 
     /**
-     * Add user to organization as member via organization_member pivot
-     * Users must have 'user' or 'salesperson' role
+    * Add user to organization as member via organization_member pivot
+    * Users must have the 'user' role
      */
     public function addOrganizationMember(Request $request): JsonResponse
     {
@@ -279,15 +279,15 @@ class OrganizationUserController extends Controller
 
             $organization = Organization::findOrFail($orgId);
 
-            // Verify user has 'user' or 'salesperson' role
+            // Verify user has the 'user' role
             $userToAdd = User::findOrFail($validated['user_id']);
             $hasValidRole = $userToAdd->roles()
-                ->whereIn('name', ['user', 'salesperson'])
+                ->where('name', 'user')
                 ->exists();
 
             if (!$hasValidRole) {
                 return response()->json([
-                    'error' => 'User must have "user" or "salesperson" role to be added as organization member.'
+                    'error' => 'User must have the "user" role to be added as organization member.'
                 ], 400);
             }
 

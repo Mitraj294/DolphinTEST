@@ -109,6 +109,7 @@
 <script setup>
 import storage from "@/services/storage";
 import axios from "axios";
+import { fetchSubscriptionStatus } from "@/services/subscription";
 import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
@@ -296,11 +297,7 @@ const fetchSubscriptionDetails = async () => {
 
   // try the simpler status endpoint which some flows use
   try {
-    const resp2 = await axios.get(
-      `${API_BASE_URL.value}/api/subscription/status`,
-      { headers }
-    );
-    const s = resp2.data || null;
+    const s = await fetchSubscriptionStatus();
     if (s) {
       subscription.value = {
         plan_amount: s.plan_amount || s.amount || null,
@@ -352,16 +349,12 @@ onMounted(async () => {
   // Try to fetch the lightweight status endpoint first since it usually
   // contains the human-friendly `plan_name` used on the success page.
   try {
-    const authToken = storage.get("authToken");
-    const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
-    const resp = await axios.get(
-      `${API_BASE_URL.value}/api/subscription/status`,
-      { headers }
-    );
-    statusInfo.value = resp.data || null;
+    // Use shared service which will guard by role and add org_id when needed
+    const s = await fetchSubscriptionStatus();
+    statusInfo.value = s || null;
   } catch (e) {
     console.debug(
-      "Could not fetch subscription status endpoint, will fallback",
+      "Could not fetch subscription status endpoint (via service), will fallback",
       e?.message || e
     );
   }

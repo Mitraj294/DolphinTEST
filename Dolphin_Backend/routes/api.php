@@ -265,7 +265,8 @@ Route::middleware('auth:api')->group(function () {
 
             Route::prefix('organization')->group(function () {
                 Route::get('/members', [OrganizationUserController::class, 'index']);
-                Route::get('/members/available', [OrganizationUserController::class, 'availableUsers']);
+                // Simplified endpoint: return users with role 'user'
+                Route::get('/members/user', [OrganizationUserController::class, 'availableUsers']);
                 Route::post('/members/add', [OrganizationUserController::class, 'addOrganizationMember']);
                 Route::post('/members/remove', [OrganizationUserController::class, 'removeOrganizationMember']);
                 Route::get('/members/for-groups', [OrganizationUserController::class, 'getAvailableMembersForGroup']);

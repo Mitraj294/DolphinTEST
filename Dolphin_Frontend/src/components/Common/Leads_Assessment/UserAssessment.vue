@@ -118,6 +118,7 @@ import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
+import { fetchSubscriptionStatus } from "@/services/subscription";
 
 const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || "";
 
@@ -265,31 +266,17 @@ export default {
         await loadQuestions(headers, params);
         await loadAnswers(headers, params);
 
-        // Fetch subscription status (extracted to keep complexity down)
-        const fetchSub = async () => {
-          try {
-            const resSub = await axios.get(
-              `${API_BASE_URL}/api/subscription/status`,
-              {
-                headers,
-              }
-            );
-            // Adjust this logic based on your backend response
-            isSubscribed.value = !!(
-              resSub.data &&
-              (resSub.data.active ||
-                resSub.data.status === "active" ||
-                resSub.data.subscribed)
-            );
-          } catch (err) {
-            // Log the error for debugging and set a safe fallback
-            // eslint-disable-next-line no-console
-            console.warn("Failed to fetch subscription status:", err);
-            isSubscribed.value = "expired";
-          }
-        };
-
-        await fetchSub();
+        // Fetch subscription status via shared service which will skip the
+        // network call for non-organization-admin roles to avoid 403s.
+        try {
+          const s = await fetchSubscriptionStatus();
+          isSubscribed.value = !!(
+            s && (s.active || s.status === "active" || s.subscribed)
+          );
+        } catch (err) {
+          console.warn("Failed to fetch subscription status (via service):", err);
+          isSubscribed.value = "expired";
+        }
       } catch (error) {
         if (error.response?.status === 401) {
           router.push("/login");

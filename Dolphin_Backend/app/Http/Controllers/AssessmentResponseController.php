@@ -44,7 +44,9 @@ class AssessmentResponseController extends Controller
             $validator = Validator::make($request->all(), [
                 'responses' => 'required|array',
                 // table name is `assessments`
-                'responses.*.assessment_id' => 'required|exists:assessments,id',
+                // The assessments table is named `assessment` (singular) in migrations,
+                // so validate against that table name to avoid SQL "table not found" errors.
+                'responses.*.assessment_id' => 'required|exists:assessment,id',
                 'responses.*.selected_options' => 'required|array',
                 'responses.*.start_time' => 'nullable|date',
                 'responses.*.end_time' => 'nullable|date',

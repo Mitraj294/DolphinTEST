@@ -206,7 +206,6 @@ export default {
         name: "",
         members: [],
       },
-      roles: [],
       groups: [],
       availableMembers: [],
       availableUsersForMember: [],
@@ -219,26 +218,31 @@ export default {
   },
   methods: {
     async openAddMemberModal() {
-      // Fetch available users with 'user' or 'salesperson' roles who are not already members
+      // Fetch available users (backend should filter by role and exclude existing members)
       try {
         const authToken = storage.get("authToken");
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
         const res = await axios.get(
-          `${API_BASE_URL}/api/organization/members/available`,
+          `${API_BASE_URL}/api/organization/members/user`,
           {
             headers: { Authorization: `Bearer ${authToken}` },
           }
         );
 
         // Format users for MultiSelectDropdown (expecting array with id and name)
-        this.availableUsersForMember = res.data.map((user) => ({
-          id: user.id,
-          name: `${user.first_name} ${user.last_name} (${user.email})`,
-        }));
+        const fetched = Array.isArray(res.data)
+          ? res.data.map((user) => ({
+            id: user.id,
+            name: `${user.first_name} ${user.last_name} (${user.email})`,
+          }))
+          : [];
+
+        // Use only the fetched users (API now returns only users with role 'user')
+        this.availableUsersForMember = fetched;
       } catch (e) {
         console.error("Failed to fetch available users:", e);
         this.availableUsersForMember = [];
-        this.$toast.add({
+        this.toast.add({
           severity: "error",
           summary: "Error",
           detail: "Failed to load available users",
@@ -278,7 +282,7 @@ export default {
       } catch (error) {
         console.error("Failed to fetch organization members:", error);
         this.availableMembers = [];
-        this.$toast.add({
+        this.toast.add({
           severity: "error",
           summary: "Error",
           detail: "Failed to load organization members",
@@ -298,7 +302,7 @@ export default {
           !Array.isArray(this.newMember.selectedUsers) ||
           this.newMember.selectedUsers.length === 0
         ) {
-          this.$toast.add({
+          this.toast.add({
             severity: "warn",
             summary: "Warning",
             detail: "Please select at least one user to add as member.",
@@ -322,7 +326,7 @@ export default {
           try {
             await axios.post(
               process.env.VUE_APP_API_BASE_URL +
-                "/api/organization/members/add",
+              "/api/organization/members/add",
               { user_id: userId },
               { headers }
             );
@@ -343,25 +347,23 @@ export default {
 
         // Show appropriate success message
         if (successCount > 0 && failedCount === 0) {
-          this.$toast.add({
+          this.toast.add({
             severity: "success",
             summary: "Success",
-            detail: `${successCount} member${
-              successCount > 1 ? "s" : ""
-            } added successfully!`,
+            detail: `${successCount} member${successCount > 1 ? "s" : ""
+              } added successfully!`,
             life: 3000,
           });
         } else if (successCount > 0 && failedCount > 0) {
-          this.$toast.add({
+          this.toast.add({
             severity: "warn",
             summary: "Partial Success",
-            detail: `${successCount} member${
-              successCount > 1 ? "s" : ""
-            } added, ${failedCount} failed.`,
+            detail: `${successCount} member${successCount > 1 ? "s" : ""
+              } added, ${failedCount} failed.`,
             life: 4000,
           });
         } else {
-          this.$toast.add({
+          this.toast.add({
             severity: "error",
             summary: "Error",
             detail: "Failed to add members.",
@@ -379,7 +381,7 @@ export default {
           e.response.data.errors
         ) {
           this.errors = e.response.data.errors;
-          this.$toast.add({
+            this.toast.add({
             severity: "error",
             summary: "Validation Error",
             detail: "Please fix the errors below and try again.",
@@ -401,7 +403,7 @@ export default {
         } else {
           console.error(e);
         }
-        this.$toast.add({
+        this.toast.add({
           severity: "error",
           summary: "Error",
           detail: msg,
@@ -490,6 +492,16 @@ export default {
         this.showAddGroupModal = false;
         this.availableMembers = [];
         this.newGroup = { name: "", members: [] };
+      }
+    }
+  },
+  watch: {
+    // When the Add Member modal is closed, clear the available users list to keep state clean
+    showAddMemberModal(newVal) {
+      if (!newVal) {
+        this.availableUsersForMember = [];
+        // Optionally clear selectedUsers when modal is closed to avoid stale selections
+        // this.newMember.selectedUsers = [];
       }
     },
   },
