@@ -14,19 +14,18 @@ use Carbon\Carbon;
 
 class AssessmentController extends Controller
 {
-    // Display a listing of the resource.
-    // @param  IndexAssessmentRequest  $request
-    // @return JsonResponse
+    
+    
+    
 
     public function index(IndexAssessmentRequest $request): JsonResponse
     {
         return $this->show($request);
     }
 
-
-    // Display the specified resource.
-    // @param  IndexAssessmentRequest  $request
-    // @return JsonResponse
+    
+    
+    
 
     public function show(IndexAssessmentRequest $request): JsonResponse
     {
@@ -54,20 +53,19 @@ class AssessmentController extends Controller
         }
     }
 
-
-    // Store a newly created resource in storage.
-    // @param  StoreAssessmentRequest  $request
-    // @return JsonResponse
+    
+    
+    
 
     public function store(StoreAssessmentRequest $request): JsonResponse
     {
         try {
             $validated = $request->validated();
 
-            // log incoming validated payload to help diagnose 500s in dev
+            
             Log::info('[AssessmentController@store] payload', ['validated' => $validated]);
 
-            // Defensive check: ensure authenticated user is present
+            
             $user = $request->user();
             if (!$user) {
                 Log::warning('[AssessmentController@store] unauthenticated request');
@@ -80,12 +78,12 @@ class AssessmentController extends Controller
                 'name' => $validated['name'],
                 'user_id' => $user->id,
                 'organization_id' => $orgId,
-                // store optional scheduling information if provided
+                
                 'date' => $validated['date'] ?? null,
                 'time' => $validated['time'] ?? null,
             ]);
 
-            // Do not attach questions on assessment creation; assessments are standalone records
+            
             return response()->json(['assessment' => $assessment], 201);
         } catch (\Exception $e) {
             Log::error('Failed to create assessment.', ['error' => $e->getMessage()]);
@@ -93,15 +91,15 @@ class AssessmentController extends Controller
         }
     }
 
-    // @param  int  $id
-    // @return JsonResponse
+    
+    
 
     public function summary($id): JsonResponse
     {
         try {
             $assessment = OrganizationAssessment::findOrFail($id);
 
-            // Members assigned to this organization assessment
+            
             try {
                 $memberIds = DB::table('organization_assessment_member')
                     ->where('organization_assessment_id', $assessment->id)
@@ -113,12 +111,12 @@ class AssessmentController extends Controller
                 $memberIds = collect();
             }
 
-            // Build a base query of responses submitted by those members.
-            // NOTE: assessment_responses.assessment_id points to the template table "assessment".
-            // Without a direct link to OrganizationAssessment, we scope by:
-            //  - user is a member of this org assessment
-            //  - and response was created at or after the member was attached to this org assessment
-            //  - and optionally after the scheduled date/time of the org assessment if provided
+            
+            
+            
+            
+            
+            
             if ($memberIds->isEmpty()) {
                 $responses = collect();
             } else {
@@ -131,24 +129,24 @@ class AssessmentController extends Controller
                 } catch (\Throwable $e) {
                     Log::warning('[AssessmentController@summary] assessment_responses join query failed', ['assessment_id' => $assessment->id, 'error' => $e->getMessage()]);
                     $responses = collect();
-                    // skip remaining logic
+                    
                 }
 
-                // if $responses already set to a collection due to failure, skip
+                
                 if (!isset($responses)) {
-                    // Filter responses that occurred after the assignment to reduce cross-assignment noise
+                    
                     $responsesQuery->whereColumn('ar.created_at', '>=', 'oam.created_at');
 
-                    // If the OrganizationAssessment has a scheduled date/time, prefer responses after that
+                    
                     if (!empty($assessment->date)) {
                         try {
-                            // Combine date and time (time may already be a Carbon instance)
+                            
                             $scheduledAt = $assessment->time instanceof Carbon
                                 ? Carbon::parse($assessment->date->toDateString() . ' ' . $assessment->time->format('H:i:s'))
                                 : Carbon::parse($assessment->date->toDateString() . ' 00:00:00');
                             $responsesQuery->where('ar.created_at', '>=', $scheduledAt);
                         } catch (\Exception $e) {
-                            // if parsing fails, ignore scheduling filter
+                            
                         }
                     }
 
@@ -156,11 +154,11 @@ class AssessmentController extends Controller
                 }
             }
 
-            // Get unique users who responded
+            
             $userIds = $responses->pluck('user_id')->unique();
             $users = User::whereIn('id', $userIds)->get()->keyBy('id');
 
-            // Build members array from responses
+            
             $members = [];
             foreach ($responses as $response) {
                 $user = $users->get($response->user_id);
@@ -209,11 +207,10 @@ class AssessmentController extends Controller
         }
     }
 
-
-    // Resolve the organization ID from the request.
-    // @param  StoreAssessmentRequest  $request
-    // @param  array  $validated
-    // @return int|null
+    
+    
+    
+    
 
     private function resolveOrganizationId(StoreAssessmentRequest $request, array $validated): ?int
     {

@@ -11,11 +11,7 @@ class IndexAssessmentRequest extends FormRequest
         return true;
     }
 
-    /**
-     * Validation rules for listing assessments.
-     *
-     * @return array<string, mixed>
-     */
+    
     public function rules(): array
     {
         return [

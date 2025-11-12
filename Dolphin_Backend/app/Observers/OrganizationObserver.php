@@ -12,17 +12,17 @@ class OrganizationObserver
     protected function applyLatestSubscriptionToOrg(Organization $organization)
     {
         try {
-            // find latest subscription for the owner user_id
+            
             if (empty($organization->user_id)) {
                 return;
             }
             $latest = null;
-            // Order by started_at (actual column) to find the latest subscription
+            
             $latest = Subscription::where('user_id', $organization->user_id)
                 ->orderBy('started_at', 'desc')
                 ->first();
             if ($latest) {
-                // Only update and save if contract dates actually change to avoid recursive observer calls
+                
                 $changed = false;
                 if ($organization->contract_start != ($latest->started_at ?? $latest->subscription_start ?? null)) {
                     $organization->contract_start = $latest->started_at ?? $latest->subscription_start ?? null;
@@ -52,7 +52,7 @@ class OrganizationObserver
 
     public function updated(Organization $organization)
     {
-        // if organization user_id changed, re-sync
+        
         $this->applyLatestSubscriptionToOrg($organization);
     }
 }

@@ -13,7 +13,11 @@
                 long-term value, we’ve got flexible options to help you grow without limits.
               </div>
               <div class="subscription-plans-options">
-                <div v-for="plan in plans" :key="plan.id" class="plan-card">
+                <div
+                  v-for="plan in plans"
+                  :key="plan.id"
+                  :class="['plan-card', { 'plan-card--current': subscription && subscription.plan_id && Number(subscription.plan_id) === Number(plan.id) }]"
+                >
                   <div v-if="plan.interval === 'yearly'" class="plan-card-badge">Save 2 Months</div>
                   <div class="plan-card-header">
                     <span class="plan-card-name">{{ plan.name }}</span>
@@ -26,12 +30,12 @@
                     >
                   </div>
                   <button
-                    class="plan-card-btn"
+                    :class="['plan-card-btn', { 'plan-card-btn--current': subscription && subscription.plan_id && Number(subscription.plan_id) === Number(plan.id) }]"
                     :disabled="isLoading"
-                    @click="subscribe(plan.stripe_price_id)"
+                    @click="planButtonAction(plan)()"
                   >
                     <span v-if="isLoading">Redirecting...</span>
-                    <span v-else>Choose Plan</span>
+                    <span v-else>{{ getPlanButtonText(plan) }}</span>
                   </button>
                 </div>
               </div>
@@ -56,7 +60,11 @@
               pre-filled.
             </div>
             <div class="subscription-plans-options">
-              <div v-for="plan in plans" :key="plan.id" class="plan-card">
+              <div
+                v-for="plan in plans"
+                :key="plan.id"
+                :class="['plan-card', { 'plan-card--current': subscription && subscription.plan_id && Number(subscription.plan_id) === Number(plan.id) }]"
+              >
                 <div v-if="plan.interval === 'yearly'" class="plan-card-badge">Save 2 Months</div>
                 <div class="plan-card-header">
                   <span class="plan-card-name">{{ plan.name }}</span>
@@ -69,12 +77,12 @@
                   >
                 </div>
                 <button
-                  class="plan-card-btn"
+                  :class="['plan-card-btn', { 'plan-card-btn--current': subscription && subscription.plan_id && Number(subscription.plan_id) === Number(plan.id) }]"
                   :disabled="isLoading"
-                  @click="subscribe(plan.stripe_price_id)"
+                  @click="planButtonAction(plan)()"
                 >
                   <span v-if="isLoading">Redirecting...</span>
-                  <span v-else>Get Started</span>
+                  <span v-else>{{ getPlanButtonText(plan) }}</span>
                 </button>
               </div>
             </div>
@@ -169,6 +177,23 @@ export default {
           // forward guest params if present
           Object.assign(opts, this.guestParams);
         }
+
+        // Ensure we send an email to the backend (API requires it).
+        // Prefer guest-provided email, then authenticated user email from Vuex,
+        // then a localStorage fallback key 'user_email' if present.
+        const email =
+          (this.guestParams && this.guestParams.email) ||
+          (this.$store &&
+            this.$store.state &&
+            this.$store.state.auth &&
+            this.$store.state.auth.user &&
+            this.$store.state.auth.user.email) ||
+          localStorage.getItem('user_email') ||
+          null;
+        if (email) {
+          opts.email = email;
+        }
+
         const res = await createCheckoutSession(priceId, opts);
         // backend may return url or redirect_url; accept either
         const redirectUrl = res?.url || res?.redirect_url || res?.redirectUrl || null;
@@ -202,6 +227,26 @@ export default {
         guest_code: qs.get('guest_code'),
         guest_token: qs.get('guest_token'),
       };
+    }
+    // Also accept Vue router query params (SPA navigation) as a fallback in case
+    // the router updated the URL without a full page reload. This ensures the
+    // guest flow works whether the user landed via a full link or an in-app
+    // router.push from Register.vue.
+    if (!this.isGuestView && this.$route && this.$route.query) {
+      const rq = this.$route.query || {};
+      const hasRouteGuest = ['email', 'lead_id', 'price_id', 'guest_code', 'guest_token'].some(
+        (k) => rq[k] !== undefined && rq[k] !== null && rq[k] !== ''
+      );
+      if (hasRouteGuest) {
+        this.isGuestView = true;
+        this.guestParams = {
+          email: rq.email || null,
+          lead_id: rq.lead_id || rq.leadId || null,
+          price_id: rq.price_id || rq.priceId || null,
+          guest_code: rq.guest_code || rq.guestCode || null,
+          guest_token: rq.guest_token || rq.guestToken || null,
+        };
+      }
     }
     this.loadPlans();
     this.loadSubscription();

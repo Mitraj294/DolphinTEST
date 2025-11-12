@@ -6,23 +6,10 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class MemberResource extends JsonResource
 {
-    /**
-     * @mixin \App\Models\Member
-     *
-     * @property int|null $id
-     * @property string|null $first_name
-     * @property string|null $last_name
-     * @property string|null $email
-     * @property string|null $phone
-     * @property \Illuminate\Support\Collection<int, \App\Models\Group>|null $groups
-     * @property string|null $member_role
-     * @property \Illuminate\Support\Collection<int, \App\Models\MemberRole>|null $memberRoles
-     */
-    //Transform the resource into an array.
-    //@param  \Illuminate\Http\Request  $request
-    /**
-     * @return array<string,mixed>
-     */
+    
+    
+    
+    
     public function toArray($request): array
     {
         return [

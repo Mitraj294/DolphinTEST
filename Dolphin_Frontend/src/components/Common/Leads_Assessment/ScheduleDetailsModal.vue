@@ -36,16 +36,14 @@
                   margin-right: 12px;
                 "
               >
-                {{ scheduleDetails.assessment.name }}
+                {{ (scheduleDetails.assessment && scheduleDetails.assessment.name) || 'Assessment' }}
               </div>
               -
               <div
                 class="schedule-assessment-name"
                 style="display: inline-block; vertical-align: middle; margin-left: 12px"
               >
-                {{
-                  formatLocalDateTime(scheduleDetails.schedule.date, scheduleDetails.schedule.time)
-                }}
+                {{ displayWhen }}
               </div>
             </div>
           </div>
@@ -62,6 +60,9 @@
               :class="['status-yellow', { active: scheduleStatus === 'scheduled' }]"
             >
               Scheduled
+              <span v-if="totalRecipients > 0" class="sent-count" :title="sendAtTooltip" style="margin-left:12px; font-size:13px; color:#444">
+                {{ sentSummary }}
+              </span>
             </span>
             <span
               v-if="scheduleStatus === 'failed'"
@@ -162,16 +163,14 @@
                   margin-right: 12px;
                 "
               >
-                {{ scheduleDetails.assessment.name }}
+                {{ (scheduleDetails.assessment && scheduleDetails.assessment.name) || 'Assessment' }}
               </div>
               -
               <div
                 class="schedule-assessment-name"
                 style="display: inline-block; vertical-align: middle; margin-left: 12px"
               >
-                {{
-                  formatLocalDateTime(scheduleDetails.schedule.date, scheduleDetails.schedule.time)
-                }}
+                {{ displayWhen }}
               </div>
             </div>
           </div>
@@ -290,9 +289,17 @@ export default {
       if (!this.scheduleDetails || !this.scheduleDetails.emails) return [];
       const schedule = this.scheduleDetails.schedule;
       if (!schedule) return [];
+      const assessmentId = this.scheduleDetails.assessment && this.scheduleDetails.assessment.id;
+      if (!assessmentId) return [];
       return (this.scheduleDetails.emails || []).filter(
-        (e) => e && e.assessment_id === this.scheduleDetails.assessment.id
+        (e) => e && e.assessment_id === assessmentId
       );
+    },
+    // Safe display string for the header date/time
+    displayWhen() {
+      const schedule = (this.scheduleDetails && this.scheduleDetails.schedule) || null;
+      if (!schedule) return '';
+      return this.formatLocalDateTime(schedule.date, schedule.time);
     },
     scheduleStatus() {
       const details = this.scheduleDetails;
@@ -329,12 +336,27 @@ export default {
       })();
 
       const scheduleInFuture = typeof scheduleTimestamp === 'number' && scheduleTimestamp >= nowUtc;
+      // Prefer backend-tracked delivery status via schedule.notified_member_ids when available
+      try {
+        const schedule = (this.scheduleDetails && this.scheduleDetails.schedule) || null;
+        if (schedule) {
+          const memberIds = this.parseArrayFieldGeneric(schedule.member_ids);
+          const notifiedIds = this.parseArrayFieldGeneric(schedule.notified_member_ids);
+          const total = memberIds.length;
+          const notified = notifiedIds.length;
+          if (total > 0 && notified >= total) return 'sent';
+          if (scheduleInFuture) return 'scheduled';
+          if (notified > 0) return 'scheduled'; // partial
+        }
+      } catch (err) {
+        console.debug && console.debug('scheduleStatus: parse error', err);
+      }
 
+      // Fallback to older heuristics using emails/notifications
       const emails = (this.filteredEmails || []).filter(Boolean);
       // If backend returned matching in-app notifications for this assessment, treat as sent
       const notifications = (this.scheduleDetails && this.scheduleDetails.notifications) || [];
       if (notifications.length) {
-        // There are in-app AssessmentInvitation notifications recorded — treat as sent
         return 'sent';
       }
       if (emails.length) {
@@ -456,6 +478,26 @@ export default {
 
       return rows;
     },
+    totalRecipients() {
+      const schedule = (this.scheduleDetails && this.scheduleDetails.schedule) || null;
+      return this.parseArrayFieldGeneric(schedule ? schedule.member_ids : null).length;
+    },
+    notifiedCount() {
+      const schedule = (this.scheduleDetails && this.scheduleDetails.schedule) || null;
+      return this.parseArrayFieldGeneric(schedule ? schedule.notified_member_ids : null).length;
+    },
+    sentSummary() {
+      const total = this.totalRecipients || 0;
+      const notf = this.notifiedCount || 0;
+      return `${notf}/${total} Sent`;
+    },
+    sendAtTooltip() {
+      const schedule = (this.scheduleDetails && this.scheduleDetails.schedule) || null;
+      if (!schedule) return '';
+      const tz = schedule.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      const when = this.formatLocalDateTime(schedule.date, schedule.time) || '';
+      return tz ? `${when} (${tz})` : when;
+    },
   },
   methods: {
     // ---- Helpers for memberDetailMap ----
@@ -542,6 +584,18 @@ export default {
         const cleaned = v.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(/\s+/g, '');
         return cleaned.split(',').filter(Boolean).map(Number);
       }
+    },
+    parseArrayFieldGeneric(v) {
+      if (!v) return [];
+      if (Array.isArray(v)) return v.map(Number).filter(Boolean);
+      try {
+        const parsed = typeof v === 'string' ? JSON.parse(v) : v;
+        if (Array.isArray(parsed)) return parsed.map(Number).filter(Boolean);
+      } catch (err) {
+        if (console && typeof console.debug === 'function') console.debug('parseArrayFieldGeneric parse failed', err);
+      }
+      const cleaned = String(v).replaceAll('[', '').replaceAll(']', '').replaceAll(/\s+/g, '');
+      return cleaned.split(',').filter(Boolean).map(Number);
     },
     groupedByScheduleGroupIds(list, scheduleGroupIds) {
       const map = new Map();

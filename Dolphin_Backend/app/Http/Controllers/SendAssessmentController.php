@@ -11,9 +11,7 @@ use Exception;
 
 class SendAssessmentController extends Controller
 {
-    /**
-     * Handles the request to send an assessment email to a lead.
-     */
+    
     public function send(Request $request)
     {
         try {
@@ -32,7 +30,7 @@ class SendAssessmentController extends Controller
             $registrationUrl = $this->buildRegistrationUrl($lead, $validated['registration_link']);
             $htmlBody = $this->prepareEmailBody($validated, $registrationUrl);
 
-            // Respect an environment flag to avoid sending external emails in local/dev CI
+            
             if (env('DISABLE_EXTERNAL_CALLS', false)) {
                 Log::info('Skipping sending assessment email because DISABLE_EXTERNAL_CALLS is set', ['to' => $validated['to']]);
                 if ($lead) {
@@ -52,7 +50,7 @@ class SendAssessmentController extends Controller
                 });
             } catch (\Throwable $e) {
                 Log::warning('Mail::html failed in SendAssessmentController: ' . $e->getMessage(), ['to' => $validated['to']]);
-                // swallow email errors but continue to update lead status
+                
             }
 
             if ($lead) {
@@ -69,9 +67,7 @@ class SendAssessmentController extends Controller
         }
     }
 
-    /**
-     * Finds a lead based on the validated request data.
-     */
+    
     private function findLead(array $validated): ?Lead
     {
         if (!empty($validated['lead_id'])) {
@@ -80,9 +76,7 @@ class SendAssessmentController extends Controller
         return Lead::where('email', $validated['to'])->first();
     }
 
-    /**
-     * Builds the registration URL with lead data as query parameters.
-     */
+    
     private function buildRegistrationUrl(?Lead $lead, string $baseUrl): string
     {
         if (!$lead) {
@@ -93,7 +87,7 @@ class SendAssessmentController extends Controller
             'first_name' => $lead->first_name,
             'last_name' => $lead->last_name,
             'email' => $lead->email,
-            // Lead uses phone_number column
+            
             'phone' => $lead->phone_number,
             'organization_name' => $lead->organization_name,
             'organization_size' => $lead->organization_size,
@@ -104,19 +98,17 @@ class SendAssessmentController extends Controller
         return $baseUrl . (parse_url($baseUrl, PHP_URL_QUERY) ? '&' : '?') . $queryString;
     }
 
-    /**
-     * Prepares the final HTML content for the email.
-     */
+    
     private function prepareEmailBody(array $validated, string $registrationUrl): string
     {
         $htmlBody = $validated['body'];
 
-        // Replace placeholders
+        
         $placeholders = ['{{registrationUrl}}', '{{registration_link}}', '{{name}}'];
         $replacements = [$registrationUrl, $registrationUrl, $validated['name']];
         $htmlBody = str_replace($placeholders, $replacements, $htmlBody);
 
-        // Wrap in a basic HTML structure if not already present
+        
         if (stripos($htmlBody, '<html') === false) {
             $safeSubject = htmlspecialchars($validated['subject'], ENT_QUOTES, 'UTF-8');
             return "<!DOCTYPE html><html><head><title>{$safeSubject}</title></head><body>{$htmlBody}</body></html>";
@@ -125,23 +117,36 @@ class SendAssessmentController extends Controller
         return $htmlBody;
     }
 
-    /**
-     * Updates the lead's status after sending the assessment.
-     */
+    
     private function updateLeadStatus(Lead $lead): void
     {
         try {
             $lead->assessment_sent_at = now();
 
-            $userExists = User::where('email', $lead->email)->exists();
+            
+            
+            $userExists = User::where('email', $lead->email)
+                ->whereNull('deleted_at')
+                ->whereNotNull('password')
+                ->exists();
 
-            if (!$userExists && strtolower($lead->status) !== 'registered') {
-                $lead->status = 'Assessment Sent';
-            } elseif ($userExists) {
-                // If a user exists, ensure the lead status is correctly marked as Registered.
+            Log::info('SendAssessmentController:updateLeadStatus - userExists check', [
+                'lead_id' => $lead->id,
+                'lead_email' => $lead->email,
+                'user_exists' => $userExists,
+                'current_lead_status' => $lead->status,
+            ]);
+
+            if ($userExists) {
+                
                 $lead->status = 'Registered';
                 if (!$lead->registered_at) {
                     $lead->registered_at = now();
+                }
+            } else {
+                
+                if (strtolower((string)$lead->status) !== 'registered') {
+                    $lead->status = 'Assessment Sent';
                 }
             }
 
@@ -155,9 +160,7 @@ class SendAssessmentController extends Controller
         }
     }
 
-    /**
-     * Overrides the default mailer to SMTP for development/testing if configured.
-     */
+    
     private function configureMailerForDevelopment(): void
     {
         if (config('mail.default') === 'log' && env('MAIL_FORCE_SMTP', false)) {
@@ -166,9 +169,7 @@ class SendAssessmentController extends Controller
         }
     }
 
-    /**
-     * Generates the final JSON success response.
-     */
+    
     private function generateSuccessResponse(): \Illuminate\Http\JsonResponse
     {
         $response = [

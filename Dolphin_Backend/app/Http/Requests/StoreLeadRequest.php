@@ -6,20 +6,17 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreLeadRequest extends FormRequest
 {
-    //Determine if the user is authorized to make this request.
-    //@return bool
+    
+    
 
     public function authorize(): bool
     {
         return true;
     }
 
+    
 
-    // Get the validation rules that apply to the request.
-
-    /**
-     * @return array<string, mixed>
-     */
+    
     public function rules(): array
     {
         return [
@@ -28,7 +25,7 @@ class StoreLeadRequest extends FormRequest
             'email'             => 'required|string|email|max:255|unique:users,email,NULL,id,deleted_at,NULL',
             'phone'             => 'required|regex:/^[6-9]\d{9}$/',
             'referral_source_id' => 'required|integer|exists:referral_sources,id',
-            'find_us'           => 'nullable|integer|exists:referral_sources,id', // backward compatibility
+            'find_us'           => 'nullable|integer|exists:referral_sources,id', 
             'organization_name' => 'required|string|max:500',
             'organization_size' => 'required|string',
             'notes'             => 'nullable|string',

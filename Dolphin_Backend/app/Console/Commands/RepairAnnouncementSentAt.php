@@ -7,16 +7,10 @@ use Illuminate\Support\Facades\DB;
 
 class RepairAnnouncementSentAt extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * Optional parameter: announcement id
-     */
+    
     protected $signature = 'repair:announcement-sent-at {announcement_id?}';
 
-    /**
-     * The console command description.
-     */
+    
     protected $description = 'Repair announcements.sent_at by inferring from notifications or dispatched_at';
 
     public function handle()
@@ -41,7 +35,7 @@ class RepairAnnouncementSentAt extends Command
         foreach ($rows as $r) {
             $this->info("Processing announcement id={$r->id}");
 
-            // try to find notifications referencing this announcement
+            
             $notif = DB::table('notifications')
                 ->where('type', 'App\\Notifications\\GeneralNotification')
                 ->whereRaw("JSON_EXTRACT(data, '$.announcement_id') = ?", [$r->id])

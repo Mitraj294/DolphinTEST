@@ -18,15 +18,11 @@ Successfully opened test file.
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@@@ Caution: word (conforming) exists in testFile.txt but not in selfWeight.txt
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @@@ Caution: word (nonconforming) exists in testFile.txt but not in selfWeight.txt
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@@@ Caution: word (nonconforming) exists in testFile.txt but not in conceptWeight.txt
+@@@ Caution: word (deeply) exists in testFile.txt but not in conceptWeight.txt
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 Finished digesting and closed test file.
 

@@ -14,7 +14,7 @@ class CleanupRoles extends Command
     {
         $this->info('Starting roles cleanup...');
 
-        // Find the latest id for each user in user_roles
+        
         $sub = DB::table('user_roles')
             ->select(DB::raw('MAX(created_at) as max_created_at, user_id'))
             ->groupBy('user_id');
@@ -32,7 +32,7 @@ class CleanupRoles extends Command
             $kept[$r->user_id] = $r->created_at;
         }
 
-        // Delete any rows where created_at is less than the kept timestamp for that user
+        
         $deleted = 0;
         foreach ($kept as $userId => $createdAt) {
             $d = DB::table('user_roles')

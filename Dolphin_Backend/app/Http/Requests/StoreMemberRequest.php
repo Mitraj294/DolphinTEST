@@ -1,14 +1,5 @@
 <?php
 
-/**
- * DEPRECATED REQUEST: This validates data for the obsolete 'members' table.
- *
- * The 'members' and 'member_roles' tables no longer exist.
- * Use organization_member pivot table and user_roles instead.
- *
- * This request is kept ONLY for backwards compatibility with MemberController.
- */
-
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -20,11 +11,7 @@ class StoreMemberRequest extends FormRequest
         return $this->user()->hasRole('organizationadmin');
     }
 
-    /**
-     * Validation rules for creating a member (legacy).
-     *
-     * @return array<string, mixed>
-     */
+    
     public function rules(): array
     {
         return [
@@ -39,11 +26,7 @@ class StoreMemberRequest extends FormRequest
         ];
     }
 
-    /**
-     * Custom messages for validation.
-     *
-     * @return array<string, string>
-     */
+    
     public function messages(): array
     {
         return [

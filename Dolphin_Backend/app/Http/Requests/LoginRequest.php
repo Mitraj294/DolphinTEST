@@ -11,11 +11,7 @@ class LoginRequest extends FormRequest
         return true;
     }
 
-    /**
-     * Validation rules for login.
-     *
-     * @return array<string, mixed>
-     */
+    
     public function rules(): array
     {
         return [

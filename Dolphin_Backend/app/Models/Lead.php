@@ -22,11 +22,7 @@ class Lead extends Model
         'registered_at',
     ];
 
-    /**
-     * Cast date/time fields to Carbon instances.
-     *
-     * @var array
-     */
+    
     protected $casts = [
         'assessment_sent_at' => 'datetime',
         'registered_at' => 'datetime',

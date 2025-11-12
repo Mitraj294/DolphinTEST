@@ -7,6 +7,7 @@ use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Models\User;
 use App\Models\WebhookLog;
+use App\Models\Lead;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,9 +22,7 @@ use UnexpectedValueException;
 
 class StripeWebhookController extends Controller
 {
-    /**
-     * Primary entry point for Stripe webhooks.
-     */
+    
     public function handleWebhook(Request $request): JsonResponse
     {
         $secret = config('services.stripe.webhook_secret');
@@ -97,16 +96,16 @@ class StripeWebhookController extends Controller
         $stripeSubscriptionId = $session->subscription ?? null;
         $stripeSubscription = null;
 
-        // If metadata did not include a local plan id, try to infer the plan
-        // from the Stripe objects (subscription items or checkout session line items)
-        // by matching the Stripe price id to our `plans.stripe_price_id`.
+        
+        
+        
         if (! $plan) {
             $priceId = null;
 
-            // If the checkout created a subscription, retrieve it and inspect items
+            
             if ($stripeSubscriptionId) {
                 try {
-                    // expand items.price and default_payment_method to extract useful info
+                    
                     $stripeSubscription = StripeSubscription::retrieve($stripeSubscriptionId, [
                         'expand' => ['items.data.price', 'default_payment_method'],
                     ]);
@@ -120,7 +119,7 @@ class StripeWebhookController extends Controller
                 }
             }
 
-            // If still not found, attempt to retrieve the Checkout Session's line items
+            
             if (empty($priceId) && ! empty($session->id)) {
                 try {
                     $checkout = \Stripe\Checkout\Session::retrieve($session->id, [
@@ -148,7 +147,7 @@ class StripeWebhookController extends Controller
             $user->forceFill(['stripe_id' => $session->customer])->save();
         }
 
-        // Retrieve subscription if not already fetched above
+        
         if (empty($stripeSubscription)) {
             $stripeSubscriptionId = $session->subscription ?? null;
             if (! $stripeSubscriptionId) {
@@ -175,7 +174,7 @@ class StripeWebhookController extends Controller
         $startedAt = $this->timestampToCarbon($stripeSubscription->current_period_start ?? $session->created ?? null);
         $currentPeriodEnd = $this->timestampToCarbon($stripeSubscription->current_period_end ?? null);
 
-        // Compute a sensible ends_at if Stripe did not provide one (fallback to plan frequency)
+        
         $endsAt = $currentPeriodEnd;
         if (! $endsAt && $plan) {
             if ($plan->type === 'monthly') {
@@ -205,13 +204,30 @@ class StripeWebhookController extends Controller
                 'payment_method_label' => $this->formatPaymentMethodLabel($paymentMethod),
             ]
         );
+
+        
+        try {
+            if (! empty($user) && ! empty($user->email)) {
+                $lead = Lead::where('email', $user->email)->first();
+                if ($lead) {
+                    $lead->status = 'Registered';
+                    if (empty($lead->registered_at)) {
+                        $lead->registered_at = now();
+                    }
+                    $lead->save();
+                    Log::info('Stripe webhook: marked lead Registered after checkout', ['lead_id' => $lead->id, 'user_id' => $user->id]);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning('Stripe webhook: failed to update lead status after checkout: ' . $e->getMessage());
+        }
     }
 
     private function handleInvoicePaid(object $invoice): void
     {
-        // Some invoices are one-off or may arrive without a subscription id.
-        // Try to resolve the subscription by stripe_subscription_id first; if
-        // missing, attempt to match by customer to a recent subscription in DB.
+        
+        
+        
         $stripeSubscriptionId = $invoice->subscription ?? null;
 
         if ($stripeSubscriptionId) {
@@ -221,7 +237,7 @@ class StripeWebhookController extends Controller
         }
 
         if (! $subscription) {
-            // Try to find a subscription for this customer (best-effort).
+            
             $customerId = $invoice->customer ?? null;
             if ($customerId) {
                 $subscription = Subscription::where('stripe_customer_id', $customerId)
@@ -231,7 +247,7 @@ class StripeWebhookController extends Controller
         }
 
         if (! $subscription) {
-            // Log the payload for manual inspection and skip processing this invoice.
+            
             Log::warning('Invoice webhook arrived without resolvable subscription', [
                 'invoice_id' => $invoice->id ?? null,
                 'customer' => $invoice->customer ?? null,
@@ -246,7 +262,7 @@ class StripeWebhookController extends Controller
             return;
         }
 
-        // Determine due date: prefer Stripe's due_date, otherwise fallback to created + 1 day
+        
         $dueTs = $invoice->due_date ?? $invoice->created ?? null;
         $dueDate = $this->timestampToCarbon($dueTs) ?? $this->timestampToCarbon($invoice->created ?? null)?->addDay();
 
@@ -291,8 +307,8 @@ class StripeWebhookController extends Controller
 
     private function convertStripeObjectToArray($object): array
     {
-        // Convert Stripe objects/collections to arrays safely.
-        // Limit recursion depth and avoid expensive json_encode on huge nested structures.
+        
+        
         $initialDepth = 3;
 
         $convert = function ($value, $depth) use (&$convert) {
@@ -310,13 +326,13 @@ class StripeWebhookController extends Controller
             }
 
             if (is_object($value)) {
-                // Prefer native toArray / jsonSerialize if available on Stripe objects
+                
                 if (method_exists($value, 'toArray')) {
                     $arr = $value->toArray();
                 } elseif ($value instanceof \JsonSerializable) {
                     $arr = $value->jsonSerialize();
                 } else {
-                    // Fallback to a safe json encode/decode but catch any exceptions
+                    
                     try {
                         $arr = json_decode(json_encode($value), true) ?: [];
                     } catch (\Throwable $e) {
@@ -324,7 +340,7 @@ class StripeWebhookController extends Controller
                     }
                 }
 
-                // Recursively convert but limit depth
+                
                 $out = [];
                 foreach ($arr as $k => $v) {
                     $out[$k] = $convert($v, $depth - 1);
@@ -333,16 +349,14 @@ class StripeWebhookController extends Controller
                 return $out;
             }
 
-            // scalar
+            
             return $value;
         };
 
         return $convert($object, $initialDepth) ?: [];
     }
 
-    /**
-     * Handle subscription updates from Stripe and sync important fields.
-     */
+    
     private function handleSubscriptionUpdated(object $stripeSubscription): void
     {
         $stripeSubscription = $this->convertStripeObjectToArray($stripeSubscription);
@@ -372,9 +386,7 @@ class StripeWebhookController extends Controller
         ])->save();
     }
 
-    /**
-     * Handle subscription deletion/cancellation events.
-     */
+    
     private function handleSubscriptionDeleted(object $stripeSubscription): void
     {
         $stripeSubscription = $this->convertStripeObjectToArray($stripeSubscription);
@@ -390,13 +402,13 @@ class StripeWebhookController extends Controller
             return;
         }
 
-        // Set ends_at to current_period_end if present, otherwise mark deleted_at now
+        
         $currentPeriodEnd = isset($stripeSubscription['current_period_end']) ? $this->timestampToCarbon($stripeSubscription['current_period_end']) : null;
 
         if ($currentPeriodEnd) {
             $sub->forceFill(['status' => $stripeSubscription['status'] ?? 'canceled', 'current_period_end' => $currentPeriodEnd, 'ends_at' => $currentPeriodEnd])->save();
         } else {
-            $sub->delete(); // uses SoftDeletes -> sets deleted_at
+            $sub->delete(); 
         }
     }
 

@@ -18,11 +18,14 @@ class OrganizationAssessment extends Model
         'name',
         'date',
         'time',
+        'timezone',
+        'send_at',
     ];
 
     protected $casts = [
         'date' => 'date',
-        'time' => 'datetime',
+        'time' => 'string',
+        'send_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -44,7 +47,7 @@ class OrganizationAssessment extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'organization_assessment_member')
-            ->withPivot('status')
+            ->withPivot('status', 'notified_at')
             ->withTimestamps();
     }
 

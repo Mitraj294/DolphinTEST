@@ -23,7 +23,7 @@ use App\Services\AuthUserService;
 
 class AuthController extends Controller
 {
-    // Register a new user, their details, and organization.
+    
 
     public function register(RegisterRequest $request)
     {
@@ -39,14 +39,14 @@ class AuthController extends Controller
         }
     }
 
-    // Simple user-only registration. Does not create or link organizations.
+    
     public function registerUserOnly(SimpleRegisterRequest $request)
     {
         DB::beginTransaction();
         try {
             $validated = $request->validated();
 
-            // Create a user record with minimal fields
+            
             $user = User::create([
                 'first_name' => $validated['first_name'],
                 'last_name' => $validated['last_name'],
@@ -56,18 +56,18 @@ class AuthController extends Controller
                 'organization_id' => null,
             ]);
 
-            // Assign default 'user' role if present
+            
             try {
                 $role = Role::where('name', 'user')->first();
                 if ($role) {
                     $user->roles()->attach($role);
                 }
             } catch (\Exception $e) {
-                // Non-fatal: log and continue
+                
                 Log::warning('Failed to attach role during simple registration', ['error' => $e->getMessage()]);
             }
 
-            // Update lead status if applicable (best-effort)
+            
             try {
                 (new AuthUserService())->updateLeadStatus($user->email);
             } catch (\Exception $e) {
@@ -84,7 +84,7 @@ class AuthController extends Controller
         }
     }
 
-    //Authenticate a user and issue a Passport token.
+    
 
     public function login(LoginRequest $request)
     {
@@ -100,7 +100,7 @@ class AuthController extends Controller
         }
 
         $tokenData = json_decode($tokenResponse->getContent(), true);
-        // Update organization's last_contacted when an organization admin logs in
+        
         try {
             $isOrgAdmin = $user->roles()->where('name', 'organizationadmin')->exists();
             if ($isOrgAdmin) {
@@ -110,7 +110,7 @@ class AuthController extends Controller
             Log::warning('Failed to update organization last_contacted on login', ['user_id' => $user->id, 'error' => $e->getMessage()]);
         }
 
-        // Rebuild user payload after potential org update
+        
         $service = new AuthUserService();
         $userPayload = $service->buildUserPayload($user->fresh());
 
@@ -123,7 +123,7 @@ class AuthController extends Controller
         ]);
     }
 
-    //Get the authenticated user's profile information.
+    
 
     public function profile(Request $request)
     {
@@ -131,7 +131,7 @@ class AuthController extends Controller
         return response()->json($userPayload);
     }
 
-    //Update the authenticated user's profile.
+    
 
     public function updateProfile(UpdateProfileRequest $request)
     {
@@ -157,8 +157,7 @@ class AuthController extends Controller
         }
     }
 
-
-    //Change the authenticated user's password.
+    
 
     public function changePassword(ChangePasswordRequest $request)
     {
@@ -174,7 +173,7 @@ class AuthController extends Controller
         return response()->json(['message' => 'Password changed successfully']);
     }
 
-    // Send a password reset link to the user.
+    
 
     public function sendResetLinkEmail(Request $request)
     {
@@ -187,7 +186,7 @@ class AuthController extends Controller
             : response()->json(['message' => __($status)], 400);
     }
 
-    // Reset the user's password.
+    
 
     public function resetPassword(Request $request)
     {
@@ -207,7 +206,7 @@ class AuthController extends Controller
             : response()->json(['message' => __($status)], 400);
     }
 
-    // Soft delete the authenticated user's account.
+    
 
     public function deleteAccount(Request $request)
     {
@@ -215,35 +214,35 @@ class AuthController extends Controller
         return response()->json(['message' => 'Account deleted successfully']);
     }
 
-    // Get the currently authenticated user. Alias for profile().
+    
 
     public function user(Request $request)
     {
         return $this->profile($request);
     }
 
-    // Log the user out (Revoke the token).
+    
 
     public function logout(Request $request)
     {
         try {
             $token = $request->user()->token();
             if ($token) {
-                // Revoke the current access token
+                
                 $token->revoke();
             } elseif (method_exists($request->user(), 'tokens')) {
-                // Fallback: delete all tokens for the user (safe in most dev contexts)
+                
                 $request->user()->tokens()->delete();
             }
         } catch (\Exception $e) {
-            // Log and continue so logout remains idempotent
+            
             Log::warning('Failed to revoke token on logout', ['error' => $e->getMessage()]);
         }
 
         return response()->json(['message' => 'Successfully logged out']);
     }
 
-    // Check the validity and expiration of the current token.
+    
 
     public function tokenStatus(Request $request)
     {
@@ -251,7 +250,7 @@ class AuthController extends Controller
         try {
             $token = $request->user()->token();
         } catch (\Exception $e) {
-            // ignore
+            
         }
 
         if (empty($token)) {
@@ -267,19 +266,18 @@ class AuthController extends Controller
         ]);
     }
 
-    // Private Helper Methods
-    // Helper methods related to token issuance remain here; user-related helpers moved to AuthUserService.
-
+    
+    
 
     private function issueToken(Request $request)
     {
-        // Resolve client id/secret (prefer env, fall back to DB). Helpers keep logic small.
+        
         [$clientId, $clientSecret] = $this->resolveClientCredentials();
 
         if (empty($clientId) || empty($clientSecret)) {
             Log::error('Password grant client id/secret missing or unusable. Cannot issue OAuth token.', ['client_id' => $clientId]);
 
-            // Provide an actionable error to the operator so they can fix deployment config.
+            
             return response()->json([
                 'error' => 'server_error',
                 'error_description' => 'OAuth password client_id or client_secret not available. Set PASSPORT_PASSWORD_CLIENT_ID and PASSPORT_PASSWORD_CLIENT_SECRET in environment or recreate a password grant client with a known secret.'
@@ -307,9 +305,7 @@ class AuthController extends Controller
         return $response;
     }
 
-    /**
-     * Helpers to resolve OAuth password client id/secret.
-     */
+    
     private function isBcryptHash(?string $val): bool
     {
         return !empty($val) && is_string($val) && preg_match('/^\$2[aby]\$/', $val);
@@ -334,13 +330,13 @@ class AuthController extends Controller
         $clientId = config('passport.password_client_id');
         $clientSecret = config('passport.password_client_secret');
 
-        // If env-provided secret looks like a bcrypt hash, do not use it as plaintext.
+        
         if ($this->isBcryptHash($clientSecret)) {
             Log::warning('PASSPORT_PASSWORD_CLIENT_SECRET appears to be a hashed value; ignoring env secret.', ['client_id' => $clientId]);
             $clientSecret = null;
         }
 
-        // If both provided via config, return early
+        
         if (!empty($clientId) && !empty($clientSecret)) {
             return [$clientId, $clientSecret];
         }

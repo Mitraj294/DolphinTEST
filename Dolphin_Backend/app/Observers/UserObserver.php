@@ -9,14 +9,12 @@ use Illuminate\Support\Carbon;
 
 class UserObserver
 {
-    /**
-     * Handle the User "deleted" event (soft delete).
-     */
+    
     public function deleted(User $user): void
     {
         $now = Carbon::now();
         try {
-            // Soft-delete full records where appropriate
+            
             $softDeleteTables = [
                 'organizations',
                 'groups',
@@ -31,7 +29,7 @@ class UserObserver
                 }
             }
 
-            // Nullify ownership on tables we want to keep but dissociate
+            
             $nullifyTables = [
                 'answers',
                 'assessments',
@@ -48,17 +46,15 @@ class UserObserver
                 }
             }
         } catch (\Exception $e) {
-            // Log and continue — observer should not block app flow
+            
             Log::error('UserObserver deleted error: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Handle the User "restored" event.
-     */
+    
     public function restored(User $user): void
     {
-        // Currently no additional restore handling is needed; method retained for parity.
+        
         Log::info('User restored', ['user_id' => $user->getKey()]);
     }
 }

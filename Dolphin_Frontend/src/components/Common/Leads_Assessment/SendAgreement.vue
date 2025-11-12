@@ -65,29 +65,26 @@
 </template>
 
 <script>
-// Layout and Form UI imports
+
 import { FormInput, FormLabel, FormRow } from '@/components/Common/Common_UI/Form';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import Editor from '@tinymce/tinymce-vue';
 import axios from 'axios';
 
-// Component: SendAgreement
-// Purpose: Send agreement/payment link email to leads. Supports TinyMCE editor
-//          with dynamic asset loading and passive event shimming.
 export default {
   name: 'SendAgreement',
   components: { MainLayout, Editor, FormInput, FormRow, FormLabel },
 
   data() {
     return {
-      leadId: null, // Lead ID (from route param or query)
-      to: '', // Recipient email
-      recipientName: '', // Recipient name
-      subject: 'Agreement and Payment Link', // Default subject
-      templateContent: '', // Email template HTML content
-      sending: false, // Sending state
+      leadId: null, 
+      to: '', 
+      recipientName: '', 
+      subject: 'Agreement and Payment Link', 
+      templateContent: '', 
+      sending: false, 
 
-      // TinyMCE Configuration (Self-hosted assets)
+      
       tinymceConfigSelfHosted: {
         height: 500,
         base_url: '/tinymce',
@@ -134,19 +131,19 @@ export default {
         content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; margin: 20px; }',
         license_key: 'gpl',
       },
-      tinyMceLoaded: false, // Whether TinyMCE assets are loaded
-      tinyMceShimPatched: false, // Whether passive event shim is patched
-      tinyMceShimRestoreTimer: null, // Timer for restoring event shim
+      tinyMceLoaded: false, 
+      tinyMceShimPatched: false, 
+      tinyMceShimRestoreTimer: null, 
     };
   },
 
-  // Lifecycle Hooks
+  
   mounted() {
-    // Get leadId from route param or query
+    
     const leadId = this.$route.params.id || this.$route.query.lead_id || null;
     this.leadId = leadId;
 
-    // Dynamically load TinyMCE assets and patch passive event listeners
+    
     this.loadTinyMceAssets()
       .then(() => {
         this.tinyMceLoaded = true;
@@ -156,7 +153,7 @@ export default {
         this.tinyMceLoaded = false;
       });
 
-    // Load lead data if leadId is present, else fetch generic template
+    
     if (leadId) {
       this.loadInitialLeadData(leadId);
     } else {
@@ -164,9 +161,9 @@ export default {
     }
   },
 
-  // Watchers
+  
   watch: {
-    // Whenever recipient email changes (and no leadId), re-fetch template
+    
     to(newEmail, oldEmail) {
       if (newEmail && newEmail !== oldEmail && !this.leadId) {
         this.fetchServerTemplate();
@@ -174,9 +171,9 @@ export default {
     },
   },
 
-  // Methods
+  
   methods: {
-    // Load initial lead data from backend
+    
     async loadInitialLeadData(leadId) {
       try {
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
@@ -189,7 +186,7 @@ export default {
         if (leadObj) {
           this.to = leadObj.email || '';
           this.recipientName = `${leadObj.first_name || ''} ${leadObj.last_name || ''}`.trim();
-          // Fetch template using lead's data
+          
           this.fetchServerTemplate();
         }
       } catch (e) {
@@ -198,26 +195,41 @@ export default {
       }
     },
 
-    // Fetch agreement email template from server
+    
     async fetchServerTemplate() {
       try {
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
         const name = this.recipientName || this.to.substring(0, this.to.indexOf('@')) || '';
-        // Preview URL for plans (used in template)
+        
         const frontendBase = 'http://127.0.0.1:8080';
         const previewPlansLink = `${frontendBase}/subscriptions/plans`;
         const params = { checkout_url: previewPlansLink, name };
         const res = await axios.get(`${API_BASE_URL}/api/email-template/lead-agreement`, {
           params,
         });
-        let html = res?.data ? String(res.data) : '';
+  let html = res?.data ? String(res.data) : '';
 
-        // Only extract the .email-container inner HTML for editor
+        
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
         const container = doc.querySelector('.email-container');
         if (container) html = container.innerHTML;
 
+        
+        
+        if (html && typeof html === 'object' && typeof html.then === 'function') {
+          try {
+            const awaited = await html;
+            console.debug && console.debug('SendAgreement: awaited template promise, result type:', typeof awaited, awaited);
+            html = String(awaited || '');
+          } catch (e) {
+            console.debug && console.debug('SendAgreement: error awaiting template promise', e);
+            html = '';
+          }
+        }
+
+        
+        console.debug && console.debug('SendAgreement: fetched server template, type:', typeof html, html);
         this.templateContent = html;
       } catch (e) {
         console.debug && console.debug('Failed to fetch server template:', e?.message || e);
@@ -225,13 +237,13 @@ export default {
       }
     },
 
-    // Handle form submission: send agreement email
+    
     async handleSendAgreement() {
       if (this.sending) return;
       this.sending = true;
       try {
         const name = this.recipientName || this.to.substring(0, this.to.indexOf('@')) || '';
-        // Replace # placeholder links with real plans link
+        
         const plansLink = 'http://127.0.0.1:8080/subscriptions/plans';
         const bodyWithLinks = String(this.templateContent).replaceAll(
           /href=(["'])#(?:0)?\1/g,

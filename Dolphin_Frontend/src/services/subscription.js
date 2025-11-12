@@ -33,16 +33,34 @@ export async function createCheckoutSession(priceId, opts = {}) {
   try {
     const headers = authHeaders();
     const payload = { price_id: priceId, ...opts };
-    const res = await axios.post(
-      `${API_BASE_URL}/api/subscription/create-checkout-session`,
-      payload,
-      { headers }
-    );
+
+    // If not authenticated (no bearer token), ensure we send an email when possible
+    // to satisfy the guest endpoint validations. Try to read from stored user.
+    if (!headers.Authorization && !payload.email) {
+      try {
+        const storageModule = await import('./storage');
+        const storage = storageModule.default;
+        const userObj = storage.get('user');
+        const storedEmail = (userObj && userObj.email) || storage.get('userEmail') || null;
+        if (storedEmail && !payload.email) payload.email = storedEmail;
+      } catch (e) {
+        console.debug?.('createCheckoutSession: could not read user email from storage', e);
+        return;
+      }
+    }
+
+    // Choose endpoint based on auth. If authenticated, use the secure
+    // /api/stripe/checkout-session endpoint which doesn't require email.
+    const url = headers.Authorization
+      ? `${API_BASE_URL}/api/stripe/checkout-session`
+      : `${API_BASE_URL}/api/subscription/create-checkout-session`;
+
+    const res = await axios.post(url, payload, { headers });
     // Stripe Session endpoint returns { id, url }
     return res.data;
   } catch (err) {
     console.debug?.('createCheckoutSession failed:', err?.message || err);
-   return [];
+   throw err;
   }
 }
 

@@ -12,36 +12,21 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use App\Mail\LeadAssessmentRegistrationMail;
 
-// LeadController
-// Controller for managing Lead operations:
-//  - Create, update, show, list, delete leads
-//  - Generate registration and agreement email templates
-//  - Prefill registration form data
-//  - Get distinct 'find_us' options for leads
-// Structure:
-// 1. Validation Rules (LeadValidationRules)
-// 2. Message Constants (Message)
-// 3. Controller Methods
-
-
-
-// 3. LeadController
-
 class LeadController extends Controller
 {
-    // Validation constants (kept local to the controller to comply with PSR-12
-    // single-class-per-file expectations).
+    
+    
     private const REQUIRED_STRING = 'required|string';
     private const REQUIRED_EMAIL = 'required|email';
     private const OPTIONAL_STRING = 'nullable|string';
 
-    // Common messages
+    
     private const MESSAGE = 'Lead Not Found';
-    // Update an existing lead.
-    // Handles PATCH for notes-only update.
-    // @param Request $request
-    // @param int $id
-    // @return \Illuminate\Http\JsonResponse
+    
+    
+    
+    
+    
 
     public function update(Request $request, int $id): JsonResponse
     {
@@ -51,7 +36,7 @@ class LeadController extends Controller
             return response()->json(['message' => self::MESSAGE], 404);
         }
 
-        // Full update validation rules
+        
         $data = $request->validate([
             'first_name'         => self::REQUIRED_STRING,
             'last_name'          => self::REQUIRED_STRING,
@@ -72,7 +57,7 @@ class LeadController extends Controller
             'city_id'            => 'nullable|integer|exists:cities,id',
         ]);
 
-        // Update the lead itself for its own columns only
+        
         $leadUpdate = [
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
@@ -82,7 +67,7 @@ class LeadController extends Controller
         ];
         $lead->update($leadUpdate);
 
-        // Handle related Organization + Address updates when provided
+        
         $orgFieldKeys = [
             'organization_name', 'organization_size', 'referral_source_id', 'referral_other_text',
             'address_line_1', 'address_line_2', 'country_id', 'state_id', 'city_id', 'zip_code'
@@ -90,7 +75,7 @@ class LeadController extends Controller
         $hasOrgRelatedInput = collect($orgFieldKeys)->some(fn($k) => array_key_exists($k, $data) && $data[$k] !== null && $data[$k] !== '');
 
         if ($hasOrgRelatedInput || !empty($data['organization_id'])) {
-            // Resolve existing or create a new organization if fields provided
+            
             $org = null;
             if (!empty($lead->organization_id)) {
                 $org = \App\Models\Organization::find($lead->organization_id);
@@ -99,7 +84,7 @@ class LeadController extends Controller
             }
 
             if (!$org) {
-                // Create minimal organization if any org fields present
+                
                 $org = \App\Models\Organization::create([
                     'name' => $data['organization_name'] ?? null,
                     'size' => $data['organization_size'] ?? null,
@@ -111,7 +96,7 @@ class LeadController extends Controller
                 $lead->organization_id = $org->id;
                 $lead->save();
             } else {
-                // Update organization core fields if provided
+                
                 $newReferralSourceId = $data['referral_source_id'] ?? $org->referral_source_id;
                 $newReferralOtherText = null;
                 if ((int)$newReferralSourceId === 10) {
@@ -129,7 +114,7 @@ class LeadController extends Controller
                 }
             }
 
-            // Update or create address for organization when address fields provided
+            
             $addressPayload = array_intersect_key($data, array_flip([
                 'address_line_1', 'address_line_2', 'country_id', 'state_id', 'city_id', 'zip_code'
             ]));
@@ -142,15 +127,14 @@ class LeadController extends Controller
             }
         }
 
-        // Return the updated lead with minimal org info for UI coherence
+        
         $lead->load('organization.address', 'organization.referralSource');
         return response()->json(['message' => 'Lead updated successfully', 'lead' => $lead]);
     }
 
-
-    // Store a new lead.
-    // @param Request $request
-    // @return \Illuminate\Http\JsonResponse
+    
+    
+    
 
     public function store(Request $request): JsonResponse
     {
@@ -175,7 +159,7 @@ class LeadController extends Controller
             'create_organization' => 'nullable|boolean',
         ]);
 
-        // Prepare lead data - only include fields that actually exist in leads table
+        
         $leadData = [
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
@@ -185,10 +169,10 @@ class LeadController extends Controller
             'organization_id' => $data['organization_id'] ?? null,
         ];
 
-        // Create the lead first
+        
         $lead = Lead::create($leadData);
 
-        // If lead was successfully created, THEN create organization if requested
+        
         if ($lead && $request->has('create_organization') && $request->create_organization && !empty($data['organization_name'])) {
             try {
                 $org = \App\Models\Organization::create([
@@ -198,11 +182,11 @@ class LeadController extends Controller
                     'referral_other_text' => $data['referral_other_text'] ?? null,
                 ]);
 
-                // Update the lead with the new organization_id
+                
                 $lead->organization_id = $org->id;
                 $lead->save();
 
-                // Create organization address if address data provided
+                
                 if (!empty($data['address_line_1']) || !empty($data['country_id'])) {
                     \App\Models\OrganizationAddress::create([
                         'organization_id' => $org->id,
@@ -225,11 +209,11 @@ class LeadController extends Controller
                     'lead_id' => $lead->id,
                     'error' => $e->getMessage()
                 ]);
-                // Lead is still created, just without organization
+                
             }
         }
 
-        // If a user already exists with this email, mark the lead as Registered.
+        
         try {
             $userModel = '\App\\Models\\User';
             $matchedUser = $userModel::where('email', $lead->email)->first();
@@ -248,10 +232,9 @@ class LeadController extends Controller
         return response()->json(['message' => 'Lead saved successfully', 'lead' => $lead], 201);
     }
 
-
-    // List all leads for authenticated user.
-    // Superadmin sees all leads.
-    // @return \Illuminate\Http\JsonResponse
+    
+    
+    
 
     public function index(): JsonResponse
     {
@@ -269,12 +252,12 @@ class LeadController extends Controller
             'organization.address',
         ];
 
-        // Role-based visibility
+        
         if (method_exists($user, 'hasRole') && ($user->hasRole('superadmin') || $user->hasRole('dolphinadmin') || $user->hasRole('salesperson'))) {
-            // Admin-style roles can view all leads
+            
             $leads = Lead::with($with)->get();
         } elseif (method_exists($user, 'hasRole') && $user->hasRole('organizationadmin')) {
-            // Organization admin can see leads for their organization only
+            
             $orgId = \App\Models\Organization::where('user_id', $user->id)->value('id');
             $leads = Lead::with($with)
                 ->when(
@@ -288,15 +271,15 @@ class LeadController extends Controller
                 )
                 ->get();
         } elseif (Schema::hasColumn('leads', 'created_by')) {
-            // Fallback: creator-scoped
+            
             $leads = Lead::with($with)->where('created_by', $user->id)->get();
         } else {
-            // No matching scope — return empty set
+            
             $leads = collect();
         }
 
         $payload = $leads->map(function ($lead) {
-            // Get organization data from relationship
+            
             $org = $lead->organization;
             $orgAddress = $org?->address;
 
@@ -310,13 +293,13 @@ class LeadController extends Controller
                 'email' => $lead->email,
                 'phone_number' => $lead->phone_number,
                 'status' => $lead->status,
-                // Organization data from relationship
+                
                 'organization_name' => $org?->name ?? null,
                 'organization_size' => $org?->size ?? null,
                 'referral_source_id' => $org?->referral_source_id ?? null,
                 'referral_source_name' => $org?->referralSource?->name ?? null,
                 'referral_other_text' => $org?->referral_other_text ?? null,
-                // Address data from organization address relationship
+                
                 'address_line_1' => $orgAddress?->address_line_1 ?? null,
                 'address_line_2' => $orgAddress?->address_line_2 ?? null,
                 'zip_code' => $orgAddress?->zip_code ?? null,
@@ -334,17 +317,21 @@ class LeadController extends Controller
                     'contract_end' => $org->contract_end ?? null,
                 ] : null,
                 'notes_count' => $lead->notes ? $lead->notes->count() : 0,
+                
+                'last_note' => ($lead->notes && $lead->notes->count()) ?
+                    $lead->notes->sortByDesc('created_at')->first()->note : null,
+                'last_note_date' => ($lead->notes && $lead->notes->count()) ?
+                    $lead->notes->sortByDesc('created_at')->first()->note_date : null,
             ];
         });
 
         return response()->json($payload);
     }
 
-
-    // Show details for a single lead.
-    // Includes registration link, organization, and sales person info if available.
-    // @param int $id
-    // @return \Illuminate\Http\JsonResponse
+    
+    
+    
+    
 
     public function show(int $id): JsonResponse
     {
@@ -369,22 +356,22 @@ class LeadController extends Controller
 
         $defaultTemplate = $this->buildDefaultTemplate($lead, $registration_link);
 
-        // Prefer relationship-based organization if available
+        
         $org = $lead->organization;
         $orgUser = $org && $org->user ? $org->user : null;
         $salesPerson = $org && $org->salesPerson ? $org->salesPerson : null;
 
-        // Build referral source display
+        
         $referralSource = 'N/A';
         if ($org && $org->referralSource) {
             $referralSource = $org->referralSource->name;
-            // If referral source is "Other", append the custom text
+            
             if (strtolower($referralSource) === 'other' && !empty($org->referral_other_text)) {
                 $referralSource = 'Other: ' . $org->referral_other_text;
             }
         }
 
-        // Build address display with address_line_2
+        
         $address = null;
         try {
             if ($org && $org->address) {
@@ -452,16 +439,14 @@ class LeadController extends Controller
         return response()->json($resp);
     }
 
-    /**
-     * Build a registration link for a lead.
-     */
+    
     private function buildRegistrationLink(Lead $lead): string
     {
         $frontendBase = env('FRONTEND_URL', env('APP_URL', 'http://127.0.0.1:8080'));
-        // Prefer canonical name and phone attributes where available.
+        
         $queryParams = [
             'email' => $lead->email,
-            // include a canonical 'name' along with first/last for backwards compatibility
+            
             'name' => $this->resolveDisplayName($lead),
             'first_name' => $lead->first_name ?? null,
             'last_name' => $lead->last_name ?? null,
@@ -474,13 +459,11 @@ class LeadController extends Controller
         return $base . '/register?' . $query;
     }
 
-    /**
-     * Build default registration email HTML template for a lead.
-     */
+    
     private function buildDefaultTemplate(Lead $lead, string $registrationLink): string
     {
         $safeLink = htmlspecialchars($registrationLink, ENT_QUOTES, 'UTF-8');
-        // Prefer a canonical display name for the lead (name > first+last > email)
+        
         $safeName = htmlspecialchars((string)$this->resolveDisplayName($lead), ENT_QUOTES, 'UTF-8');
         return <<<HTML
             <h2>Hello {$safeName},</h2>
@@ -498,12 +481,7 @@ class LeadController extends Controller
         HTML;
     }
 
-    /**
-     * Resolve a friendly display name for a model.
-     * Preference order: name, full_name, lead_name, first_name + last_name, email, id
-     * @param  mixed  $model
-     * @return string
-     */
+    
     private function resolveDisplayName($model): string
     {
         $result = '';
@@ -511,7 +489,7 @@ class LeadController extends Controller
             return $result;
         }
 
-        // Try common canonical fields first
+        
         if (!empty($model->name)) {
             $result = (string)$model->name;
         } elseif (!empty($model->full_name)) {
@@ -519,13 +497,13 @@ class LeadController extends Controller
         } elseif (!empty($model->lead_name)) {
             $result = (string)$model->lead_name;
         } else {
-            // Use first/last if present
+            
             $first = $model->first_name ?? null;
             $last = $model->last_name ?? null;
             if ($first || $last) {
                 $result = trim((string)($first . ' ' . $last));
             } elseif (!empty($model->email)) {
-                // Fallbacks
+                
                 $result = (string)$model->email;
             } elseif (!empty($model->id)) {
                 $result = (string)$model->id;
@@ -535,14 +513,12 @@ class LeadController extends Controller
         return $result;
     }
 
+    
 
-    // sales person resolution removed — application schema no longer guarantees sales_person_id on leads/orgs
-
-
-    // Soft-delete a lead by id.
-    // @param Request $request
-    // @param int $id
-    // @return \Illuminate\Http\JsonResponse
+    
+    
+    
+    
 
     public function destroy(Request $request, int $id): JsonResponse
     {
@@ -564,10 +540,9 @@ class LeadController extends Controller
         }
     }
 
-
-    // Generates registration invite email HTML.
-    // @param Request $request
-    // @return \Illuminate\Http\Response
+    
+    
+    
 
     public function leadRegistration(Request $request): Response
     {
@@ -608,10 +583,9 @@ class LeadController extends Controller
         return response($html, 200)->header('Content-Type', 'text/html');
     }
 
-
-    // Generates lead agreement email HTML.
-    // @param Request $request
-    // @return \Illuminate\Http\Response
+    
+    
+    
 
     public function leadAgreement(Request $request): Response
     {
@@ -654,10 +628,9 @@ class LeadController extends Controller
         return response($html, 200)->header('Content-Type', 'text/html');
     }
 
-
-    // Prefill lead info for registration form.
-    // @param Request $request
-    // @return \Illuminate\Http\JsonResponse
+    
+    
+    
 
     public function prefill(Request $request): JsonResponse
     {
@@ -681,7 +654,7 @@ class LeadController extends Controller
             return response()->json(['message' => self::MESSAGE], 404);
         }
 
-        // Get organization data
+        
         $org = $lead->organization;
         $orgAddress = $org?->address;
 
@@ -694,12 +667,12 @@ class LeadController extends Controller
             'phone_number'           => $lead->phone_number ?? null,
             'phone'                  => $lead->phone_number ?? null,
             'status'                 => $lead->status ?? null,
-            // Organization data
+            
             'organization_name'      => $org?->name ?? null,
             'organization_size'      => $org?->size ?? null,
             'referral_source_id'     => $org?->referral_source_id ?? null,
             'referral_other_text'    => $org?->referral_other_text ?? null,
-            // Address data
+            
             'organization_address'   => $orgAddress?->address_line_1 ?? null,
             'address_line_1'         => $orgAddress?->address_line_1 ?? null,
             'address_line_2'         => $orgAddress?->address_line_2 ?? null,
@@ -713,13 +686,12 @@ class LeadController extends Controller
         ]]);
     }
 
-
-    // Get referral sources from referral_sources table.
-    // @return \Illuminate\Http\JsonResponse
+    
+    
 
     public function findUsOptions(): JsonResponse
     {
-        // Preserve ordering by numeric id as requested (instead of alphabetical name)
+        
         $sources = \App\Models\ReferralSource::orderBy('id')->get(['id', 'name']);
 
         if ($sources->isEmpty()) {

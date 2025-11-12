@@ -12,9 +12,7 @@ use Illuminate\Validation\Rule;
 
 class OrganizationController extends Controller
 {
-    /**
-     * Display a listing of the organizations.
-     */
+    
     public function index(Request $request)
     {
         $user = $request->user()->load('roles');
@@ -38,19 +36,19 @@ class OrganizationController extends Controller
 
         $organizationsCollection = $query->get();
 
-        // Prefetch latest subscription per user_id to avoid N+1 queries.
+        
         $userIds = $organizationsCollection->pluck('user_id')->filter()->unique()->values()->all();
         $latestSubscriptions = [];
         if (!empty($userIds)) {
-            // Fetch latest subscription per user_id and keep model instances to avoid
-            // extra queries (previous implementation converted to array and re-fetched).
+            
+            
             $subs = Subscription::whereIn('user_id', $userIds)
                 ->orderByDesc('ends_at')
                 ->get()
                 ->groupBy('user_id')
                 ->map(fn($group) => $group->first());
 
-            // subs is a collection keyed by user_id => Subscription model
+            
             foreach ($subs as $uid => $s) {
                 $latestSubscriptions[$uid] = $s;
             }
@@ -61,9 +59,7 @@ class OrganizationController extends Controller
         return response()->json($organizations);
     }
 
-    /**
-     * Display the specified organization.
-     */
+    
     public function show(Request $request, Organization $organization)
     {
         $user = $request->user();
@@ -86,9 +82,7 @@ class OrganizationController extends Controller
         return response()->json($this->formatOrganizationPayload($organization));
     }
 
-    /**
-     * Store a newly created organization in storage.
-     */
+    
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -104,7 +98,7 @@ class OrganizationController extends Controller
             'certified_staff' => 'nullable|integer',
         ]);
 
-        // Map incoming fields to the organizations table columns
+        
         $organizationData = [
             'user_id' => $validated['user_id'],
             'name' => $validated['name'],
@@ -120,7 +114,7 @@ class OrganizationController extends Controller
 
         $organization = Organization::create($organizationData);
 
-        // create organization address if provided in request
+        
         try {
             $addr = $request->only(['address', 'address_line_1', 'address_line_2', 'country_id', 'state_id', 'city_id', 'zip', 'zip_code']);
             $hasAddr = false;
@@ -148,13 +142,11 @@ class OrganizationController extends Controller
         return response()->json($this->formatOrganizationPayload($organization->fresh()), 201);
     }
 
-    /**
-     * Update the specified organization in storage.
-     */
+    
     public function update(Request $request, Organization $organization)
     {
-        // Using a policy for authorization is recommended here
-        // $this->authorize('update', $organization);
+        
+        
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
@@ -180,7 +172,7 @@ class OrganizationController extends Controller
 
         try {
             DB::transaction(function () use ($organization, $validated) {
-                // Build organization data from validated fields
+                
                 $organizationData = array_intersect_key($validated, array_flip([
                     'name',
                     'size',
@@ -219,7 +211,7 @@ class OrganizationController extends Controller
                     $organization->user->update($userData);
                 }
 
-                // update/create organization address from provided fields
+                
                 if (!empty($orgAddressData)) {
                     $orgAddressData['organization_id'] = $organization->id;
                     \App\Models\OrganizationAddress::updateOrCreate(
@@ -236,25 +228,22 @@ class OrganizationController extends Controller
         }
     }
 
-    /**
-     * Remove the specified organization from storage.
-     */
+    
     public function destroy(Organization $organization)
     {
-        // Using a policy for authorization is recommended here
-        // $this->authorize('delete', $organization);
+        
+        
 
         $organization->delete();
 
         return response()->json(null, 204);
     }
 
-
     private function formatOrganizationPayload(Organization $org, ?Subscription $providedLatestSubscription = null): array
     {
         $user = $org->user;
 
-        // Use the provided latest subscription (prefetched) if available to avoid extra queries
+        
         $latestSubscription = $providedLatestSubscription;
         if (!$latestSubscription && $org->user_id) {
             $latestSubscription = Subscription::where('user_id', $org->user_id)
@@ -266,7 +255,7 @@ class OrganizationController extends Controller
             ? trim($org->salesPerson->first_name . ' ' . $org->salesPerson->last_name)
             : null;
 
-        // Determine primary role for the organization's user
+        
         $userRole = $user && $user->roles->count() > 0
             ? $user->roles->first()->name ?? null
             : null;
@@ -301,7 +290,7 @@ class OrganizationController extends Controller
             'sales_person_id' => $org->sales_person_id,
             'sales_person' => $salesPersonName,
             'certified_staff' => $org->certified_staff,
-            // Subscription status flags
+            
             'active_subscription' => ($latestSubscription && $latestSubscription->status === 'active') ? 1 : 0,
             'expired_subscription' => ($latestSubscription && $latestSubscription->status === 'expired') ? 1 : 0,
             'no_subscription' => $latestSubscription ? 0 : 1,

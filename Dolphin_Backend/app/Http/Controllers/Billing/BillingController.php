@@ -7,26 +7,23 @@ use Illuminate\Http\Request;
 use App\Models\Organization;
 use App\Models\Subscription;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class BillingController extends Controller
 {
-    /**
-     * GET /api/subscription
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
+    
     public function current(Request $request)
     {
-        /** @var \Illuminate\Http\Request $request */
-        // Enforce role at controller level as a defensive check in case
-        // middleware is misapplied. Only organization admins may access billing.
+        
+        
+        
         $user = $request->user();
-        // Allow either organization admins or superadmins to access billing data.
-        // Some requests include an `org_id` query param which lets superadmins
-        // retrieve billing information for another organization. The previous
-        // check only allowed organizationadmin which prevented superadmins
-        // from reaching the resolveUser logic below. Update the check to
-        // accept users with either role.
+        
+        
+        
+        
+        
+        
         if (
             ! $user ||
             ! method_exists($user, 'hasRole') ||
@@ -78,19 +75,15 @@ class BillingController extends Controller
                 ],
             ]);
         } catch (\Throwable $e) {
-            // defensive fallback
+            
             return response()->json(null);
         }
     }
 
-    /**
-     * GET /api/subscription/status
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
+    
     public function status(Request $request)
     {
-        /** @var \Illuminate\Http\Request $request */
+        
         $user = $request->user();
         if (
             ! $user ||
@@ -141,14 +134,10 @@ class BillingController extends Controller
         }
     }
 
-    /**
-     * GET /api/billing/history
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
+    
     public function history(Request $request)
     {
-        /** @var \Illuminate\Http\Request $request */
+        
         $user = $request->user();
         if (
             ! $user ||
@@ -159,18 +148,45 @@ class BillingController extends Controller
         }
         try {
             $user = $this->resolveUser($request);
+
+            
+            try {
+                Log::info('BillingController::history - resolved user', [
+                    'authenticated_user_id' => $request->user()?->id ?? null,
+                    'resolved_user_id' => $user?->id ?? null,
+                    'org_id_param' => $request->query('org_id') ?: $request->input('org_id'),
+                ]);
+            } catch (\Throwable $_e) {
+                Log::warning('BillingController::history - failed to emit resolved-user log', [
+                    'error' => $_e->getMessage(),
+                ]);
+            }
             if (! $user) {
                 return response()->json([]);
             }
 
             $subscriptions = $user->subscriptions()->with(['plan', 'invoices'])->latest('created_at')->get();
 
-            // Use a standard closure rather than an arrow function so static analyzers
-            // that don't fully support `fn` or inferred uses can resolve the variable
-            // types correctly.
-            // Use a callable to avoid closures that capture $this which some static
-            // analyzers (like intelephense) can mis-handle and report false
-            // "undefined variable" errors for $subscription / $request.
+            
+            try {
+                $ids = $subscriptions->pluck('id')->toArray();
+                Log::info('BillingController::history - subscriptions found', [
+                    'resolved_user_id' => $user->id,
+                    'count' => $subscriptions->count(),
+                    'subscription_ids' => $ids,
+                ]);
+            } catch (\Throwable $_e) {
+                Log::warning('BillingController::history - failed to emit subscriptions-found log', [
+                    'error' => $_e->getMessage(),
+                ]);
+            }
+
+            
+            
+            
+            
+            
+            
             $history = $subscriptions->flatMap([$this, 'formatHistoryPayload'])->toArray();
 
             return response()->json($history);
@@ -179,36 +195,58 @@ class BillingController extends Controller
         }
     }
 
-    /**
-     * Resolve the user for the request.
-     * If the requester is a superadmin and an org_id is provided, it will
-     * return the organization's owner. Otherwise, it returns the authenticated user.
-     *
-     * @param Request $request
-     * @return \App\Models\User|null
-     */
+    
     private function resolveUser(Request $request): ?\App\Models\User
     {
-        /** @var \Illuminate\Http\Request $request */
+        
         $authenticatedUser = $request->user();
         if (!$authenticatedUser) {
             return null;
         }
+        
         $orgId = $request->query('org_id') ?: $request->input('org_id');
         if ($orgId && method_exists($authenticatedUser, 'hasRole') && $authenticatedUser->hasRole('superadmin')) {
             $organization = Organization::find($orgId);
             return $organization?->user;
         }
+
+        
+        
+        
+        
+        if (method_exists($authenticatedUser, 'hasRole') && $authenticatedUser->hasRole('organizationadmin')) {
+            
+            $userOrgId = $authenticatedUser->organization_id ?? null;
+            if ($userOrgId) {
+                $organization = Organization::find($userOrgId);
+                if ($organization && $organization->user) {
+                    return $organization->user;
+                }
+            }
+
+            
+            
+            
+            try {
+                $memberOrg = $authenticatedUser->organizationMemberships()->first();
+                if ($memberOrg && $memberOrg->user) {
+                    return $memberOrg->user;
+                }
+            } catch (\Throwable $e) {
+                Log::warning('BillingController::resolveUser - failed to resolve organization membership', [
+                    'authenticated_user_id' => $authenticatedUser->id ?? null,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
         return $authenticatedUser;
     }
 
-    /**
-     * @param Request $request
-     * @return Subscription|null
-     */
+    
     private function resolveCurrentSubscription(Request $request): ?Subscription
     {
-        /** @var \Illuminate\Http\Request $request */
+        
         $user = $this->resolveUser($request);
         if (! $user) {
             return null;
@@ -222,13 +260,10 @@ class BillingController extends Controller
             ?? $user->subscriptions()->with(['plan', 'invoices'])->latest('created_at')->first();
     }
 
-    /**
-     * @param Request $request
-     * @return Subscription|null
-     */
+    
     private function resolveLatestSubscription(Request $request): ?Subscription
     {
-        /** @var \Illuminate\Http\Request $request */
+        
         $user = $this->resolveUser($request);
         if (! $user) {
             return null;
@@ -237,14 +272,10 @@ class BillingController extends Controller
         return $user->subscriptions()->with(['plan', 'invoices'])->latest('created_at')->first();
     }
 
-    /**
-     * Format a subscription's invoices into the billing history payload.
-     * @param Subscription $subscription
-     * @return array
-     */
+    
     private function formatHistoryPayload(Subscription $subscription): array
     {
-        /** @var Subscription $subscription */
+        
         $invoices = $subscription->invoices instanceof Collection
             ? $subscription->invoices
             : Collection::wrap($subscription->invoices ?? []);
@@ -263,16 +294,7 @@ class BillingController extends Controller
         return $history;
     }
 
-    /**
-     * Helper to format a single invoice payload for history output.
-     * Kept as a separate method to improve static analysis and readability.
-     *
-     * @param mixed $invoice
-     * @param Subscription $subscription
-     * @param mixed $plan
-     * @param string $symbol
-     * @return array
-     */
+    
     private function formatInvoicePayload($invoice, Subscription $subscription, $plan, string $symbol): array
     {
         return [
@@ -291,10 +313,7 @@ class BillingController extends Controller
         ];
     }
 
-    /**
-     * @param Subscription $subscription
-     * @param mixed $plan
-     */
+    
     private function formatSubscriptionSummary(Subscription $subscription, $plan, string $symbol): array
     {
         return [

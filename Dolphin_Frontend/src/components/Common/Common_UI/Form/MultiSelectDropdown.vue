@@ -92,18 +92,18 @@ export default {
         (item[this.optionLabel] || '').toLowerCase().includes(this.search.toLowerCase())
       );
     },
-    // If there are no filtered options but there are selected items, show the
-    // selected items in the dropdown so they appear checked when reopening.
+    
+    
     displayItems() {
       if (this.filteredItems && this.filteredItems.length) return this.filteredItems;
-      // If no options match (or options array empty), but user has selected items,
-      // show those selected items in the dropdown so they appear marked.
+      
+      
       if (Array.isArray(this.selectedItems) && this.selectedItems.length) {
         return this.selectedItems.map((s) => {
-          // If selected item is primitive, wrap it into an object shape so template
-          // can access optionValue/optionLabel safely. For primitive values we keep
-          // value under the optionValue key and leave optionLabel undefined so
-          // label helpers will resolve it.
+          
+          
+          
+          
           if (typeof s === 'string' || typeof s === 'number') {
             return { [this.optionValue]: s };
           }
@@ -118,8 +118,8 @@ export default {
         this.selectedItems.some((i) => i[this.optionValue] === item[this.optionValue])
       );
     },
-    // Build a readable string for selected items; handles primitives, objects, id references,
-    // nested shapes, and circular objects via a safe stringify fallback.
+    
+    
     selectedLabelString() {
       if (!Array.isArray(this.selectedItems) || this.selectedItems.length === 0) return '';
 
@@ -150,7 +150,7 @@ export default {
       }
     },
     search() {
-      // Reset focused index when search changes
+      
       this.focusedIndex = -1;
     },
   },
@@ -205,7 +205,7 @@ export default {
         return String(lbl);
       }
     },
-    // --- helper methods extracted to reduce complexity ---
+    
     safeStringify(obj) {
       try {
         const seen = new WeakSet();
@@ -259,7 +259,7 @@ export default {
     },
 
     extractNestedLabel(item) {
-      // keep this loop minimal; delegate branching to getLabelFromNested
+      
       const nestedKeys = ['role', 'user', 'data'];
       for (const key of nestedKeys) {
         const nested = item && item[key];
@@ -309,7 +309,7 @@ export default {
 
       if (s === null || s === undefined) return '';
 
-      // primitive selected (id or label)
+      
       if (typeof s === 'string' || typeof s === 'number') {
         const optLabel = this.getOptionLabelByValue(s);
         return optLabel ?? String(s);
@@ -347,7 +347,7 @@ export default {
         this.focusedIndex = -1;
         this.$nextTick(() => {
           this.updateDropdownPosition();
-          // Focus search input for immediate typing
+          
           if (this.$refs.searchInput) {
             this.$refs.searchInput.focus();
           }
@@ -355,7 +355,7 @@ export default {
       }
     },
     toggleItem(item) {
-      // Compare items by the configured optionValue (defaults to 'id')
+      
       const idx = this.selectedItems.findIndex(
         (i) => i[this.optionValue] === item[this.optionValue]
       );
@@ -385,11 +385,11 @@ export default {
           const dropdownRect = dropdownEl.getBoundingClientRect();
           const itemRect = item.getBoundingClientRect();
 
-          // Check if item is above the visible area
+          
           if (itemRect.top < dropdownRect.top) {
             dropdownEl.scrollTop = item.offsetTop;
           }
-          // Check if item is below the visible area
+          
           else if (itemRect.bottom > dropdownRect.bottom) {
             dropdownEl.scrollTop = item.offsetTop - dropdownEl.clientHeight + item.clientHeight;
           }
@@ -432,7 +432,7 @@ export default {
         case ' ':
         case 'Spacebar':
           if (this.showDropdown) {
-            // already open — no-op
+            
             break;
           }
           event.preventDefault();
@@ -467,13 +467,13 @@ export default {
     },
     toggleSelectAll() {
       if (this.isAllSelected) {
-        // Unselect all filtered — use a Set for faster lookups
+        
         const filteredIds = new Set(this.filteredItems.map((i) => i[this.optionValue]));
         const newSelected = this.selectedItems.filter((i) => !filteredIds.has(i[this.optionValue]));
         this.$emit('update:selectedItems', newSelected);
       } else {
-        // Select all filtered
-        // Merge with already selected (avoid duplicates)
+        
+        
         const merged = [...this.selectedItems];
         for (const item of this.filteredItems) {
           if (!merged.some((i) => i[this.optionValue] === item[this.optionValue])) {

@@ -9,23 +9,19 @@ use Illuminate\Support\Facades\DB;
 
 class UpdateAnnouncementSentTimestamp
 {
-    /**
-     * Create the event listener.
-     */
+    
     public function __construct()
     {
-        //
+        
     }
 
-    /**
-     * Handle the event.
-     */
+    
     public function handle(NotificationSent $event): void
     {
         if ($event->notification instanceof GeneralNotification) {
             try {
-                // Use the announcement id to perform an atomic update in case the announcement
-                // model held inside the queued notification is stale or was serialized.
+                
+                
                 $announcement = $event->notification->getAnnouncement();
                 $announcementId = $announcement->id ?? null;
 
@@ -50,7 +46,7 @@ class UpdateAnnouncementSentTimestamp
                     Log::warning('[UpdateAnnouncementSentTimestamp] no announcement id on notification', []);
                 }
             } catch (\Exception $e) {
-                // Do not throw from an event listener; just log so queue doesn't fail the notification.
+                
                 Log::error('[UpdateAnnouncementSentTimestamp] failed', ['error' => $e->getMessage()]);
             }
         }

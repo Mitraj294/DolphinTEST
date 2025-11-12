@@ -1,0 +1,155 @@
+-----------------Test Results for test@example.com------------------
+
+Test Subject: test@example.com
+
+Self Total Words: 31
+Concept Total Words: 29
+Adjusted Total Words: 14
+
+################################
+####### Weight Results #########
+################################
+
+******* Self Projection *******
+
+A percent: 49.81%
+
+B percent: 51.24%
+
+C percent: 32.66%
+
+D percent: 27.79%
+
+Average: 40.37%
+
+Decision Approach: 40.33%
+
+A | -------------------------------------------------0--------------------------------------------------
+B | --------------------------------------------------0-------------------------------------------------
+C | --------------------------------0-------------------------------------------------------------------
+D | ---------------------------0------------------------------------------------------------------------
+DA| ---------------------------------------0------------------------------------------------------------
+L | ---------------------------------------|------------------------------------------------------------
+
+******* Concept Projection *******
+
+A percent: 35.62%
+
+B percent: 25.11%
+
+C percent: 49.10%
+
+D percent: 22.98%
+
+Average: 33.20%
+
+A | -----------------------------------0----------------------------------------------------------------
+B | ------------------------0---------------------------------------------------------------------------
+C | ------------------------------------------------0---------------------------------------------------
+D | ----------------------0-----------------------------------------------------------------------------
+L | --------------------------------|-------------------------------------------------------------------
+
+######################################
+### Count for Self word categories ###
+######################################
+A Count: 8
+B Count: 9
+C Count: 6
+D Count: 8
+
+---------- Self A words ----------
+agreeable
+assertive
+competitive
+confident
+daring
+demanding
+resourceful
+submissive
+---------------------------------
+
+---------- Self B words ----------
+charismatic
+friendly
+gregarious
+logical
+outgoing
+sociable
+sophisticated
+stimulating
+thoughtful
+---------------------------------
+
+---------- Self C words ----------
+calm
+forceful
+intense
+passive
+patient
+relaxed
+---------------------------------
+
+---------- Self D words ----------
+arbitrary
+conventional
+dutiful
+formal
+inflexible
+neat
+precise
+responsive
+---------------------------------
+
+#########################################
+### Count for Concept word categories ###
+#########################################
+A Count: 7
+B Count: 7
+C Count: 6
+D Count: 9
+
+---------- Concept A words ----------
+audacious
+docile
+humble
+independent
+individualistic
+meek
+selfstarter
+---------------------------------
+
+---------- Concept B words ----------
+constrained
+enthusiastic
+introspective
+persuasive
+reflective
+reserved
+shy
+---------------------------------
+
+---------- Concept C words ----------
+consistent
+driving
+methodical
+quick
+tense
+tranquil
+---------------------------------
+
+---------- Concept D words ----------
+accurate
+careful
+disorganized
+flexible
+frank
+informal
+persistent
+respectful
+unconventional
+---------------------------------
+
+----------------- End of test@example.com's test! ------------------
+
+
+

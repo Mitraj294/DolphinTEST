@@ -7,9 +7,7 @@ use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
 {
-    /**
-     * List invoices with optional filtering by subscription_id.
-     */
+    
     public function index(Request $request)
     {
         $user = $request->user();
@@ -28,10 +26,7 @@ class InvoiceController extends Controller
         return response()->json($query->orderBy('created_at', 'desc')->paginate($perPage));
     }
 
-    /**
-     * Store a new subscription invoice.
-     * Validates input and returns created resource.
-     */
+    
     public function store(Request $request)
     {
         $user = $request->user();
@@ -54,7 +49,7 @@ class InvoiceController extends Controller
         $invoice = SubscriptionInvoice::create([
             'subscription_id' => $validated['subscription_id'],
             'stripe_invoice_id' => $validated['stripe_invoice_id'],
-            // Store amounts as strings if model/migration expects strings, otherwise cast to string
+            
             'amount_due' => (string) $validated['amount_due'],
             'amount_paid' => (string) $validated['amount_paid'],
             'currency' => strtoupper($validated['currency']),
@@ -67,9 +62,7 @@ class InvoiceController extends Controller
         return response()->json(['invoice' => $invoice], 201);
     }
 
-    /**
-     * Show a single invoice.
-     */
+    
     public function show(string $id)
     {
         $user = request()->user();
@@ -81,9 +74,7 @@ class InvoiceController extends Controller
         return response()->json(['invoice' => $invoice]);
     }
 
-    /**
-     * Update an invoice record.
-     */
+    
     public function update(Request $request, string $id)
     {
         $user = $request->user();
@@ -118,9 +109,7 @@ class InvoiceController extends Controller
         return response()->json(['invoice' => $invoice]);
     }
 
-    /**
-     * Delete an invoice.
-     */
+    
     public function destroy(string $id)
     {
         $user = request()->user();

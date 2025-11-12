@@ -290,7 +290,7 @@ export default {
           headers: { Authorization: `Bearer ${token}` },
         });
         // Map leads and resolve referral source name if possible
-        leads.value = response.data.map((lead) => {
+  leads.value = response.data.map((lead) => {
           // Figure out the referral source name
           let sourceName = lead.find_us || '';
 
@@ -344,8 +344,10 @@ export default {
             referral_source_id: lead.referral_source_id || null,
             referral_other_text: lead.referral_other_text || null,
             status: lead.registered_at ? 'Registered' : lead.status,
-            notes: lead.notes,
-            notesAction: lead.notes ? 'View' : 'Add',
+            // Use the server-provided most recent note (last_note). This ensures
+            // the UI shows the latest note even when multiple lead_notes exist.
+            notes: lead.last_note || null,
+            notesAction: lead.last_note ? 'View' : 'Add',
           };
         });
       } catch (error) {
@@ -405,23 +407,32 @@ export default {
       });
     };
 
-    // Update notes for a lead
+    // Create a lead note (use dedicated notes endpoints instead of patching lead)
+    // This avoids triggering lead validation rules when only updating notes.
     const updateLeadNotes = async () => {
       if (!currentLead.value) return;
       try {
         const token = storage.get('authToken');
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-        await axios.patch(
-          `${API_BASE_URL}/api/leads/${currentLead.value.id}`,
-          { notes: notesInput.value },
+
+        // Use the lead-notes API to store a note for this lead. We use POST for both
+        // add and update flows here (creates a new LeadNote). This is low-risk and
+        // avoids calling the lead update endpoint which enforces required lead fields.
+        await axios.post(
+          `${API_BASE_URL}/api/leads/${currentLead.value.id}/notes`,
+          { note: notesInput.value },
           { headers: { Authorization: `Bearer ${token}` } }
         );
+
         toast.add({
           severity: 'success',
           summary: 'Success',
-          detail: 'Notes updated successfully.',
+          detail: notesModalMode.value === 'add' ? 'Note added successfully.' : 'Note saved successfully.',
           life: 3000,
         });
+
+        // Update local UI to reflect the new/edited note. The lead list stores a
+        // short `notes` string for quick viewing; overwrite it with the latest text.
         const lead = leads.value.find((l) => l.id === currentLead.value.id);
         if (lead) {
           lead.notes = notesInput.value;
@@ -433,7 +444,7 @@ export default {
         toast.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'Failed to update notes.',
+          detail: 'Failed to save note. Check console for details.',
           life: 3000,
         });
       }
@@ -878,16 +889,21 @@ export default {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 135px;
-  height: 30px;
+  /* Reduced min-width so badge doesn't get clipped in narrow tables */
+  min-width: 90px;
+  height: 28px;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
-  color: #fff;
+  color: #ffffff;
   text-align: center;
   white-space: nowrap;
-  padding: 0 12px;
+  padding: 0 10px;
   box-sizing: border-box;
+  /* Make it visually distinct from table background */
+  border: 1px solid rgba(0,0,0,0.06);
+  /* Ensure it remains on top of other table content */
+  z-index: 2;
 }
 .status-badge.lead-stage {
   background: #6c757d;
@@ -897,6 +913,16 @@ export default {
 }
 .status-badge.registered {
   background: #28a745;
+}
+
+/* If the table cell is very narrow, allow the badge to shrink visually */
+@media (max-width: 800px) {
+  .status-badge {
+    min-width: 72px;
+    font-size: 12px;
+    height: 24px;
+    padding: 0 8px;
+  }
 }
 .table-search-bar {
   padding: 18px 46px 18px 24px;

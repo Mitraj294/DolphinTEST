@@ -562,10 +562,24 @@ export default {
           this.buildRegistrationPayload()
         );
         if (response.status === 201) {
-          this.$router.push({
-            name: 'Login',
-            query: { email: this.email, registrationSuccess: true },
-          });
+          // If the registration flow was started from a link that included
+          // a `redirect` (for example: `/register?redirect=/subscriptions/plans`),
+          // forward the newly-registered user to that path so they can
+          // immediately continue to payment/checkout. Include price_id and
+          // email in the query so the plans page can preselect the price.
+          const redirect = this.$route?.query?.redirect;
+          const priceId = this.$route?.query?.price_id;
+          // Only allow internal redirects (start with '/') to avoid open-redirects.
+          if (redirect && typeof redirect === 'string' && redirect.startsWith('/')) {
+            const redirectQuery = { email: this.email };
+            if (priceId) redirectQuery.price_id = priceId;
+            this.$router.push({ path: redirect, query: redirectQuery });
+          } else {
+            this.$router.push({
+              name: 'Login',
+              query: { email: this.email, registrationSuccess: true },
+            });
+          }
         }
       } catch (error) {
         const msg = this.processRegistrationError(error);
@@ -595,6 +609,7 @@ export default {
         country_id: this.country, // new field name
         referral_source_id: this.referral_source_id,
         referral_other_text: this.referral_source_id === 10 ? this.referral_other_text : null,
+        lead_id: this.$route?.query?.lead_id || null,
       };
     },
     processRegistrationError(error) {

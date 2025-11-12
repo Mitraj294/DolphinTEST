@@ -302,7 +302,11 @@ export default {
     },
     openScheduleDetails(item) {
       this.selectedAssessment = item;
-      this.scheduleDetails = item.schedule;
+      // Pass a normalized object the modal expects: { assessment, schedule }
+      this.scheduleDetails = {
+        assessment: { id: item.id, name: item.name },
+        schedule: item.schedule || null,
+      };
       this.showScheduleDetailsModal = true;
     },
     closeScheduleDetailsModal() {
@@ -349,7 +353,11 @@ export default {
       const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
 
       // Make sure ids are arrays
-      const toArray = (v) => (Array.isArray(v) ? v : v ? [v] : []);
+      const toArray = (v) => {
+        if (Array.isArray(v)) return v;
+        if (v) return [v];
+        return [];
+      };
       const gIds = toArray(groupIds);
       const mIds = toArray(memberIds);
 
@@ -357,11 +365,11 @@ export default {
         const localDateTime = new Date(`${date}T${time}:00`);
         const sendAt = localDateTime.toISOString();
 
-        // Create schedule record
-        await axios.post(
+        // Create schedule record and use server response to update UI
+        const postRes = await axios.post(
           `${base}/api/assessment-schedules`,
           {
-            assessment_id: this.selectedAssessment.id,
+            assessment_id: this.selectedAssessment?.id,
             date,
             time,
             send_at: sendAt,
@@ -372,50 +380,65 @@ export default {
           { headers }
         );
 
-        // Queue individual scheduled emails (best-effort)
-        const emailPromises = (selectedMembers || []).map((member) => {
-          if (!member || !member.email) return Promise.resolve({ skipped: true });
-          const group_id =
-            member.group_id ||
-            (Array.isArray(member.group_ids) && member.group_ids[0]) ||
-            (gIds.length === 1 ? gIds[0] : null);
-          return axios
-            .post(
+        const savedSchedule = postRes?.data || null;
+
+        // Queue individual scheduled emails (best-effort). Be defensive about
+        // selectedMembers shape (may be ids, objects, or empty) and never throw.
+        const safeSelected = Array.isArray(selectedMembers) ? selectedMembers : [];
+        const emailPromises = safeSelected.map((member) => {
+          try {
+            // member may be an object or an id; require an object with email to proceed
+            if (!member || typeof member !== 'object' || !member.email) return Promise.resolve({ skipped: true });
+
+            const group_id =
+              member.group_id ||
+              (Array.isArray(member.group_ids) && member.group_ids[0]) ||
+              (gIds.length === 1 ? gIds[0] : null);
+
+            return axios.post(
               `${base}/api/schedule-email`,
               {
                 recipient_email: member.email,
                 subject: 'Assessment Scheduled',
-                body: `You have an assessment scheduled: ${this.selectedAssessment.name}`,
+                body: `You have an assessment scheduled: ${this.selectedAssessment?.name || ''}`,
                 send_at: sendAt,
-                assessment_id: this.selectedAssessment.id,
-                member_id: member.id,
+                assessment_id: this.selectedAssessment?.id || null,
+                member_id: member.id || null,
                 group_id,
               },
               { headers }
-            )
-            .catch((err) => ({ error: err, member }));
+            );
+          } catch (error) {
+            // Never rethrow from the map callback — return a resolved failure marker
+            return Promise.resolve({ error: error, member });
+          }
         });
 
-        const results = await Promise.allSettled(emailPromises);
-        const failed = results
+        const settled = await Promise.allSettled(emailPromises);
+        const failed = settled
           .filter((r) => r.status === 'fulfilled' && r.value && r.value.error)
           .map((r) => r.value && r.value.member?.email)
           .filter(Boolean);
 
-        const msg = failed.length
-          ? `Assessment scheduled - ${failed.length} email(s) failed`
-          : 'Assessment scheduled';
+        const msg = failed.length ? `Assessment scheduled - ${failed.length} email(s) failed` : 'Assessment scheduled';
         this._showToast('success', 'Scheduled', msg);
 
-        // Close and refresh the scheduled data for the affected assessment
-        this.closeScheduleModal();
+        // Update the assessments array using the returned schedule payload
         try {
-          const updated = await this.fetchScheduleForAssessment(this.selectedAssessment);
-          this.assessments = this.assessments.map((a) => (a.id === updated.id ? updated : a));
+          if (this.selectedAssessment && this.selectedAssessment.id) {
+            const updated = { ...this.selectedAssessment, schedule: savedSchedule };
+            this.assessments = this.assessments.map((a) => (a.id === updated.id ? updated : a));
+          } else {
+            // Fallback: reload everything
+            await this.initializeComponent();
+          }
         } catch (err_) {
-          console.debug && console.debug('[AssessmentsCard] refresh single schedule failed', err_);
+          console.debug && console.debug('[AssessmentsCard] update-after-schedule failed', err_);
           await this.initializeComponent();
         }
+
+        // Close modal after we've updated state
+        this.closeScheduleModal();
       } catch (e) {
         console.debug && console.debug('Failed to schedule assessment', e?.message || e);
         this._showToast('error', 'Failed', 'Could not schedule assessment.');

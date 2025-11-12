@@ -54,18 +54,14 @@ class Subscription extends Model
         return $this->hasMany(SubscriptionInvoice::class);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Helper Methods
-    |--------------------------------------------------------------------------
-    */
+    
 
-    /** Determine if subscription is currently active. */
+    
     public function isActive(): bool
     {
         $statusActive = $this->status === 'active';
 
-        // If paused or canceled at period end and we're past the end date, treat as inactive.
+        
         $periodEnded = $this->cancel_at_period_end && $this->current_period_end && $this->current_period_end->isPast();
 
         $hasEnded = $this->ends_at && $this->ends_at->isPast();
@@ -75,13 +71,13 @@ class Subscription extends Model
         return (bool) $isActive;
     }
 
-    /** Determine if subscription is in trial period. */
+    
     public function isInTrial(): bool
     {
         return $this->trial_ends_at && $this->trial_ends_at->isFuture();
     }
 
-    /** Remaining trial days (integer) or null if not in trial. */
+    
     public function remainingTrialDays(): ?int
     {
         if (! $this->isInTrial()) {
@@ -91,7 +87,7 @@ class Subscription extends Model
         return now()->diffInDays($this->trial_ends_at, false);
     }
 
-    /** Remaining active period days (integer) or null if not active. */
+    
     public function remainingPeriodDays(): ?int
     {
         $end = $this->current_period_end ?? $this->ends_at;
@@ -105,11 +101,7 @@ class Subscription extends Model
         return now()->diffInDays($end, false);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Scopes
-    |--------------------------------------------------------------------------
-    */
+    
     public function scopeActive($query)
     {
         return $query->where('status', 'active')->where(function ($q) {

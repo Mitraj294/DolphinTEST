@@ -4,56 +4,61 @@
       <div class="notifications-table-outer">
         <div class="notifications-table-card">
           <div class="notifications-controls">
-            <div class="notifications-date-wrapper">
-              <input
-                type="date"
-                placeholder="Select Date"
-                class="notifications-date"
-                v-model="selectedDate"
-                @change="onDateChange"
-              />
+            <div class="notifications-left" style="display:flex; align-items:center; gap:18px; flex:1; min-width:0;">
+              <div class="notifications-date-wrapper" style="display:flex; align-items:center; gap:8px;">
+                <input
+                  type="date"
+                  placeholder="Select Date"
+                  class="notifications-date"
+                  v-model="selectedDate"
+                  @change="onDateChange"
+                />
+                <button
+                  v-if="selectedDate"
+                  class="mark-all"
+                  style="height:36px"
+                  @click="clearDate"
+                >
+                  Clear
+                </button>
+              </div>
+                <div class="notifications-tabs" style="width: 240px; min-width: 240px; display:flex;">
+                <button
+                  :class="['notifications-tab-btn-left', { active: tab === 'unread' }]"
+                  @click="switchTab('unread')"
+                >
+                  Unread
+                </button>
+                <button
+                  :class="['notifications-tab-btn-right', { active: tab === 'all' }]"
+                  @click="switchTab('all')"
+                >
+                  All
+                </button>
+                </div>
+            </div>
+
+            <div class="notifications-right" style="display:flex; align-items:center; justify-content:flex-end; min-width:0;">
               <button
-                v-if="selectedDate"
-                class="mark-all"
-                style="margin-left: 8px; height: 36px"
-                @click="clearDate"
+                v-if="tab === 'unread' && notifications.length > 0 && !isImpersonating"
+                :disabled="markAllLoading"
+                @click="markAllAsRead"
+                style="
+                  margin-top: 10px;
+                  background: #fff;
+                  color: #0164a5;
+                  border: none;
+                  border-radius: 6px;
+                  padding: 4px 10px;
+                  font-size: 0.95rem;
+                  cursor: pointer;
+                "
               >
-                Clear
+                <i class="fas fa-check" style="margin-right: 6px"></i>
+                <span v-if="!markAllLoading">Mark All As Read</span>
+                <span v-else>Marking...</span>
               </button>
             </div>
-            <div class="notifications-tabs">
-              <button
-                :class="['notifications-tab-btn-left', { active: tab === 'unread' }]"
-                @click="switchTab('unread')"
-              >
-                Unread
-              </button>
-              <button
-                :class="['notifications-tab-btn-right', { active: tab === 'all' }]"
-                @click="switchTab('all')"
-              >
-                All
-              </button>
-            </div>
-            <button
-              v-if="tab === 'unread' && notifications.length > 0 && !isImpersonating"
-              :disabled="markAllLoading"
-              @click="markAllAsRead"
-              style="
-                margin-top: 10px;
-                background: #fff;
-                color: #0164a5;
-                border: none;
-                border-radius: 6px;
-                padding: 4px 10px;
-                font-size: 0.95rem;
-                cursor: pointer;
-              "
-            >
-              <i class="fas fa-check" style="margin-right: 6px"></i>
-              <span v-if="!markAllLoading">Mark All As Read</span>
-              <span v-else>Marking...</span>
-            </button>
           </div>
           <div class="notifications-list">
             <div v-for="(item, id) in paginatedNotifications" :key="id" class="notification-item">
@@ -164,7 +169,7 @@ export default {
     };
   },
   computed: {
-    // Whether the current session is an impersonation (super user switched into another account)
+    
     isImpersonating() {
       return !!storage.get('superAuthToken');
     },
@@ -176,7 +181,7 @@ export default {
       return this.filteredNotifications.slice(start, start + this.pageSize);
     },
     filteredNotifications() {
-      // base list depending on tab
+      
       let list = [];
       if (this.tab === 'unread') {
         list = this.notifications.slice();
@@ -186,16 +191,16 @@ export default {
         list = this.notifications.slice();
       }
 
-      // if a date is selected, filter by created_at date (YYYY-MM-DD)
+      
       if (this.selectedDate) {
-        // selectedDate is in YYYY-MM-DD format from the input[type=date]
+        
         const sel = parseISO(this.selectedDate);
         if (isValid(sel)) {
           list = list.filter((n) => {
             const createdAt =
               n.created_at || (n._rawData && (n._rawData.created_at || n._rawData.createdAt)) || '';
             if (!createdAt) return false;
-            // try parsing ISO, if invalid fallback to Date
+            
             let d = typeof createdAt === 'string' ? parseISO(createdAt) : new Date(createdAt);
             if (!isValid(d)) {
               d = new Date(createdAt);
@@ -211,34 +216,34 @@ export default {
   },
   methods: {
     async switchTab(newTab) {
-      // Only fetch if switching to a different tab
-      if (this.tab !== newTab) {
-        this.tab = newTab;
-        this.page = 1; // Reset to first page when switching tabs
-        await this.fetchNotifications();
-      }
+      
+      if (this.tab === newTab) return;
+
+      this.tab = newTab;
+      this.page = 1; 
+      await this.fetchNotifications();
     },
     async fetchNotifications() {
       try {
-        // If the logged-in user is a superadmin, skip fetching the
-        // `/api/notifications/unread` endpoint — superadmins don't need
-        // the unread badge and the backend may restrict that route.
+        
+        
+        
         const role = authMiddleware.getRole();
-        // If the user is a superadmin and not impersonating, skip fetching
-        // unread notifications (superadmins don't have per-user unread badge).
+        
+        
         if (role === 'superadmin' && this.tab === 'unread' && !this.isImpersonating) {
           this.notificationsReady = true;
           this.notifications = [];
           this.readNotifications = [];
-          // Ensure any global badge/consumers are updated
+          
           try {
             this.updateNotificationCount();
           } catch (err) {
-            // Log a debug message so the exception is handled and visible
-            // during development rather than being silently ignored.
-            // This satisfies the lint rule that caught exceptions must be
-            // handled or rethrown.
-            // eslint-disable-next-line no-console
+            
+            
+            
+            
+            
             console.debug('GetNotifications: updateNotificationCount failed', err);
           }
           return;
@@ -254,13 +259,23 @@ export default {
         const storedUserId = storage.get('userId') || storage.get('user_id');
         const currentUserId = storedUserId ? Number.parseInt(storedUserId, 10) : 0;
 
-        const mapped = notificationsArr
-          .filter((n) => this._isNotificationForUser(n, currentUserId))
-          .map((n) => this._normalizeNotification(n));
+        
+        
+        
+        
+        
+        let mapped = [];
+        if (this.isImpersonating) {
+          mapped = notificationsArr.map((n) => this._normalizeNotification(n));
+        } else {
+          mapped = notificationsArr
+            .filter((n) => this._isNotificationForUser(n, currentUserId))
+            .map((n) => this._normalizeNotification(n));
+        }
 
         this.notificationsReady = true;
-        // When impersonating, we still want to display notifications for the
-        // impersonated user, but disable read operations in the UI.
+        
+        
         this.notifications = mapped.filter((m) => !m.read_at);
         this.readNotifications = mapped.filter((m) => !!m.read_at);
       } catch (error) {
@@ -393,17 +408,17 @@ export default {
       });
     },
     onDateChange() {
-      // reset to first page when date filter changes
+      
       this.page = 1;
-      // If needed, you could fetch fresh data from server for the date here.
-      // For now, we filter client-side using already fetched notifications.
+      
+      
     },
     clearDate() {
       this.selectedDate = '';
       this.page = 1;
     },
     formatDate(dateStr) {
-      // Format MySQL datetime to 'MMM DD, YYYY at hh:mm A'
+      
       const d = new Date(dateStr);
       if (Number.isNaN(d)) return dateStr;
       const options = {
@@ -430,15 +445,15 @@ export default {
         }
         const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
         await axios.post('/api/notifications/mark-all-read', {}, config);
-        // Refresh notifications
+        
         await this.fetchNotifications();
-        // Ensure badge updates immediately: update internal count and notify navbar
+        
         try {
           this.updateNotificationCount();
         } catch (e) {
           console.debug && console.debug('Error updating notification count:', e);
         }
-        // Broadcast events for in-window and cross-tab listeners
+        
         globalThis.dispatchEvent(new Event('notification-updated'));
         globalThis.dispatchEvent(new Event('storage'));
       } catch (error) {
@@ -465,7 +480,7 @@ export default {
         try {
           await axios.post(`/api/announcements/${notif.id}/read`, {}, config);
           await this.fetchNotifications();
-          // Ensure badge updates immediately: update internal count and notify navbar
+          
           try {
             this.updateNotificationCount();
           } catch (e) {
@@ -501,18 +516,18 @@ export default {
     togglePageDropdown() {
       this.showPageDropdown = !this.showPageDropdown;
     },
-    // single authoritative method for updating stored notification count
+    
     updateNotificationCount() {
       if (!this.notificationsReady) {
         return;
       }
       const unreadCount = Array.isArray(this.notifications) ? this.notifications.length : 0;
       storage.set('notificationCount', String(unreadCount));
-      // Broadcast a storage event for cross-tab listeners
+      
       globalThis.dispatchEvent(new Event('storage'));
-      // Broadcast a domain event for in-window subscribers (Navbar)
+      
       globalThis.dispatchEvent(new Event('notification-updated'));
-      // Provide direct count payload for listeners to avoid refetch flicker
+      
       globalThis.dispatchEvent(
         new CustomEvent('notification-count-sync', {
           detail: { count: unreadCount },
@@ -540,7 +555,7 @@ export default {
     },
   },
   mounted() {
-    // Fetch notifications only when arriving at notifications page or after login
+    
     if (
       storage.get('showDashboardWelcome') ||
       this.$route.name === 'GetNotification' ||

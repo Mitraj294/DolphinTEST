@@ -12,16 +12,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Controller for managing users within an organization's groups
- * Replaces the old MemberController functionality
- */
 class OrganizationUserController extends Controller
 {
-    /**
-     * Get all organization members from organization_member table
-     * These are users that have been added as members to the organization
-     */
+    
     public function index(Request $request): JsonResponse
     {
         try {
@@ -33,7 +26,7 @@ class OrganizationUserController extends Controller
 
             $organization = Organization::findOrFail($orgId);
 
-            // Get members from organization_member pivot table
+            
             $members = $organization->members()
                 ->with(['roles', 'groups' => function ($query) use ($orgId) {
                     $query->where('organization_id', $orgId);
@@ -63,10 +56,7 @@ class OrganizationUserController extends Controller
         }
     }
 
-    /**
-    * Get available users to add as organization members
-    * Returns users with only the 'user' role who are NOT already members
-     */
+    
     public function availableUsers(Request $request): JsonResponse
     {
         try {
@@ -78,10 +68,10 @@ class OrganizationUserController extends Controller
 
             $organization = Organization::findOrFail($orgId);
 
-            // Get existing member IDs (ensure users.id is selected to avoid ambiguous `id` from pivot table)
+            
             $existingMemberIds = $organization->members()->pluck('users.id')->toArray();
 
-            // Get users with only the 'user' role who are not already members
+            
             $users = User::whereHas('roles', function ($query) {
                 $query->where('name', 'user');
             })
@@ -104,10 +94,7 @@ class OrganizationUserController extends Controller
         }
     }
 
-    /**
-     * Get available members (from organization_member) to add to groups
-     * Returns members of the organization only
-     */
+    
     public function getAvailableMembersForGroup(Request $request): JsonResponse
     {
         try {
@@ -119,7 +106,7 @@ class OrganizationUserController extends Controller
 
             $organization = Organization::findOrFail($orgId);
 
-            // Get organization members from organization_member table
+            
             $members = $organization->members()
                 ->select('users.id', 'users.first_name', 'users.last_name', 'users.email')
                 ->get()
@@ -138,9 +125,7 @@ class OrganizationUserController extends Controller
         }
     }
 
-    /**
-     * Add a user to a group
-     */
+    
     public function addToGroup(Request $request): JsonResponse
     {
         try {
@@ -156,22 +141,22 @@ class OrganizationUserController extends Controller
             }
             $orgId = $this->getOrganizationIdForCurrentUser($user);
 
-            // Verify group belongs to organization
+            
             $group = Group::where('id', $validated['group_id'])
                 ->where('organization_id', $orgId)
                 ->firstOrFail();
 
-            // Verify user belongs to organization
+            
             $userToAdd = User::where('id', $validated['user_id'])
                 ->where('organization_id', $orgId)
                 ->firstOrFail();
 
-            // Check user doesn't have admin role
+            
             if ($userToAdd->roles()->whereIn('name', ['superadmin', 'dolphin_admin', 'organizationadmin', 'salesperson'])->exists()) {
                 return response()->json(['error' => 'Cannot add admin users to groups as members.'], 400);
             }
 
-            // Add user to group
+            
             $group->users()->syncWithoutDetaching([
                 $validated['user_id'] => ['role' => $validated['role'] ?? 'member']
             ]);
@@ -186,9 +171,7 @@ class OrganizationUserController extends Controller
         }
     }
 
-    /**
-     * Remove a user from a group
-     */
+    
     public function removeFromGroup(Request $request): JsonResponse
     {
         try {
@@ -203,12 +186,12 @@ class OrganizationUserController extends Controller
             }
             $orgId = $this->getOrganizationIdForCurrentUser($user);
 
-            // Verify group belongs to organization
+            
             $group = Group::where('id', $validated['group_id'])
                 ->where('organization_id', $orgId)
                 ->firstOrFail();
 
-            // Remove user from group
+            
             $group->users()->detach($validated['user_id']);
 
             return response()->json([
@@ -220,9 +203,7 @@ class OrganizationUserController extends Controller
         }
     }
 
-    /**
-     * Update user's role in a group
-     */
+    
     public function updateGroupRole(Request $request): JsonResponse
     {
         try {
@@ -238,12 +219,12 @@ class OrganizationUserController extends Controller
             }
             $orgId = $this->getOrganizationIdForCurrentUser($user);
 
-            // Verify group belongs to organization
+            
             $group = Group::where('id', $validated['group_id'])
                 ->where('organization_id', $orgId)
                 ->firstOrFail();
 
-            // Update role in pivot table
+            
             $group->users()->updateExistingPivot($validated['user_id'], [
                 'role' => $validated['role']
             ]);
@@ -258,15 +239,10 @@ class OrganizationUserController extends Controller
         }
     }
 
-    /**
-     * Add user to organization via organization_users pivot (with status tracking)
-     */
-    // addOrganizationUser() removed: unused; prefer addOrganizationMember()/organization member flows.
+    
+    
 
-    /**
-    * Add user to organization as member via organization_member pivot
-    * Users must have the 'user' role
-     */
+    
     public function addOrganizationMember(Request $request): JsonResponse
     {
         try {
@@ -279,7 +255,7 @@ class OrganizationUserController extends Controller
 
             $organization = Organization::findOrFail($orgId);
 
-            // Verify user has the 'user' role
+            
             $userToAdd = User::findOrFail($validated['user_id']);
             $hasValidRole = $userToAdd->roles()
                 ->where('name', 'user')
@@ -291,10 +267,10 @@ class OrganizationUserController extends Controller
                 ], 400);
             }
 
-            // Add user as organization member
+            
             $organization->members()->syncWithoutDetaching($validated['user_id']);
 
-            // Return updated member with details
+            
             $member = User::with(['roles'])
                 ->find($validated['user_id']);
 
@@ -315,9 +291,7 @@ class OrganizationUserController extends Controller
         }
     }
 
-    /**
-     * Remove user from organization members
-     */
+    
     public function removeOrganizationMember(Request $request): JsonResponse
     {
         try {
@@ -330,7 +304,7 @@ class OrganizationUserController extends Controller
 
             $organization = Organization::findOrFail($orgId);
 
-            // Remove user from organization members
+            
             $organization->members()->detach($validated['user_id']);
 
             return response()->json([
@@ -342,25 +316,19 @@ class OrganizationUserController extends Controller
         }
     }
 
-    /**
-     * Get all organization users (via organization_users pivot)
-     */
-    // getOrganizationUsers() removed: not referenced by routes; use index() or getOrganizationMembers()
+    
+    
 
-    /**
-     * Get all organization members (via organization_member pivot)
-     */
-    // getOrganizationMembers() removed: duplicate of index() which returns member payload.
+    
+    
 
-    /**
-     * Get the organization ID for the currently authenticated user.
-     */
+    
     private function getOrganizationIdForCurrentUser(\App\Models\User $user): int
     {
-        // Prefer explicit organization_id column when available
+        
         $orgId = $user->organization_id ?? null;
 
-        // If not present, check organization_member pivot (user may be a member)
+        
         if (! $orgId) {
             try {
                 $membership = $user->organizationMemberships()->first();
@@ -368,17 +336,17 @@ class OrganizationUserController extends Controller
                     $orgId = $membership->id;
                 }
             } catch (\Throwable $e) {
-                // ignore and continue to other checks
+                
             }
         }
 
-        // Fallback: organization record where this user is the owner/creator
+        
         if (! $orgId) {
             $organization = Organization::where('user_id', $user->id)->first();
             $orgId = $organization ? $organization->id : null;
         }
 
-        // Allow superadmins to specify organization via query param (optional)
+        
         if (! $orgId && request()->user() && request()->user()->roles()->where('name', 'superadmin')->exists()) {
             $orgId = (int) request()->query('organization_id', 0) ?: null;
         }

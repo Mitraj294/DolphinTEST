@@ -12,9 +12,7 @@ use App\Http\Resources\AnnouncementResource;
 
 class AnnouncementController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    
     public function index()
     {
         $announcements = Announcement::orderBy('schedule_date', 'desc')
@@ -24,35 +22,33 @@ class AnnouncementController extends Controller
         return response()->json(['announcements' => AnnouncementResource::collection($announcements)]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    
     public function store(Request $request)
     {
         $validated = $request->validate([
-            // creation fields
+            
             'message' => 'required|string',
             'schedule_date' => 'nullable|date',
             'schedule_time' => 'nullable|date_format:H:i',
-            // recipients (optional)
+            
             'organization_ids' => 'nullable|array',
             'organization_ids.*' => 'integer|exists:organizations,id',
             'admin_ids' => 'nullable|array',
             'admin_ids.*' => 'integer|exists:users,id',
             'group_ids' => 'nullable|array',
             'group_ids.*' => 'integer|exists:groups,id',
-            // alternative scheduling input
+            
             'scheduled_at' => 'nullable|date',
         ]);
 
-        // Normalize scheduled_at -> schedule_date/schedule_time when provided
+        
         if (!empty($validated['scheduled_at']) && (empty($validated['schedule_date']) || empty($validated['schedule_time']))) {
             try {
                 $dt = Carbon::parse($validated['scheduled_at']);
                 $validated['schedule_date'] = $validated['schedule_date'] ?? $dt->toDateString();
                 $validated['schedule_time'] = $validated['schedule_time'] ?? $dt->format('H:i');
             } catch (\Exception $e) {
-                // ignore parse failure; proceed with any provided schedule_* fields
+                
             }
         }
 
@@ -60,11 +56,11 @@ class AnnouncementController extends Controller
             'message' => $validated['message'],
             'schedule_date' => $validated['schedule_date'] ?? null,
             'schedule_time' => $validated['schedule_time'] ?? null,
-            // Use null-safe operator in case request is unauthenticated
+            
             'sender_id' => $request->user()?->id ?? null,
             ]);
 
-        // Attach recipients if provided
+        
         if (!empty($validated['organization_ids'])) {
             $announcement->organizations()->syncWithoutDetaching($validated['organization_ids']);
         }
@@ -75,25 +71,25 @@ class AnnouncementController extends Controller
             $announcement->groups()->syncWithoutDetaching($validated['group_ids']);
         }
 
-        // Dispatch notifications immediately or schedule via delay based on schedule_* fields
+        
         try {
             $recipients = $this->getRecipientsForAnnouncement($announcement);
             $notification = new GeneralNotification($announcement);
 
-            // If both schedule_date and schedule_time are present, delay delivery
+            
             if (!empty($announcement->schedule_date) && !empty($announcement->schedule_time)) {
                 $dtString = $announcement->schedule_date . ' ' . $announcement->schedule_time;
                 try {
                     $when = Carbon::parse($dtString);
                     $notification->delay($when);
                 } catch (\Exception $e) {
-                    // ignore invalid schedule; send immediately
+                    
                 }
             }
 
             if ($recipients->count() > 0) {
                 Notification::send($recipients, $notification);
-                // Mark announcement as sent now that notifications were dispatched
+                
                 $announcement->sent_at = now();
                 $announcement->save();
             }
@@ -102,7 +98,7 @@ class AnnouncementController extends Controller
                 'announcement_id' => $announcement->id,
                 'error' => $e->getMessage(),
             ]);
-            // continue; creation still succeeded
+            
         }
 
         return response()->json([
@@ -111,9 +107,7 @@ class AnnouncementController extends Controller
         ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
+    
     public function show(string $id)
     {
         try {
@@ -125,9 +119,7 @@ class AnnouncementController extends Controller
         }
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+    
     public function update(Request $request, string $id)
     {
         $announcement = Announcement::findOrFail($id);
@@ -146,9 +138,7 @@ class AnnouncementController extends Controller
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    
     public function destroy(string $id)
     {
         try {
@@ -161,9 +151,7 @@ class AnnouncementController extends Controller
         }
     }
 
-    /**
-     * Get scheduled announcements for today
-     */
+    
     public function todayScheduled()
     {
         try {
@@ -178,9 +166,7 @@ class AnnouncementController extends Controller
         }
     }
 
-    /**
-     * Get announcements by date range
-     */
+    
     public function byDateRange(Request $request)
     {
         $request->validate([
@@ -203,25 +189,23 @@ class AnnouncementController extends Controller
         }
     }
 
-    /**
-     * Collect unique User recipients for an announcement from attached orgs, groups, and admins.
-     */
+    
     private function getRecipientsForAnnouncement(Announcement $announcement)
     {
-        // Prefer organization members over legacy users pivot
+        
         try {
             $announcement->load(['organizations.members', 'groups.users', 'admins']);
 
             $adminUsers = $announcement->admins ?? collect();
             $orgUsers = $announcement->organizations->flatMap(function ($org) {
-                return $org->members ?? collect(); // users of the organization via organization_member
+                return $org->members ?? collect(); 
             });
 
             $groupUsers = $announcement->groups->flatMap(function ($group) {
                 return $group->users ?? collect();
             });
 
-            // Merge all users and remove duplicates
+            
             return $adminUsers->merge($orgUsers)->merge($groupUsers)->unique('id');
         } catch (\Throwable $e) {
             Log::warning('[getRecipientsForAnnouncement] failed to load recipients', ['announcement_id' => $announcement->id ?? null, 'error' => $e->getMessage()]);

@@ -19,12 +19,7 @@ class AssessmentResultController extends Controller
         $this->calculationService = $calculationService;
     }
 
-    /**
-     * Calculate and store assessment results using C++ algorithm
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
+    
     public function calculate(Request $request): JsonResponse
     {
         if (!\Illuminate\Support\Facades\Auth::check()) {
@@ -50,12 +45,12 @@ class AssessmentResultController extends Controller
         try {
             $userId = Auth::id();
 
-            // Check if dolphin executable is available
+            
             if (!$this->calculationService->isDolphinExecutableAvailable()) {
                 Log::warning('Dolphin executable not found, attempting to build');
 
                 if (!$this->calculationService->buildDolphinExecutable()) {
-                    // Don't return here to keep single return in method; prepare response and skip calculation
+                    
                     $responseData = [
                         'error' => 'Assessment calculation system is not available. Please contact support.'
                     ];
@@ -63,7 +58,7 @@ class AssessmentResultController extends Controller
                 }
             }
 
-            // Only calculate if previous checks passed
+            
             if ($status === 200) {
                 $result = $this->calculationService->calculateResults(
                     $userId,
@@ -94,12 +89,7 @@ class AssessmentResultController extends Controller
         return response()->json($responseData, $status);
     }
 
-    /**
-     * Get user's assessment results
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
+    
     public function getUserResults(Request $request): JsonResponse
     {
         try {
@@ -108,7 +98,7 @@ class AssessmentResultController extends Controller
                 return response()->json(['error' => 'Unauthenticated.'], 401);
             }
             $assessmentId = $request->query('assessment_id');
-            $type = $request->query('type'); // 'original' or 'adjust'
+            $type = $request->query('type'); 
 
             $query = AssessmentResult::where('user_id', $userId)
                 ->with(['organizationAssessment', 'user']);
@@ -139,12 +129,7 @@ class AssessmentResultController extends Controller
         }
     }
 
-    /**
-     * Get a specific assessment result by ID
-     *
-     * @param int $id
-     * @return JsonResponse
-     */
+    
     public function show($id): JsonResponse
     {
         try {
@@ -178,12 +163,7 @@ class AssessmentResultController extends Controller
         }
     }
 
-    /**
-     * Get results comparison between original and adjusted assessments
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
+    
     public function compareResults(Request $request): JsonResponse
     {
         try {
@@ -221,11 +201,7 @@ class AssessmentResultController extends Controller
         }
     }
 
-    /**
-     * Check if calculation system is available
-     *
-     * @return JsonResponse
-     */
+    
     public function checkSystemStatus(): JsonResponse
     {
         try {

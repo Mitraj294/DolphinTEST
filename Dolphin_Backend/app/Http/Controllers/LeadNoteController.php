@@ -9,9 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class LeadNoteController extends Controller
 {
-    /**
-     * Get all notes for a specific lead.
-     */
+    
     public function index($leadId)
     {
         $lead = Lead::find($leadId);
@@ -25,9 +23,7 @@ class LeadNoteController extends Controller
         return response()->json($notes);
     }
 
-    /**
-     * Store a new note for a lead.
-     */
+    
     public function store(Request $request, $leadId)
     {
         $lead = Lead::find($leadId);
@@ -68,9 +64,7 @@ class LeadNoteController extends Controller
         }
     }
 
-    /**
-     * Get a specific note.
-     */
+    
     public function show($leadId, $noteId)
     {
         $note = LeadNote::with('creator:id,first_name,last_name,email')
@@ -84,9 +78,7 @@ class LeadNoteController extends Controller
         return response()->json($note);
     }
 
-    /**
-     * Update a note.
-     */
+    
     public function update(Request $request, $leadId, $noteId)
     {
         $note = LeadNote::where('lead_id', $leadId)->find($noteId);
@@ -120,9 +112,7 @@ class LeadNoteController extends Controller
         }
     }
 
-    /**
-     * Delete a note.
-     */
+    
     public function destroy(Request $request, $leadId, $noteId)
     {
         $note = LeadNote::where('lead_id', $leadId)->find($noteId);

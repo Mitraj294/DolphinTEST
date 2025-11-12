@@ -1,9 +1,8 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use App\Models\Plan;
 use App\Models\User;
+use App\Models\Lead;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -11,12 +10,10 @@ use Stripe\Checkout\Session as StripeSession;
 use Stripe\Customer;
 use Stripe\Exception\ApiErrorException;
 use Stripe\Stripe;
+use App\Services\UrlBuilder;
 
 class SubscriptionController extends Controller
 {
-    /**
-     * Create a Stripe Checkout session for the authenticated user.
-     */
     public function createCheckoutSession(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -30,7 +27,7 @@ class SubscriptionController extends Controller
             'cancel_url' => ['nullable', 'url'],
         ]);
 
-        $plan = Plan::where('stripe_price_id', $validated['price_id'])->firstOrFail();
+    $plan = Plan::where('stripe_price_id', $validated['price_id'])->firstOrFail();
 
         $secret = config('services.stripe.secret');
         if (! $secret) {
@@ -42,8 +39,8 @@ class SubscriptionController extends Controller
         Stripe::setApiKey($secret);
 
         $stripeCustomerId = $this->resolveStripeCustomerId($user);
-        $successUrl = $validated['success_url'] ?? $this->defaultSuccessUrl();
-        $cancelUrl = $validated['cancel_url'] ?? $this->defaultCancelUrl();
+    $successUrl = $validated['success_url'] ?? UrlBuilder::subscriptionsSuccessUrl();
+    $cancelUrl = $validated['cancel_url'] ?? UrlBuilder::subscriptionsCancelledUrl();
 
         try {
             $session = StripeSession::create([
@@ -80,6 +77,88 @@ class SubscriptionController extends Controller
             return response()->json(['error' => 'Unable to create checkout session'], 422);
         }
 
+        return response()->json([
+            'id' => $session->id,
+            'url' => $session->url,
+        ]);
+    }
+
+    public function createCheckoutSessionGuest(Request $request): JsonResponse
+    {
+
+        $validated = $request->validate([
+            'price_id' => ['required', 'string'],
+            'email' => ['nullable', 'email', 'required_without:lead_id'],
+            'lead_id' => ['nullable', 'integer', 'exists:leads,id', 'required_without:email'],
+            'success_url' => ['nullable', 'url'],
+            'cancel_url' => ['nullable', 'url'],
+        ]);
+
+    
+
+        $secret = config('services.stripe.secret');
+        if (! $secret) {
+            Log::error('Stripe secret missing when attempting to create guest checkout session.');
+
+            return response()->json(['error' => 'Stripe is not configured'], 500);
+        }
+
+        Stripe::setApiKey($secret);
+
+        try {
+            $guestEmail = $validated['email'] ?? null;
+            if (empty($guestEmail) && ! empty($validated['lead_id'])) {
+                $lead = Lead::find($validated['lead_id']);
+                if ($lead) {
+                    $guestEmail = $lead->email;
+                }
+            }
+
+            if (empty($guestEmail)) {
+                Log::warning('Guest checkout attempted without an email and lead did not resolve to an email', ['payload' => $validated]);
+                return response()->json(['error' => 'Email or lead_id with an email is required'], 422);
+            }
+
+            $customer = Customer::create([
+                'email' => $guestEmail,
+            ]);
+
+            $successUrl = $validated['success_url'] ?? UrlBuilder::subscriptionsSuccessUrl();
+            $cancelUrl = $validated['cancel_url'] ?? UrlBuilder::subscriptionsCancelledUrl();
+
+            $session = StripeSession::create([
+                'customer' => $customer->id,
+                'payment_method_types' => ['card'],
+                'line_items' => [[
+                    'price' => $validated['price_id'],
+                    'quantity' => 1,
+                ]],
+                'mode' => 'subscription',
+                'success_url' => $successUrl,
+                'cancel_url' => $cancelUrl,
+                'client_reference_id' => isset($validated['lead_id']) ? (string)$validated['lead_id'] : null,
+                'metadata' => [
+                    'lead_id' => isset($validated['lead_id']) ? (string)$validated['lead_id'] : null,
+                    'price_id' => (string)$validated['price_id'],
+                    'guest_email' => $guestEmail,
+                ],
+                'subscription_data' => [
+                    'metadata' => [
+                        'lead_id' => isset($validated['lead_id']) ? (string)$validated['lead_id'] : null,
+                        'price_id' => (string)$validated['price_id'],
+                        'guest_email' => $guestEmail,
+                    ],
+                ],
+            ]);
+        } catch (ApiErrorException $exception) {
+            Log::error('Stripe guest checkout session creation failed', [
+                'message' => $exception->getMessage(),
+                'email' => $validated['email'],
+                'price_id' => $validated['price_id'],
+            ]);
+
+            return response()->json(['error' => 'Unable to create checkout session'], 422);
+        }
 
         return response()->json([
             'id' => $session->id,
@@ -103,72 +182,30 @@ class SubscriptionController extends Controller
         return $customer->id;
     }
 
-    private function defaultSuccessUrl(): string
-    {
-        $base = $this->frontendBaseUrl();
-
-        return $base . '/subscriptions/success?session_id={CHECKOUT_SESSION_ID}';
-    }
-
-    private function defaultCancelUrl(): string
-    {
-        $base = $this->frontendBaseUrl();
-
-        return $base . '/subscriptions/cancelled';
-    }
-
-    private function frontendBaseUrl(): string
-    {
-        $base = config('app.frontend_url')
-            ?? env('FRONTEND_URL')
-            ?? config('app.url')
-            ?? 'http://localhost:8080';
-
-        return rtrim($base, '/');
-    }
-
-    /**
-     * Determine whether the given subscription has expired.
-     *
-     * Middleware currently expects this helper on the controller. Keep it
-     * lightweight and delegate to the model's helpers where possible.
-     *
-     * @param  \App\Models\Subscription|int|null  $subscription
-     * @return bool
-     */
     public function hasExpired($subscription): bool
     {
         if (! $subscription) {
             return true;
         }
-
-        // Accept either an ID or a model instance
         if (is_numeric($subscription)) {
             $subscription = \App\Models\Subscription::find($subscription);
             if (! $subscription) {
                 return true;
             }
         }
-
-        // Prefer a model-level helper if available
         if (method_exists($subscription, 'isActive')) {
             return ! $subscription->isActive();
         }
-
-        // Fallback checks: expired status or ends_at in the past
         if (isset($subscription->status) && $subscription->status === 'expired') {
             return true;
         }
-
         if (isset($subscription->ends_at) && $subscription->ends_at) {
             try {
                 return \Carbon\Carbon::parse($subscription->ends_at)->isPast();
             } catch (\Throwable $e) {
-                // If parsing fails, consider it expired to be safe
                 return true;
             }
         }
-
         return false;
     }
 }

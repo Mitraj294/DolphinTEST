@@ -57,7 +57,7 @@ export default {
   },
   computed: {
     widthStyle() {
-      // returns an object suitable for Vue :style binding
+      
       return getWidthStyle(this.dropdownWidth);
     },
     displayLabel() {

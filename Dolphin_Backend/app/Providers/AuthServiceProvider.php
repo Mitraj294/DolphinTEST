@@ -8,30 +8,23 @@ use Laravel\Passport\Passport;
 
 class AuthServiceProvider extends ServiceProvider
 {
-    /**
-     * The policy mappings for the application.
-     *
-     * @var array<class-string, class-string>
-     */
+    
     protected $policies = [
         \App\Models\User::class => \App\Policies\UserPolicy::class,
     ];
 
-    /**
-     * Register any authentication / authorization services.
-     */
+    
     public function boot()
     {
         $this->registerPolicies();
 
-        // Enable password grant type (required in Passport >= 12)
+        
         Passport::enablePasswordGrant();
 
-        // Declare API scopes
+        
         Passport::tokensCan([
             'impersonate' => 'Act as another user (impersonation)',
         ]);
-
 
         if (request()->boolean('remember')) {
             Passport::tokensExpireIn(now()->addDays(7));
@@ -41,7 +34,7 @@ class AuthServiceProvider extends ServiceProvider
             Passport::refreshTokensExpireIn(now()->addDays(7));
         }
 
-        // Optional: set personal access token expiry
+        
         Passport::personalAccessTokensExpireIn(now()->addMonths(2));
     }
 }

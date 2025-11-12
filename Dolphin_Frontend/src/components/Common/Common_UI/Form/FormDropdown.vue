@@ -51,11 +51,11 @@ export default {
   name: 'FormDropdown',
   props: {
     modelValue: [String, Number],
-    options: { type: Array, required: false, default: null }, // If not provided, will use slot
+    options: { type: Array, required: false, default: null }, 
     icon: { type: String, default: '' },
     placeholder: { type: String, default: 'Select' },
     disabled: { type: Boolean, default: false },
-    // allow callers to override horizontal padding in px (left/right)
+    
     paddingLeft: { type: [Number, String], default: 36 },
     paddingRight: { type: [Number, String], default: 36 },
   },
@@ -73,11 +73,11 @@ export default {
         const found = this.options.find((opt) => opt.value === this.modelValue);
         return found ? found.text : this.placeholder;
       }
-      // fallback for slot
+      
       return this.placeholder;
     },
     inputStyle() {
-      // ensure numeric value and append 'px'
+      
       const left = Number(this.paddingLeft) || 36;
       const right = Number(this.paddingRight) || 36;
       return { padding: `0 ${right}px 0 ${left}px` };
@@ -87,7 +87,7 @@ export default {
       if (this.options && this.options.length) {
         opts = this.options;
       } else if (this.$slots.default) {
-        // Parse slot options
+        
         const slotNodes = this.$slots.default();
         opts = slotNodes
           .filter((node) => node.type === 'option' && node.props && node.props.value !== undefined)
@@ -118,20 +118,20 @@ export default {
       if (this.disabled) return;
       this.showDropdown = !this.showDropdown;
       if (this.showDropdown) {
-        // Find the index of the currently selected option
+        
         const selectedIndex = this.filteredOptions.findIndex(
           (opt) => opt.value === this.modelValue
         );
         this.focusedIndex = selectedIndex >= 0 ? selectedIndex : -1;
 
-        // update position on open
+        
         this.$nextTick(() => {
           this.updateDropdownPosition();
-          // Focus search input for immediate typing
+          
           if (this.$refs.searchInput) {
             this.$refs.searchInput.focus();
           }
-          // Scroll to selected item if exists
+          
           if (this.focusedIndex >= 0) {
             this.scrollToFocusedItem();
           }
@@ -140,7 +140,7 @@ export default {
     },
     selectOption(option) {
       this.$emit('update:modelValue', option.value);
-      this.$emit('change', option.value); // Always emit change event
+      this.$emit('change', option.value); 
       this.showDropdown = false;
       this.search = '';
       this.focusedIndex = -1;
@@ -162,11 +162,11 @@ export default {
           const dropdownRect = dropdownEl.getBoundingClientRect();
           const itemRect = item.getBoundingClientRect();
 
-          // Check if item is above the visible area
+          
           if (itemRect.top < dropdownRect.top) {
             dropdownEl.scrollTop = item.offsetTop;
           }
-          // Check if item is below the visible area
+          
           else if (itemRect.bottom > dropdownRect.bottom) {
             dropdownEl.scrollTop = item.offsetTop - dropdownEl.clientHeight + item.clientHeight;
           }
@@ -256,15 +256,15 @@ export default {
       }
     },
     updateDropdownPosition() {
-      // position the teleported dropdown relative to the input's root element
+      
       const root = this.$refs.dropdownRoot;
       const el = this.$refs.dropdownEl;
       if (!root || !el) return;
       const rect = root.getBoundingClientRect();
-      const top = rect.bottom + globalThis.scrollY + 6; // small offset
+      const top = rect.bottom + globalThis.scrollY + 6; 
       const left = rect.left + globalThis.scrollX;
       const width = rect.width;
-      // apply fixed-positioning so it stays in viewport during scroll
+      
       this.dropdownStyle = {
         position: 'absolute',
         top: `${top}px`,
@@ -276,7 +276,7 @@ export default {
   },
   mounted() {
     document.addEventListener('mousedown', this.handleClickOutside);
-    // keep position updated on resize/scroll
+    
     globalThis.addEventListener('resize', this.updateDropdownPosition);
     globalThis.addEventListener('scroll', this.updateDropdownPosition, true);
   },
@@ -290,7 +290,7 @@ export default {
       }
     },
     search() {
-      // Reset focused index when search changes, but maintain selection if visible
+      
       const selectedIndex = this.filteredOptions.findIndex((opt) => opt.value === this.modelValue);
       this.focusedIndex = selectedIndex >= 0 ? selectedIndex : -1;
     },

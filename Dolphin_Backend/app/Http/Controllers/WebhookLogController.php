@@ -16,12 +16,12 @@ class WebhookLogController extends Controller
 
         $query = WebhookLog::query();
 
-        // Filter by type if provided
+        
         if ($request->has('type')) {
             $query->where('type', $request->type);
         }
 
-        // Filter by processed status if provided
+        
         if ($request->has('processed')) {
             $query->where('processed', $request->boolean('processed'));
         }

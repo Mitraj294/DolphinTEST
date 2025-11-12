@@ -1,15 +1,5 @@
 <?php
 
-/**
- * DEPRECATED REQUEST: This validates data for the obsolete 'answers' table.
- *
- * The 'answers' and 'questions' tables no longer exist.
- * Use assessment_responses table instead.
- *
- * This request is kept ONLY for backwards compatibility with AnswerController.
- * Create a new StoreAssessmentResponseRequest for new implementations.
- */
-
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -22,11 +12,7 @@ class StoreAnswerRequest extends FormRequest
         return Auth::check();
     }
 
-    /**
-     * Validation rules for storing answers (legacy request).
-     *
-     * @return array<string, mixed>
-     */
+    
     public function rules(): array
     {
         return [

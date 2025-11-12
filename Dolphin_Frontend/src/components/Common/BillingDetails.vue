@@ -159,7 +159,7 @@ export default {
         const sub = await getActiveSubscription();
         this.subscription = sub || null;
 
-        // Attempt to fetch invoices for this subscription if available
+        
         let invRes = null;
         try {
           const params = {};
@@ -167,12 +167,12 @@ export default {
             params.subscription_id = this.subscription.id;
           invRes = await getInvoices(params);
         } catch (e) {
-          // Could not fetch invoices for subscription, log and continue with empty
+          
           console.debug && console.debug('Could not fetch invoices for subscription:', e);
           invRes = null;
         }
 
-        // invRes may be paginated { data: [...] } or an array
+        
         if (Array.isArray(invRes)) {
           this.invoices = invRes;
         } else if (invRes && Array.isArray(invRes.data)) {
@@ -180,11 +180,36 @@ export default {
         } else {
           this.invoices = [];
         }
+
+        
+        
+        
+        
+        
+        if ((!this.invoices || this.invoices.length === 0) && this.subscription) {
+          this.invoices = [this.synthesizeSubscriptionSummary(this.subscription)];
+        }
       } catch (e) {
         console.debug && console.debug('Failed to load billing details:', e);
         this.subscription = null;
         this.invoices = [];
       }
+    },
+    
+    synthesizeSubscriptionSummary(subscription) {
+      const plan = subscription.plan || null;
+      return {
+        subscription_id: subscription.id || subscription.subscription_id || null,
+        plan_id: subscription.plan_id || (plan && plan.id) || null,
+        status: subscription.status || null,
+        subscriptionEnd: subscription.end || subscription.ends_at || subscription.current_period_end || null,
+        paymentDate: subscription.start || subscription.started_at || null,
+        payment_method: subscription.payment_method?.label || subscription.payment_method_label || null,
+        amount: plan?.amount || subscription.latest_amount_paid || null,
+        currency: plan?.currency || subscription.currency || null,
+        pdfUrl: null,
+        description: plan ? `${plan.name} subscription` : 'Subscription payment',
+      };
     },
     formatDate(dateStr) {
       if (!dateStr) return '';
@@ -197,7 +222,7 @@ export default {
       });
     },
     async manageSubscription() {
-      // Open billing portal (if backend supports it). Gracefully handle errors.
+      
       this.isCreatingPortal = true;
       try {
         const res = await createBillingPortalSession();

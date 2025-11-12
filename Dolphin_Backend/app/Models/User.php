@@ -11,12 +11,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Traits\HasRoles;
 
-/**
- * @mixin \Eloquent
- * @property int $id
- * @property string $email
- * @method static static findOrFail($id)
- */
 class User extends Authenticatable
 {
     use HasFactory;
@@ -24,11 +18,7 @@ class User extends Authenticatable
     use HasApiTokens;
     use HasRoles;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    
     protected $fillable = [
         'first_name',
         'last_name',
@@ -46,21 +36,13 @@ class User extends Authenticatable
         'trial_ends_at',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
+    
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array<string,string>
-     */
+    
     protected $casts = [
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
@@ -71,24 +53,22 @@ class User extends Authenticatable
         'deleted_at' => 'datetime',
     ];
 
-    // Role relationship is defined on the model directly for clarity. The
-    // HasRoles trait provides helper methods (hasRole/hasAnyRole) and will
-    // rely on this relationship when evaluating permissions.
+    
+    
+    
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'role_users');
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<\App\Models\Role, \App\Models\User>
-     */
+    
     
 
-    // Add role helper trait so middleware can call hasRole/hasAnyRole
-    // without errors.
+    
+    
 
-    // Legacy relationship (organization_users pivot) retained for backward compatibility.
-    // Prefer organizationMemberships() which uses organization_member.
+    
+    
     public function organizations(): BelongsToMany
     {
         return $this->belongsToMany(Organization::class, 'organization_users')
@@ -96,21 +76,17 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<\App\Models\Organization, \App\Models\User>
-     */
+    
     
 
-    // Primary organization membership relation (replacement for organizations()).
+    
     public function organizationMemberships(): BelongsToMany
     {
         return $this->belongsToMany(Organization::class, 'organization_member')
             ->withTimestamps();
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<\App\Models\Organization, \App\Models\User>
-     */
+    
     
 
     public function groups(): BelongsToMany
@@ -120,9 +96,7 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<\App\Models\Group, \App\Models\User>
-     */
+    
     
 
     public function country(): BelongsTo
@@ -130,21 +104,17 @@ class User extends Authenticatable
         return $this->belongsTo(Country::class);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Models\Country, \App\Models\User>
-     */
+    
     
 
-    // Optional geographic relations (used by some eager loads). These will
-    // safely resolve to null when the corresponding foreign keys are absent.
+    
+    
     public function state(): BelongsTo
     {
         return $this->belongsTo(State::class);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Models\State, \App\Models\User>
-     */
+    
     
 
     public function city(): BelongsTo
@@ -152,9 +122,7 @@ class User extends Authenticatable
         return $this->belongsTo(City::class);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Models\City, \App\Models\User>
-     */
+    
     
 
     public function organizationAssessments(): HasMany
@@ -162,9 +130,7 @@ class User extends Authenticatable
         return $this->hasMany(OrganizationAssessment::class);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Models\OrganizationAssessment, \App\Models\User>
-     */
+    
     
 
     public function assessmentResponses(): HasMany
@@ -172,9 +138,7 @@ class User extends Authenticatable
         return $this->hasMany(AssessmentResponse::class);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Models\AssessmentResponse, \App\Models\User>
-     */
+    
     
 
     public function assessmentResults(): HasMany
@@ -182,9 +146,7 @@ class User extends Authenticatable
         return $this->hasMany(AssessmentResult::class);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Models\AssessmentResult, \App\Models\User>
-     */
+    
     
 
     public function subscriptions(): HasMany
@@ -192,9 +154,7 @@ class User extends Authenticatable
         return $this->hasMany(Subscription::class);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Models\Subscription, \App\Models\User>
-     */
+    
     
 
     public function leadNotes(): HasMany
@@ -202,9 +162,7 @@ class User extends Authenticatable
         return $this->hasMany(LeadNote::class, 'created_by');
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Models\LeadNote, \App\Models\User>
-     */
+    
     
 
     public function managedOrganizations(): HasMany
@@ -212,9 +170,7 @@ class User extends Authenticatable
         return $this->hasMany(Organization::class, 'sales_person_id');
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Models\Organization, \App\Models\User>
-     */
+    
     
 
     public function announcementsAsAdmin(): BelongsToMany
@@ -223,8 +179,6 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<\App\Models\Announcement, \App\Models\User>
-     */
+    
     
 }

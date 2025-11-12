@@ -9,12 +9,8 @@
         </div>
         <div class="user-assessment-table-container">
           <div class="user-assessment-words-grid">
-            <label
-              v-for="(option, idx) in currentQuestion.options"
-              :key="`${option}-${idx}`"
-              class="user-assessment-checkbox-label"
-              :class="{ checked: currentSelectedWords.includes(option) }"
-            >
+            <label v-for="(option, idx) in currentQuestion.options" :key="`${option}-${idx}`"
+              class="user-assessment-checkbox-label" :class="{ checked: currentSelectedWords.includes(option) }">
               <span class="user-assessment-checkbox-custom"></span>
               <input type="checkbox" :value="option" v-model="selectedWords[step - 1]" />
               {{ option }}
@@ -25,30 +21,18 @@
           <div style="flex: 1; display: flex; align-items: center">
             <span class="user-assessment-step-btn"> Question {{ step }} of {{ totalSteps }} </span>
           </div>
-          <div
-            style="
+          <div style="
               flex: 1;
               display: flex;
               justify-content: flex-end;
               align-items: center;
               gap: 12px;
-            "
-          >
+            ">
             <button v-if="step > 1" class="user-assessment-back-btn" @click="goToBack">Back</button>
-            <button
-              v-if="step < totalSteps"
-              class="user-assessment-next-btn"
-              :disabled="!canProceed"
-              @click="goToNext"
-            >
+            <button v-if="step < totalSteps" class="user-assessment-next-btn" :disabled="!canProceed" @click="goToNext">
               Next
             </button>
-            <button
-              v-else
-              class="user-assessment-next-btn"
-              :disabled="!canProceed"
-              @click="handleSubmit"
-            >
+            <button v-else class="user-assessment-next-btn" :disabled="!canProceed" @click="handleSubmit">
               Submit
             </button>
           </div>
@@ -59,13 +43,8 @@
           <div class="user-assessment-success-icon">
             <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
               <circle cx="40" cy="40" r="40" fill="#2ECC40" />
-              <path
-                d="M25 42l13 13 17-23"
-                stroke="#fff"
-                stroke-width="5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
+              <path d="M25 42l13 13 17-23" stroke="#fff" stroke-width="5" stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
           </div>
           <div class="user-assessment-success-title">
@@ -79,14 +58,11 @@
             remaining essentially unchanged
           </div>
           <button
-            v-if="isSubscribed"
+      
             class="user-assessment-success-btn"
-            @click="goToManageSubscription"
+            @click="router.push('/dashboard')"
           >
-            Manage Subscription
-          </button>
-          <button v-else class="user-assessment-success-btn" @click="explorePlans">
-            Explore Subscriptions
+            For Result Go to Dashboard
           </button>
           <div style="margin-top: 16px"></div>
         </div>
@@ -104,6 +80,88 @@ import { useRouter } from 'vue-router';
 import { fetchSubscriptionStatus } from '@/services/subscription';
 
 const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || '';
+
+// Normalize a stored form definition to an array of option strings.
+// Pulled out to module scope to avoid deep nesting inside setup().
+function normalizeFormDefinition(def) {
+  let parsed = def;
+  try {
+    // If it's a string that looks like JSON, repeatedly parse up to a few times
+    let attempts = 0;
+    while (typeof parsed === 'string' && attempts < 5) {
+      const trimmed = parsed.trim();
+      // If it starts with [ or { or " then attempt parse
+      if (trimmed.startsWith('[') || trimmed.startsWith('{') || trimmed.startsWith('"')) {
+        parsed = JSON.parse(parsed);
+        attempts++;
+      } else {
+        break;
+      }
+    }
+  } catch (e) {
+    // If parsing fails, fallback to using the original value
+    // eslint-disable-next-line no-console
+    console.debug && console.debug('normalizeFormDefinition: failed to parse', e);
+    parsed = def;
+  }
+
+  // Now normalize into an array of strings. Avoid inline callbacks to reduce nesting.
+  if (Array.isArray(parsed)) {
+    // Are all items strings?
+    let allStrings = true;
+    for (const item of parsed) {
+      if (typeof item !== 'string') {
+        allStrings = false;
+        break;
+      }
+    }
+    if (allStrings) return parsed;
+
+    // Are all items objects?
+    let allObjects = true;
+    for (const item of parsed) {
+      if (!(item && typeof item === 'object')) {
+        allObjects = false;
+        break;
+      }
+    }
+    if (allObjects) {
+      const out = [];
+      for (const it of parsed) {
+        out.push(it.label || it.text || String(it));
+      }
+      return out;
+    }
+
+    // Mixed types - coerce to strings
+    const outMixed = [];
+    for (const item of parsed) {
+      outMixed.push(String(item));
+    }
+    return outMixed;
+  }
+
+  // If parsed is an object containing an options/choices field
+  if (parsed && typeof parsed === 'object') {
+    if (Array.isArray(parsed.options)) {
+      const out = [];
+      for (const it of parsed.options) {
+        out.push(typeof it === 'string' ? it : it.label || it.text || String(it));
+      }
+      return out;
+    }
+    if (Array.isArray(parsed.choices)) {
+      const out = [];
+      for (const it of parsed.choices) {
+        out.push(typeof it === 'string' ? it : it.label || it.text || String(it));
+      }
+      return out;
+    }
+  }
+
+  // Not parseable into an array - return empty array
+  return [];
+}
 
 export default {
   name: 'UserAssessment',
@@ -143,55 +201,7 @@ export default {
         });
         if (Array.isArray(resQ.data)) {
           // Transform assessment data to match old question format for compatibility
-          const normalizeFormDefinition = (def) => {
-            // Try to robustly parse strings which might be double-encoded JSON
-            let parsed = def;
-            try {
-              // If it's a string that looks like JSON, repeatedly parse up to a few times
-              let attempts = 0;
-              while (typeof parsed === 'string' && attempts < 5) {
-                const trimmed = parsed.trim();
-                // If it starts with [ or { or " then attempt parse
-                if (trimmed.startsWith('[') || trimmed.startsWith('{') || trimmed.startsWith('"')) {
-                  parsed = JSON.parse(parsed);
-                  attempts++;
-                } else {
-                  break;
-                }
-              }
-            } catch (e) {
-              // If parsing fails, fallback to using the original value
-              // eslint-disable-next-line no-console
-              console.debug && console.debug('normalizeFormDefinition: failed to parse', e);
-              parsed = def;
-            }
-
-            // Now normalize into an array of strings
-            if (Array.isArray(parsed)) {
-              // If items are objects, try to extract a label/text property
-              if (parsed.every((it) => typeof it === 'string')) return parsed;
-              if (parsed.every((it) => it && typeof it === 'object')) {
-                return parsed.map((it) => it.label || it.text || String(it));
-              }
-              // Mixed types - coerce to strings
-              return parsed.map((it) => String(it));
-            }
-
-            // If parsed is an object containing an options/choices field
-            if (parsed && typeof parsed === 'object') {
-              if (Array.isArray(parsed.options))
-                return parsed.options.map((it) =>
-                  typeof it === 'string' ? it : it.label || it.text || String(it)
-                );
-              if (Array.isArray(parsed.choices))
-                return parsed.choices.map((it) =>
-                  typeof it === 'string' ? it : it.label || it.text || String(it)
-                );
-            }
-
-            // Not parseable into an array - return empty array
-            return [];
-          };
+          
 
           questions.value = resQ.data.map((assessment) => {
             const options = normalizeFormDefinition(assessment.form_definition);
@@ -362,15 +372,6 @@ export default {
 
     onMounted(fetchQuestionsAndAnswers);
 
-    // Success page navigation handlers
-    const goToManageSubscription = () => {
-      router.push({ name: 'ManageSubscription' });
-    };
-
-    const explorePlans = () => {
-      router.push({ name: 'SubscriptionPlans' });
-    };
-
     return {
       step,
       questions,
@@ -383,9 +384,8 @@ export default {
       goToNext,
       goToBack,
       handleSubmit,
-      goToManageSubscription,
-      explorePlans,
       isSubscribed,
+      router,
     };
   },
 };
@@ -543,9 +543,11 @@ export default {
   cursor: pointer;
   transition: background 0.18s;
 }
+
 .user-assessment-next-btn:hover {
   background: #005fa3;
 }
+
 .user-assessment-back-btn {
   background: #fff;
   color: #222;
@@ -560,6 +562,7 @@ export default {
     background 0.18s,
     border 0.18s;
 }
+
 .user-assessment-back-btn:hover {
   background: #f5f5f5;
   border: 1.5px solid #0074c2;
@@ -576,15 +579,18 @@ export default {
   text-align: center;
   margin: 0 auto;
 }
+
 .user-assessment-success-icon {
   margin-bottom: 32px;
 }
+
 .user-assessment-success-title {
   font-size: 2rem;
   font-weight: 600;
   margin-bottom: 24px;
   color: #234056;
 }
+
 .user-assessment-success-desc {
   font-size: 1.1rem;
   color: #444;
@@ -593,6 +599,7 @@ export default {
   margin-left: auto;
   margin-right: auto;
 }
+
 .user-assessment-success-btn {
   background: #0074c2;
   color: #fff;
@@ -604,6 +611,7 @@ export default {
   cursor: pointer;
   transition: background 0.18s;
 }
+
 .user-assessment-success-btn:hover {
   background: #005fa3;
 }
@@ -614,50 +622,61 @@ export default {
     border-radius: 14px;
     max-width: 100%;
   }
+
   .user-assessment-header {
     padding: 8px 8px 0 8px;
     border-top-left-radius: 14px;
     border-top-right-radius: 14px;
   }
+
   .user-assessment-table-container {
     padding: 0 8px 8px 8px;
     border-bottom-left-radius: 14px;
     border-bottom-right-radius: 14px;
   }
+
   .user-assessment-footer {
     padding: 0 18px 18px 18px;
   }
+
   .user-assessment-success-card {
     border-radius: 14px;
     padding: 18px 8px 18px 8px;
     max-width: 100%;
   }
+
   .user-assessment-words-grid {
     gap: 12px 12px;
   }
 }
+
 @media (max-width: 900px) {
   .user-assessment-card {
     border-radius: 10px;
   }
+
   .user-assessment-header {
     padding: 8px 4px 0 4px;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
   }
+
   .user-assessment-table-container {
     padding: 0 4px 4px 4px;
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;
   }
+
   .user-assessment-footer {
     padding: 0 14px 14px 14px;
   }
+
   .user-assessment-success-card {
     border-radius: 10px;
     padding: 8px 4px 8px 4px;
     max-width: 100%;
   }
+
   .user-assessment-words-grid {
     grid-template-columns: 1fr;
     gap: 8px 8px;

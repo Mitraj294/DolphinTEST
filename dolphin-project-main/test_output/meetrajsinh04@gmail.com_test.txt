@@ -2,9 +2,9 @@
 
 Test Subject: meetrajsinh04@gmail.com
 
-Self Total Words: 31
-Concept Total Words: 23
-Adjusted Total Words: 14
+Self Total Words: 29
+Concept Total Words: 31
+Adjusted Total Words: 13
 
 ################################
 ####### Weight Results #########
@@ -12,135 +12,141 @@ Adjusted Total Words: 14
 
 ******* Self Projection *******
 
-A percent: 49.81%
+A percent: 35.15%
 
-B percent: 51.24%
+B percent: 25.00%
 
-C percent: 32.66%
+C percent: 40.51%
 
-D percent: 27.79%
+D percent: 22.78%
 
-Average: 40.37%
+Average: 30.86%
 
-Decision Approach: 40.33%
+Decision Approach: 27.26%
 
-A | -------------------------------------------------0--------------------------------------------------
-B | --------------------------------------------------0-------------------------------------------------
-C | --------------------------------0-------------------------------------------------------------------
-D | ---------------------------0------------------------------------------------------------------------
-DA| ---------------------------------------0------------------------------------------------------------
-L | ---------------------------------------|------------------------------------------------------------
+A | ----------------------------------0-----------------------------------------------------------------
+B | ------------------------0---------------------------------------------------------------------------
+C | ----------------------------------------0-----------------------------------------------------------
+D | ----------------------0-----------------------------------------------------------------------------
+DA| --------------------------0-------------------------------------------------------------------------
+L | ------------------------------|---------------------------------------------------------------------
 
 ******* Concept Projection *******
 
-A percent: 22.00%
+A percent: 15.24%
 
-B percent: 21.92%
+B percent: 27.06%
 
-C percent: 26.60%
+C percent: 32.51%
 
-D percent: 45.79%
+D percent: 39.65%
 
-Average: 29.08%
+Average: 28.62%
 
-A | ---------------------0------------------------------------------------------------------------------
-B | ---------------------0------------------------------------------------------------------------------
-C | --------------------------0-------------------------------------------------------------------------
-D | ---------------------------------------------0------------------------------------------------------
+A | --------------0-------------------------------------------------------------------------------------
+B | --------------------------0-------------------------------------------------------------------------
+C | --------------------------------0-------------------------------------------------------------------
+D | ---------------------------------------0------------------------------------------------------------
 L | ----------------------------|-----------------------------------------------------------------------
 
 ######################################
 ### Count for Self word categories ###
 ######################################
-A Count: 8
-B Count: 9
+A Count: 7
+B Count: 7
 C Count: 6
-D Count: 8
+D Count: 9
 
 ---------- Self A words ----------
-agreeable
-assertive
-competitive
-confident
-daring
-demanding
-resourceful
-submissive
+audacious
+docile
+humble
+independent
+individualistic
+meek
+selfstarter
 ---------------------------------
 
 ---------- Self B words ----------
-charismatic
-friendly
-gregarious
-logical
-outgoing
-sociable
-sophisticated
-stimulating
-thoughtful
+constrained
+enthusiastic
+introspective
+persuasive
+reflective
+reserved
+shy
 ---------------------------------
 
 ---------- Self C words ----------
-calm
-forceful
-intense
-passive
-patient
-relaxed
+consistent
+driving
+methodical
+quick
+tense
+tranquil
 ---------------------------------
 
 ---------- Self D words ----------
-arbitrary
-conventional
-dutiful
-formal
-inflexible
-neat
-precise
-responsive
+accurate
+careful
+disorganized
+flexible
+frank
+informal
+persistent
+respectful
+unconventional
 ---------------------------------
 
 #########################################
 ### Count for Concept word categories ###
 #########################################
 A Count: 4
-B Count: 5
-C Count: 3
-D Count: 11
+B Count: 6
+C Count: 6
+D Count: 15
 
 ---------- Concept A words ----------
-demanding
-selfstarter
+accommodating
+harmonious
 timid
 unassuming
 ---------------------------------
 
 ---------- Concept B words ----------
-logical
+captivating
+optimistic
+quiet
 reserved
-shy
-sophisticated
-stimulating
+serious
+silent
 ---------------------------------
 
 ---------- Concept C words ----------
-consistent
-forceful
-tranquil
+deliberate
+fastpaced
+highstrung
+restless
+stable
+volatile
 ---------------------------------
 
 ---------- Concept D words ----------
+casual
+cautious
 conscientious
 disciplined
-formal
 fussy
-inflexible
+loyal
 meticulous
 organized
-precise
-respectful
-responsive
+polite
+rebellious
+thorough
+undisciplined
 uninhibited
+unrestrained
+unstructured
 ---------------------------------
 
 ----------------- End of meetrajsinh04@gmail.com's test! ------------------

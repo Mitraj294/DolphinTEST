@@ -269,7 +269,7 @@ export default {
   },
   computed: {
     isReferralSourceOther() {
-      // Check if the selected referral source is "Other"
+      
       if (!this.form.referral_source_id) return false;
       const selected = this.referralSources.find((r) => r.id === this.form.referral_source_id);
       return selected && selected.name && selected.name.toLowerCase() === 'other';
@@ -289,7 +289,7 @@ export default {
   },
 
   methods: {
-    //  Helper Methods
+    
     getLeadId() {
       const q = this.$route.query;
       return this.$route.params.id || q.id || null;
@@ -335,7 +335,7 @@ export default {
         }
       }
 
-      // Prefer a canonical `name` query param if present; otherwise fall back to first/last/contact
+      
       let first = q.first_name || null;
       let last = q.last_name || null;
       if (!first && !last && q.name) {
@@ -371,16 +371,16 @@ export default {
     },
 
     fillForm(leadObj) {
-      // Extract organization data from relationship if available
+      
       const org = leadObj.organization || {};
       const orgAddress = org.address || {};
 
       this.form = {
-        // Accept canonical 'name' from backend and split to first/last if needed
+        
         first_name: leadObj.first_name || '',
         last_name: leadObj.last_name || '',
         name: leadObj.name || null,
-        // If first/last missing but `name` exists, split it
+        
         ...(!leadObj.first_name && leadObj.name
           ? {
               first_name: (leadObj.name || '').split(/\s+/)[0] || '',
@@ -389,13 +389,13 @@ export default {
           : {}),
         email: leadObj.email || '',
         phone_number: leadObj.phone_number || leadObj.phone || '',
-        // Get referral data from organization
+        
         referral_source_id: org.referral_source_id || leadObj.referral_source_id || null,
         referral_other_text: org.referral_other_text || leadObj.referral_other_text || '',
-        // Get organization data
+        
         organization_name: org.name || leadObj.organization_name || '',
         organization_size: org.size || leadObj.organization_size || '',
-        // Get address data from organization address
+        
         address_line_1:
           orgAddress.address_line_1 || leadObj.address_line_1 || leadObj.address || '',
         address_line_2: orgAddress.address_line_2 || leadObj.address_line_2 || '',

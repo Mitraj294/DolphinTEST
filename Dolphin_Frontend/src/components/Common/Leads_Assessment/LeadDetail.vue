@@ -29,7 +29,15 @@
                     ><b>{{ orgData?.referral_source || leadData.source || 'N/A' }}</b>
                   </div>
                   <div class="lead-detail-list-row">
-                    <span>Status</span><b>{{ leadData.status }}</b>
+                    <span>Status</span>
+                    <b>
+                      <span
+                        class="status-badge"
+                        :class="(leadData.status || (leadData.registered_at ? 'Registered' : 'Lead Stage')).toLowerCase().replace(/\s+/g, '-')"
+                      >
+                        {{ leadData.status || (leadData.registered_at ? 'Registered' : 'Lead Stage') }}
+                      </span>
+                    </b>
                   </div>
                 </div>
               </div>
@@ -684,6 +692,36 @@ export default {
   flex: 1 1 50%;
   justify-content: flex-start;
   display: flex;
+}
+
+/* Status badge styling (component-local) */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 90px;
+  height: 28px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  padding: 0 10px;
+  box-sizing: border-box;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+.status-badge.lead-stage { background: #6c757d; }
+.status-badge.assessment-sent { background: #007bff; }
+.status-badge.registered { background: #28a745; }
+
+@media (max-width: 800px) {
+  .status-badge {
+    min-width: 72px;
+    font-size: 12px;
+    height: 24px;
+    padding: 0 8px;
+  }
 }
 
 @media (max-width: 900px) {

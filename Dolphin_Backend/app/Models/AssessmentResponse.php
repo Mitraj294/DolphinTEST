@@ -6,13 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-/**
- * @mixin \Eloquent
- * @property int $id
- * @property mixed $selected_options
- * @property int $assessment_id
- * @method static \Illuminate\Database\Eloquent\Builder|static where(string $column, $value = null)
- */
 class AssessmentResponse extends Model
 {
     protected $fillable = [

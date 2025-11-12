@@ -53,46 +53,35 @@
 </template>
 
 <script>
-// Layout and Form UI imports
+
 import { FormInput, FormLabel, FormRow } from '@/components/Common/Common_UI/Form';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import axios from 'axios';
 import storage from '@/services/storage';
+import Editor from '@tinymce/tinymce-vue';
 
-// NOTE: we dynamically load TinyMCE core, icons, theme and plugins at runtime
-// so we can ensure the global `tinymce` is defined before icons/plugins run.
-
-/**
-
- * SendAssessment.vue
-
- * - Allows sending assessment invite emails to leads/users.
- * - Loads editable template from backend or generates based on lead.
- * - Uses TinyMCE editor for rich email composition.
-
- */
 export default {
   name: 'SendAssessment',
-  components: {
+    components: {
     MainLayout,
     FormInput,
     FormRow,
     FormLabel,
-    Editor: () => import('@tinymce/tinymce-vue'),
+    Editor,
   },
   data() {
     return {
-      // don't render Editor until TinyMCE and plugins are loaded
+      
       editorLoaded: false,
-      leadId: null, // ID of the lead (from route, query, or backend)
-      to: '', // Recipient email
-      recipientName: '', // Recipient name
-      subject: 'Complete Your Registration', // Default subject
-      templateContent: '', // Email body (HTML)
-      sending: false, // Email sending state
-      registrationLink: '', // Registration link for invite
+      leadId: null, 
+      to: '', 
+      recipientName: '', 
+      subject: 'Complete Your Registration', 
+      templateContent: '', 
+      sending: false, 
+      registrationLink: '', 
 
-      // TinyMCE configuration (self-hosted, free plugins only)
+      
       tinymceConfigSelfHosted: {
         height: 500,
         base_url: '/tinymce',
@@ -144,12 +133,12 @@ export default {
     };
   },
 
-  // Load TinyMCE core and plugins dynamically to ensure global is present
+  
   created() {
     this.loadTinyMCEModules();
   },
 
-  // Lifecycle: On mount, load initial lead data if available
+  
 
   mounted() {
     const leadId = this.$route.params.id || this.$route.query.lead_id || null;
@@ -157,7 +146,7 @@ export default {
     if (leadId) this.loadInitialLeadData(leadId);
   },
 
-  // Watchers: If recipient email changes, re-fetch server template
+  
 
   watch: {
     to(newEmail, oldEmail) {
@@ -167,18 +156,18 @@ export default {
     },
   },
 
-  // Methods
+  
 
   methods: {
-    // Dynamically import tinymce core, theme, icons and plugins
+    
     async loadTinyMCEModules() {
       try {
-        // load core and assign to global so icon modules can access it
+        
         const tinymceModule = await import('tinymce/tinymce');
-        // some bundlers export default, others the module itself
+        
         globalThis.tinymce = tinymceModule.default || tinymceModule;
 
-        // load icons, theme, models and plugins
+        
         await import('tinymce/icons/default');
         await import('tinymce/themes/silver');
         await import('tinymce/models/dom');
@@ -204,17 +193,15 @@ export default {
         ];
         await Promise.all(plugins.map((p) => import(`tinymce/plugins/${p}`)));
 
-        // mark editor as ready to render
+        
         this.editorLoaded = true;
       } catch (e) {
-        // if dynamic import fails, still attempt to render editor (may error)
+        
         console.debug && console.debug('Failed to dynamically load TinyMCE modules:', e);
         this.editorLoaded = true;
       }
     },
-    /**
-     * Loads lead data and default template from backend for given leadId.
-     */
+    
     async loadInitialLeadData(leadId) {
       try {
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
@@ -225,11 +212,15 @@ export default {
 
         const leadObj = res.data?.lead;
         const leadDefaultTemplate = res.data?.defaultTemplate;
-        if (leadObj && leadDefaultTemplate) {
+          if (leadObj && leadDefaultTemplate) {
           this.leadId = leadObj.id || this.leadId;
           this.to = leadObj.email || '';
           this.recipientName = `${leadObj.first_name || ''} ${leadObj.last_name || ''}`.trim();
-          this.templateContent = String(leadDefaultTemplate);
+          
+          
+          const resolvedTemplate = String(leadDefaultTemplate);
+          console.debug && console.debug('SendAssessment: assigning templateContent from leadDefaultTemplate', typeof resolvedTemplate, resolvedTemplate);
+          this.templateContent = resolvedTemplate;
         }
       } catch (e) {
         console.debug && console.debug('Failed to load initial lead data:', e);
@@ -237,9 +228,7 @@ export default {
       }
     },
 
-    /**
-     * Builds registration link for recipient, including lead_id for prefill.
-     */
+    
     updateRegistrationLink() {
       if (this.to) {
         const origin =
@@ -257,9 +246,7 @@ export default {
       }
     },
 
-    /**
-     * Fetches server-generated email template for the given recipient.
-     */
+    
     async fetchServerTemplate() {
       if (!this.to) return;
       this.updateRegistrationLink();
@@ -272,12 +259,26 @@ export default {
         const res = await axios.get(`${API_BASE_URL}/api/email-template/lead-registration`, {
           params,
         });
-        let html = res?.data ? String(res.data) : '';
-        // Only use the .email-container inner HTML for the editor
+  let html = res?.data ? String(res.data) : '';
+        
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
         const container = doc.querySelector('.email-container');
         if (container) html = container.innerHTML;
+        
+        
+        if (html && typeof html === 'object' && typeof html.then === 'function') {
+          try {
+            const awaited = await html;
+            console.debug && console.debug('SendAssessment: awaited template promise, result type:', typeof awaited, awaited);
+            html = String(awaited || '');
+          } catch (e) {
+            console.debug && console.debug('SendAssessment: error awaiting template promise', e);
+            html = '';
+          }
+        }
+        
+        console.debug && console.debug('SendAssessment: fetched server template, type:', typeof html, html);
         this.templateContent = html;
       } catch (e) {
         console.debug && console.debug('Failed to fetch server template:', e?.message || e);
@@ -285,9 +286,7 @@ export default {
       }
     },
 
-    /**
-     * Handles the form submit: sends assessment email to backend.
-     */
+    
     async handleSendAssessment() {
       if (this.sending) return;
       this.sending = true;
@@ -323,9 +322,7 @@ export default {
       }
     },
 
-    /**
-     * Compute recipient name from available sources.
-     */
+    
     computeRecipientName() {
       return (
         this.recipientName ||
@@ -336,9 +333,7 @@ export default {
       );
     },
 
-    /**
-     * Build payload for backend API.
-     */
+    
     buildPayload(name) {
       const payload = {
         to: this.to,
@@ -354,9 +349,7 @@ export default {
       return payload;
     },
 
-    /**
-     * Format email sending error for toast notification.
-     */
+    
     formatSendErrorDetail(error) {
       let detail = 'Failed to send assessment email.';
       if (error?.response?.data) {
@@ -378,9 +371,7 @@ export default {
       return detail;
     },
 
-    /**
-     * TinyMCE editor init callback.
-     */
+    
     onTinyMCEInit() {
       console.debug && console.debug('TinyMCE initialized');
     },

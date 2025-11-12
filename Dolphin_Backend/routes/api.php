@@ -3,10 +3,12 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AssessmentController;
+use App\Http\Controllers\AssessmentScheduleController;
 use App\Http\Controllers\AssessmentResponseController;
 use App\Http\Controllers\AssessmentResultController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\ScheduledEmailController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LeadNoteController;
 use App\Http\Controllers\LocationController;
@@ -59,6 +61,11 @@ Route::prefix('password')->group(function () {
 });
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
+
+// Public endpoint: allow guest checkout session creation when a user is not
+// authenticated. Frontend uses this for users who arrive from an agreement
+// link and have not yet registered or logged in.
+Route::post('/subscription/create-checkout-session', [SubscriptionController::class, 'createCheckoutSessionGuest']);
 
 Route::prefix('assessments')->group(function () {
     Route::get('/{id}/summary', [AssessmentController::class, 'summary']);
@@ -171,6 +178,11 @@ Route::middleware('auth:api')->group(function () {
     Route::middleware('subscription.check')->group(function () {
 
         Route::apiResource('assessments', AssessmentController::class)->only(['index', 'store']);
+    // Assessment scheduling endpoints
+    Route::get('/assessment-schedules', [AssessmentScheduleController::class, 'show']);
+    Route::post('/assessment-schedules', [AssessmentScheduleController::class, 'store']);
+        // Best-effort endpoint for scheduling individual emails from the frontend
+        Route::post('/schedule-email', [ScheduledEmailController::class, 'store']);
         Route::get('/assessments-list', [AssessmentResponseController::class, 'getAssessments']);
         Route::post('/assessment-responses', [AssessmentResponseController::class, 'store']);
         Route::get('/assessment-responses', [AssessmentResponseController::class, 'getUserResponses']);

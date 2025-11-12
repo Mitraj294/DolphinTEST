@@ -168,18 +168,18 @@ export default {
     };
   },
   computed: {
-    // Always show the full members list in the dropdown. When groups are
-    // selected we still display all members, but group-members will be
-    // auto-selected via onGroupSelection(). This keeps the UI consistent
-    // with the user's request to "show all members" while pre-selecting
-    // members that belong to the selected groups.
+    
+    
+    
+    
+    
     filteredMembers() {
       return this.members;
     },
   },
   methods: {
-    // --- Helpers ---------------------------------------------------------
-    // Return an array of member objects who belong to the supplied group id
+    
+    
     groupMembersFor(groupId) {
       const gid = typeof groupId === 'object' && groupId ? groupId.id : groupId;
       return this.members.filter(
@@ -188,8 +188,8 @@ export default {
       );
     },
 
-    // Merge two arrays of member objects (existing + toAdd) deduped by id.
-    // The resulting array preserves the ordering of `this.members`.
+    
+    
     mergeMembersById(existing = [], toAdd = []) {
       const mergedById = new Map();
       const pushIfValid = (m) => {
@@ -197,25 +197,25 @@ export default {
       };
       (existing || []).forEach(pushIfValid);
       (toAdd || []).forEach(pushIfValid);
-      // preserve ordering from this.members for predictable UI
+      
       return (this.members || []).filter((m) => mergedById.has(Number(m.id)));
     },
 
-    // Return true if all members of a group are present in the selectedIdSet
+    
     allGroupMembersSelected(group, selectedIdSet) {
       const groupMembers = this.groupMembersFor(group.id);
       if (!groupMembers.length) return false;
       return groupMembers.every((gm) => selectedIdSet.has(Number(gm.id)));
     },
 
-    // --- Event handlers -------------------------------------------------
-    // Called when the groups multi-select changes.
-    // Behavior: preserve manual member selections and add members that belong
-    // to the selected groups (no removals).
+    
+    
+    
+    
     onGroupSelection(selectedGroups) {
       this.selectedGroupIds = selectedGroups;
 
-      // If no groups selected, keep manual member selections unchanged.
+      
       if (!Array.isArray(selectedGroups) || selectedGroups.length === 0) {
         return;
       }
@@ -223,36 +223,36 @@ export default {
       const selectedGroupIds = selectedGroups.map((g) => g.id);
       const selectedGroupIdSet = new Set(selectedGroupIds);
 
-      // Collect members who belong to any selected group
+      
       const groupMembers = this.members.filter(
         (member) =>
           Array.isArray(member.group_ids) &&
           member.group_ids.some((gid) => selectedGroupIdSet.has(gid))
       );
 
-      // Merge manual selections with group members (deduped)
+      
       const existing = Array.isArray(this.selectedMemberIds) ? this.selectedMemberIds : [];
       this.selectedMemberIds = this.mergeMembersById(existing, groupMembers);
     },
 
     onMemberSelection(selectedMembers) {
-      // selectedMembers is an array of member objects from MultiSelectDropdown
+      
       this.selectedMemberIds = Array.isArray(selectedMembers) ? selectedMembers : [];
 
-      // Build a set of selected member ids for quick lookup
+      
       const selectedIds = new Set(this.selectedMemberIds.map((m) => Number(m.id)));
 
-      // Determine which groups should be auto-selected: those where ALL members
-      // of the group are present in selectedMemberIds
+      
+      
       const autoSelectedGroups = [];
       for (const group of this.groups) {
-        // find members belonging to this group
+        
         const groupMembers = this.members.filter(
           (member) => Array.isArray(member.group_ids) && member.group_ids.includes(group.id)
         );
 
         if (groupMembers.length === 0) {
-          // no members in this group, skip
+          
         } else {
           const allSelected = groupMembers.every((gm) => selectedIds.has(Number(gm.id)));
 
@@ -268,7 +268,7 @@ export default {
     async schedule() {
       this.isSubmitting = true;
       try {
-        // Basic validation
+        
         if (!this.scheduleDate || !this.scheduleTime) {
           this.toast.add({
             severity: 'warn',
@@ -278,16 +278,16 @@ export default {
           this.isSubmitting = false;
           return;
         }
-        // Emit schedule payload to parent so parent can perform both
-        // assessment schedule creation and scheduling individual emails.
+        
+        
         const payload = {
           assessment_id: this.assessment_id,
           date: this.scheduleDate,
           time: this.scheduleTime,
           group_ids: this.selectedGroupIds.map((g) => g.id),
-          user_ids: this.selectedMemberIds.map((m) => m.id), // Changed from member_ids to user_ids
-          member_ids: this.selectedMemberIds.map((m) => m.id), // Keep for backwards compatibility
-          // include selectedMembers with email and ids so parent can call /api/schedule-email
+          user_ids: this.selectedMemberIds.map((m) => m.id), 
+          member_ids: this.selectedMemberIds.map((m) => m.id), 
+          
           selectedMembers: (this.selectedMemberIds || []).map((m) => ({
             id: m.id,
             email: m.email,
@@ -319,37 +319,19 @@ export default {
 
     async checkExistingSchedule() {
       if (!this.assessment_id) {
-        // assessment_id missing — nothing to check
+        
         this.scheduledLoading = false;
         return;
       }
 
       this.scheduledLoading = true;
       try {
-        // If backend provides schedule-checking endpoint, implement here.
-        // For now assume none; leave scheduledDetails null (non-fatal).
+        
+        
         this.scheduledStatus = null;
         this.scheduledDetails = null;
 
-        /* OLD CODE (endpoint removed):
-        const authToken = storage.get("authToken");
-        const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-        const url = `${API_BASE_URL}/api/scheduled-email/show?assessment_id=${encodeURIComponent(
-          this.assessment_id
-        )}`;
-
-        const response = await axios.get(url, {
-          headers: { Authorization: `Bearer ${authToken}` },
-        });
-
-        if (response.data?.scheduled) {
-          this.scheduledStatus = "scheduled";
-          this.scheduledDetails = response.data;
-        } else {
-          this.scheduledStatus = null;
-          this.scheduledDetails = null;
-        }
-        */
+        
       } catch (error) {
         this.scheduledStatus = null;
         console.debug && console.debug('Error checking schedule status:', error);

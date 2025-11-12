@@ -13,26 +13,16 @@ use App\Http\Controllers\SubscriptionController;
 
 class CheckSubscriptionStatus
 {
-    /**
-     * The subscription controller instance.
-     *
-     * @var SubscriptionController
-     */
+    
     protected SubscriptionController $subscriptionController;
 
-    /**
-     * Create a new middleware instance.
-     */
+    
     public function __construct(SubscriptionController $subscriptionController)
     {
         $this->subscriptionController = $subscriptionController;
     }
 
-    /**
-     * Roles that are exempt from subscription checks.
-     *
-     * @var string[]
-     */
+    
     protected array $exemptRoles = [
         'superadmin',
         'dolphinadmin',
@@ -40,19 +30,13 @@ class CheckSubscriptionStatus
         'user',
     ];
 
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @return \Symfony\Component\HttpFoundation\Response
-     */
+    
     public function handle(Request $request, Closure $next): Response
     {
-        /** @var User|null $user */
+        
         $user = Auth::user();
 
-        // initial state
+        
         $allow = false;
         $forceBlock = false;
         $blockContext = [
@@ -61,7 +45,7 @@ class CheckSubscriptionStatus
             'message' => 'You have not selected any plans yet.',
         ];
 
-        // Evaluate organization-level rules for organization admins
+        
         if ($user && method_exists($user, 'hasRole') && $user->hasRole('organizationadmin')) {
             $organization = $this->resolveOrganizationForUser($user);
             if ($organization) {
@@ -72,30 +56,28 @@ class CheckSubscriptionStatus
             }
         }
 
-        // Unauthenticated requests are allowed to proceed
+        
         if (! Auth::check()) {
             $allow = true;
         }
 
-        // If organization didn't force a block, evaluate user-level exemptions/subscriptions
+        
         if (! $forceBlock) {
             $allow = $allow || $this->userHasAnyExemptRole($user) || $this->userHasActiveSubscription($user);
         }
 
-        // Allowed path
+        
         if ($allow) {
             return $next($request);
         }
 
-        // Build blocking payload and return appropriate response
+        
         [$latest, $status, $message] = $this->buildBlockPayload($forceBlock, $user, $blockContext);
 
         return $this->respondBlocked($request, $latest, $status, $message);
     }
 
-    /**
-     * Try to resolve the organization for the given user.
-     */
+    
     private function resolveOrganizationForUser(User $user): ?Organization
     {
         $organization = null;
@@ -111,9 +93,7 @@ class CheckSubscriptionStatus
         return $organization;
     }
 
-    /**
-     * Evaluate an organization's subscription state. Returns [allow, forceBlock, blockContext].
-     */
+    
     private function evaluateOrganizationSubscription(Organization $organization): array
     {
         $allow = false;
@@ -148,10 +128,7 @@ class CheckSubscriptionStatus
         return [$allow, $forceBlock, $blockContext];
     }
 
-    /**
-     * Build the block payload (latest, status, message) depending on org/user context.
-     * Returns [latest, status, message].
-     */
+    
     private function buildBlockPayload(bool $forceBlock, ?User $user, array $blockContext): array
     {
         if ($forceBlock) {
@@ -167,16 +144,14 @@ class CheckSubscriptionStatus
         return [$latest, $status, $message];
     }
 
-    /**
-     * Respond with either JSON (API) or redirect (web) for blocked requests.
-     */
+    
     private function respondBlocked(Request $request, $latest, string $status, string $message): Response
     {
         if ($request->expectsJson() || $request->is('api/*')) {
             return response()->json([
                 'message' => $message,
                 'status' => $status,
-                // normalize to subscription_end key in response but use actual model property
+                
                 'subscription_end' => $latest?->ends_at?->toDateTimeString() ?? ($latest?->subscription_end?->toDateTimeString() ?? null),
                 'subscription_id' => $latest?->id,
                 'redirect_url' => url('/manage-subscription'),
@@ -186,10 +161,7 @@ class CheckSubscriptionStatus
         return redirect('/manage-subscription')->with('error', $message);
     }
 
-
-    /**
-     * Determine if the user has any role that exempts them from subscription checks.
-     */
+    
     protected function userHasAnyExemptRole(?User $user): bool
     {
         $has = false;
@@ -212,9 +184,7 @@ class CheckSubscriptionStatus
         return $has;
     }
 
-    /**
-     * Check whether the user has at least one active subscription record.
-     */
+    
     protected function userHasActiveSubscription(?User $user): bool
     {
         if (! $user) {
@@ -231,7 +201,7 @@ class CheckSubscriptionStatus
 
             if ($subscription) {
                 if ($this->subscriptionController->hasExpired($subscription)) {
-                    // Update status for consistency
+                    
                     $subscription->update(['status' => 'expired']);
                     $hasActive = false;
                 } else {

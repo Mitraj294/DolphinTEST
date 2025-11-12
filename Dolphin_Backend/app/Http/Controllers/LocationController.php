@@ -37,7 +37,7 @@ class LocationController extends Controller
             if ($countryId !== null) {
                 $states = State::where('country_id', (int) $countryId)->orderBy('name')->get(['id', 'name']);
             } else {
-                // return all states if country not specified
+                
                 $states = State::orderBy('name')->get(['id', 'name']);
             }
 
@@ -122,7 +122,7 @@ class LocationController extends Controller
     {
         try {
             Log::info('[LocationController] Fetching referral sources');
-            // Order strictly by id to preserve canonical ordering user expects (no alphabetical reordering)
+            
             $sources = ReferralSource::orderBy('id')->get(['id', 'name']);
             Log::info('[LocationController] Referral sources fetched', ['count' => count($sources)]);
             return response()->json($sources);

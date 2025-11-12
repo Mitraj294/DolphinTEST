@@ -24,27 +24,36 @@ class AssessmentInvitation extends Notification implements ShouldQueue
 
     public function via($notifiable)
     {
-        // This notification can be sent via email and stored in the database.
+        
         return ['mail', 'database'];
     }
 
     public function toMail($notifiable)
     {
+        
+        $link = $this->assessmentLink;
+        $subject = 'You have been invited to an assessment: ' . ($this->assessmentName ?? '');
+
         return (new MailMessage())
-            ->subject('You have been invited to an assessment')
-            ->line('You have been invited to take the assessment: ' . $this->assessmentName)
-            ->action('Take Assessment', $this->assessmentLink)
+            ->subject($subject)
+            ->greeting('Hello!')
+            ->line('You have been invited to take the assessment:')
+            ->line('"' . ($this->assessmentName ?? '') . '"')
+            ->action('Take Assessment', $link)
+            ->line('If the button above does not work, copy and paste the following link into your browser:')
+            ->line($link)
             ->line('Thank you for your participation!');
     }
 
     public function toDatabase($notifiable)
     {
-        // This will be stored in the 'notifications' table for in-app display.
+        
+        $linkPath = '/assessments/' . $this->assessmentId;
         return [
             'message' => 'You have a new assessment to complete: ' . $this->assessmentName,
-            'link' => '/assessments',
+            'link' => $linkPath,
             'assessment_id' => $this->assessmentId,
-            // keep assessment_name for backwards compatibility
+            
             'assessment_name' => $this->assessmentName,
         ];
     }

@@ -14,14 +14,12 @@ use Illuminate\Support\Facades\Log;
 
 class GroupController extends Controller
 {
-    /**
-     * Message constant used when the user's organization cannot be resolved.
-     */
+    
     private const ORG_RESOLVE_ERROR = 'Could not resolve organization for the current user.';
 
-    //Display a listing of the resource.
-    //@param  \Illuminate\Http\Request  $request
-    //@return \Illuminate\Http\JsonResponse
+    
+    
+    
 
     public function index(Request $request): JsonResponse
     {
@@ -59,10 +57,9 @@ class GroupController extends Controller
         return response()->json($response_data, $status_code);
     }
 
-
-    //Store a newly created resource in storage.
-    //@param  \App\Http\Requests\StoreGroupRequest  $request
-    //@return \Illuminate\Http\JsonResponse
+    
+    
+    
 
     public function store(StoreGroupRequest $request): JsonResponse
     {
@@ -84,7 +81,7 @@ class GroupController extends Controller
                 'user_id' => $user->id,
             ]);
 
-            // Support both user_ids and member_ids for backwards compatibility
+            
             $userIds = $validated['user_ids'] ?? $validated['member_ids'] ?? [];
             if (!empty($userIds)) {
                 $group->users()->sync($userIds);
@@ -97,11 +94,10 @@ class GroupController extends Controller
         }
     }
 
-
-    //Display the specified resource.
-    //@param  \Illuminate\Http\Request  $request
-    //@param  int  $id
-    //@return \Illuminate\Http\JsonResponse
+    
+    
+    
+    
 
     public function show(Request $request, int $id): JsonResponse
     {
@@ -127,7 +123,7 @@ class GroupController extends Controller
                 $group = $query->findOrFail($id);
                 $response_data = [
                     'group' => $group,
-                    'members' => $group->users, // Return users but keep 'members' key for backwards compatibility
+                    'members' => $group->users, 
                     'users' => $group->users
                 ];
             }
@@ -143,11 +139,10 @@ class GroupController extends Controller
         return response()->json($response_data, $status_code);
     }
 
+    
 
-    //Resolve the organization ID for a given user.
-
-    //@param  \App\Models\User  $user
-    //@return int|null
+    
+    
 
     private function resolveOrganizationId(User $user): ?int
     {
@@ -160,13 +155,7 @@ class GroupController extends Controller
         return $organization?->id;
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  StoreGroupRequest  $request
-     * @param  int  $id
-     * @return JsonResponse
-     */
+    
     public function update(UpdateGroupRequest $request, int $id): JsonResponse
     {
         $response_data = [];
@@ -190,7 +179,7 @@ class GroupController extends Controller
                 'name' => $validated['name'],
             ]);
 
-            // Support both user_ids and member_ids for backwards compatibility
+            
             $userIds = $validated['user_ids'] ?? $validated['member_ids'] ?? null;
             if ($userIds !== null) {
                 $group->users()->sync($userIds);
@@ -210,13 +199,7 @@ class GroupController extends Controller
         return response()->json($response_data, $status_code);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  Request  $request
-     * @param  int  $id
-     * @return JsonResponse
-     */
+    
     public function destroy(Request $request, int $id): JsonResponse
     {
         $response_data = [];

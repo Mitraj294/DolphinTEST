@@ -15,11 +15,7 @@ use Illuminate\Support\Facades\Validator;
 
 class AssessmentResponseController extends Controller
 {
-    /**
-     * Get all assessments
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
+    
     public function getAssessments(): JsonResponse
     {
         try {
@@ -32,20 +28,15 @@ class AssessmentResponseController extends Controller
         }
     }
 
-    /**
-     * Store user's assessment responses
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
+    
     public function store(Request $request): JsonResponse
     {
         try {
             $validator = Validator::make($request->all(), [
                 'responses' => 'required|array',
-                // table name is `assessments`
-                // The assessments table is named `assessment` (singular) in migrations,
-                // so validate against that table name to avoid SQL "table not found" errors.
+                
+                
+                
                 'responses.*.assessment_id' => 'required|exists:assessment,id',
                 'responses.*.selected_options' => 'required|array',
                 'responses.*.start_time' => 'nullable|date',
@@ -65,7 +56,7 @@ class AssessmentResponseController extends Controller
                 return response()->json(['error' => 'Unauthenticated.'], 401);
             }
 
-            // If no attempt_id provided, generate one safely
+            
             if (empty($attemptId)) {
                 $maxAttempt = (int) DB::table('assessment_responses')
                     ->where('user_id', $userId)
@@ -75,7 +66,7 @@ class AssessmentResponseController extends Controller
 
             DB::transaction(function () use ($responses, $userId, $attemptId) {
                 foreach ($responses as $responseData) {
-                    // Create assessment response
+                    
                     $assessmentResponse = AssessmentResponse::create([
                         'user_id' => $userId,
                         'attempt_id' => $attemptId,
@@ -83,7 +74,7 @@ class AssessmentResponseController extends Controller
                         'selected_options' => json_encode($responseData['selected_options']),
                     ]);
 
-                    // Create timing data if provided
+                    
                     if (!empty($responseData['start_time']) && !empty($responseData['end_time'])) {
                         try {
                             $startTime = \Carbon\Carbon::parse($responseData['start_time']);
@@ -103,7 +94,7 @@ class AssessmentResponseController extends Controller
                 }
             });
 
-            // Automatically calculate and store assessment results
+            
             try {
                 $calculationService = new AssessmentCalculationService();
                 $assessmentId = $responses[0]['assessment_id'] ?? null;
@@ -126,7 +117,7 @@ class AssessmentResponseController extends Controller
                     }
                 }
             } catch (\Exception $e) {
-                // Log error but don't fail the response submission
+                
                 Log::error('Failed to auto-calculate assessment results', [
                     'user_id' => $userId,
                     'attempt_id' => $attemptId,
@@ -150,12 +141,7 @@ class AssessmentResponseController extends Controller
         }
     }
 
-    /**
-     * Get user's assessment responses
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
+    
     public function getUserResponses(Request $request): JsonResponse
     {
         try {
@@ -195,11 +181,7 @@ class AssessmentResponseController extends Controller
         }
     }
 
-    /**
-     * Get all attempts for the current user
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
+    
     public function getUserAttempts(): JsonResponse
     {
         try {
@@ -224,12 +206,7 @@ class AssessmentResponseController extends Controller
         }
     }
 
-    /**
-     * Get assessment timing data for a specific attempt
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
+    
     public function getAssessmentTiming(Request $request): JsonResponse
     {
         try {
@@ -247,7 +224,7 @@ class AssessmentResponseController extends Controller
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
-            // Get responses with timing data
+            
             $responses = AssessmentResponse::where('user_id', $userId)
                 ->where('attempt_id', $attemptId)
                 ->with(['assessment:id,title', 'assessmentTime'])

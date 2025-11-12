@@ -17,21 +17,13 @@ class AssessmentCalculationService
 
     public function __construct()
     {
-        // Path to your dolphin-project-main folder
+        
         $this->dolphinPath = base_path('../dolphin-project-main');
         $this->pythonPath = env('PYTHON_PATH', 'python3');
         $this->dolphinDbConnection = 'dolphin_clean';
     }
 
-    /**
-     * Calculate assessment results using C++ algorithm
-     *
-     * @param int $userId
-     * @param int $attemptId
-     * @param int|null $organizationAssessmentId
-    * @return AssessmentResult|null
-     * @throws \Exception
-     */
+    
     public function calculateResults(int $userId, int $attemptId, ?int $organizationAssessmentId = null): ?AssessmentResult
     {
         try {
@@ -41,7 +33,7 @@ class AssessmentCalculationService
                 'assessment_id' => $organizationAssessmentId
             ]);
 
-            // Get user's selected words from assessment_responses
+            
             $responses = AssessmentResponse::where('user_id', $userId)
                 ->where('attempt_id', $attemptId)
                 ->get();
@@ -50,7 +42,7 @@ class AssessmentCalculationService
                 throw new \Exception("No responses found for user {$userId}, attempt {$attemptId}");
             }
 
-            // Check if result already exists for this attempt
+            
             $existingResult = AssessmentResult::where('user_id', $userId)
                 ->where('attempt_id', $attemptId)
                 ->first();
@@ -63,7 +55,7 @@ class AssessmentCalculationService
                 return $existingResult;
             }
 
-            // Extract selected words from responses
+            
             $selectedWords = $this->extractSelectedWords($responses);
 
             Log::info('Extracted words', [
@@ -71,17 +63,17 @@ class AssessmentCalculationService
                 'concept_words_count' => count($selectedWords['concept_words'])
             ]);
 
-            // Get user email
+            
             $user = User::findOrFail($userId);
             $email = $user->email;
 
-            // Write to database input table for C++ program
+            
             $this->prepareInputData($email, $selectedWords);
 
-            // Run C++ algorithm
+            
             $result = $this->runDolphinAlgorithm($email);
 
-            // Store results in assessment_results table
+            
             $assessmentResult = $this->storeResults($userId, $attemptId, $organizationAssessmentId, $result, $selectedWords);
 
             Log::info('Assessment calculation completed successfully', [
@@ -98,24 +90,19 @@ class AssessmentCalculationService
                 'trace' => $e->getTraceAsString()
             ]);
 
-            // Don't throw exception - return null to allow response saving to continue
+            
             return null;
         }
     }
 
-    /**
-     * Extract selected words from assessment responses
-     *
-     * @param Collection<int, AssessmentResponse> $responses
-     * @return array{self_words: array<int, string>, concept_words: array<int, string>}
-     */
+    
     protected function extractSelectedWords(Collection $responses): array
     {
         $selfWords = [];
         $conceptWords = [];
 
         foreach ($responses as $response) {
-            /** @var AssessmentResponse $response */
+            
             $options = is_array($response->selected_options)
                 ? $response->selected_options
                 : json_decode($response->selected_options, true);
@@ -128,16 +115,16 @@ class AssessmentCalculationService
                 continue;
             }
 
-            // Determine if this is self or concept words based on assessment_id
-            // Assessment ID 1 = Self words, Assessment ID 2 = Concept words
-            // Adjust these IDs based on your actual assessment structure
+            
+            
+            
             if ($response->assessment_id == 1) {
                 $selfWords = array_merge($selfWords, $options);
             } elseif ($response->assessment_id == 2) {
                 $conceptWords = array_merge($conceptWords, $options);
             } else {
-                // If you have different assessment IDs, adjust this logic
-                // For now, alternate between self and concept
+                
+                
                 if (empty($selfWords)) {
                     $selfWords = $options;
                 } else {
@@ -152,20 +139,12 @@ class AssessmentCalculationService
         ];
     }
 
-    /**
-     * Prepare input data in MySQL for C++ program
-     *
-     * @param string $email
-     * @param array $selectedWords
-     * @return void
-     */
-    /**
-     * @param array{self_words: array<int, string>, concept_words: array<int, string>} $selectedWords
-     */
+    
+    
     protected function prepareInputData(string $email, array $selectedWords): void
     {
         try {
-            // Insert into 'input' table that C++ program reads from
+            
             DB::connection($this->dolphinDbConnection)->table('input')->updateOrInsert(
                 ['email' => $email],
                 [
@@ -188,16 +167,10 @@ class AssessmentCalculationService
         }
     }
 
-    /**
-     * Run the C++ dolphin algorithm
-     *
-     * @param string $email
-     * @return object
-     * @throws \Exception
-     */
+    
     protected function runDolphinAlgorithm(string $email): object
     {
-        // Change to dolphin directory and run the algorithm
+        
         $command = sprintf(
             "cd %s && ./dolphin '%s' 2>&1",
             escapeshellarg($this->dolphinPath),
@@ -228,7 +201,7 @@ class AssessmentCalculationService
             'output_lines' => count($output)
         ]);
 
-        // Read results from MySQL 'results' table
+        
         $result = DB::connection($this->dolphinDbConnection)
             ->table('results')
             ->where('email', $email)
@@ -241,26 +214,15 @@ class AssessmentCalculationService
         return $result;
     }
 
-    /**
-     * Store results in assessment_results table
-     *
-     * @param int $userId
-     * @param int $attemptId
-     * @param int|null $organizationAssessmentId
-     * @param object $result
-     * @param array $selectedWords
-     * @return AssessmentResult
-     */
-    /**
-     * @param array{self_words: array<int, string>, concept_words: array<int, string>, adj_words?: array<int, string>} $selectedWords
-     */
+    
+    
     protected function storeResults(int $userId, int $attemptId, ?int $organizationAssessmentId, object $result, array $selectedWords): AssessmentResult
     {
-        // Determine type: 'original' for first test, 'adjust' for retakes
+        
         $existingResults = AssessmentResult::where('user_id', $userId)->count();
         $type = $existingResults > 0 ? 'adjust' : 'original';
 
-        // Parse word arrays from the output file or use the input words categorized
+        
         $wordCategories = $this->categorizeWords($selectedWords);
 
         $assessmentResult = AssessmentResult::create([
@@ -268,35 +230,35 @@ class AssessmentCalculationService
             'user_id' => $userId,
             'attempt_id' => $attemptId,
             'type' => $type,
-            // Self scores
+            
             'self_a' => $result->self_a ?? 0,
             'self_b' => $result->self_b ?? 0,
             'self_c' => $result->self_c ?? 0,
             'self_d' => $result->self_d ?? 0,
             'self_avg' => $result->self_avg ?? 0,
-            // Concept scores
+            
             'conc_a' => $result->conc_a ?? 0,
             'conc_b' => $result->conc_b ?? 0,
             'conc_c' => $result->conc_c ?? 0,
             'conc_d' => $result->conc_d ?? 0,
             'conc_avg' => $result->conc_avg ?? 0,
-            // Decision approach
+            
             'dec_approach' => $result->dec_approach ?? 0,
-            // Counts
+            
             'self_total_count' => $result->self_total_words ?? 0,
             'conc_total_count' => $result->conc_total_words ?? 0,
             'adj_total_count' => $result->adj_total_words ?? 0,
-            // Word arrays
+            
             'self_total_words' => $wordCategories['self_words'],
             'conc_total_words' => $wordCategories['concept_words'],
             'adj_total_words' => $wordCategories['adj_words'],
-            // Task scores (if available)
+            
             'task_a' => 0,
             'task_b' => 0,
             'task_c' => 0,
             'task_d' => 0,
             'task_avg' => 0,
-            // Adjusted scores (if available)
+            
             'adj_a' => 0,
             'adj_b' => 0,
             'adj_c' => 0,
@@ -314,20 +276,12 @@ class AssessmentCalculationService
         return $assessmentResult;
     }
 
-    /**
-     * Categorize words (placeholder - can be enhanced to read from output file)
-     *
-     * @param array $selectedWords
-     * @return array
-     */
-    /**
-     * @param array{self_words: array<int, string>, concept_words: array<int, string>, adj_words?: array<int, string>} $selectedWords
-     * @return array{self_words: array<int, string>, concept_words: array<int, string>, adj_words: array<int, string>}
-     */
+    
+    
     protected function categorizeWords(array $selectedWords): array
     {
-        // For now, return the input words
-        // You can enhance this to parse the output file and categorize words into A, B, C, D
+        
+        
         return [
             'self_words' => $selectedWords['self_words'],
             'concept_words' => $selectedWords['concept_words'],
@@ -335,27 +289,19 @@ class AssessmentCalculationService
         ];
     }
 
-    // Optional: parsing helper for output files was removed because the
-    // current pipeline reads categorized words from the input/results DB
-    // tables. Keep this placeholder in mind if you later want to parse
-    // algorithm output files directly.
+    
+    
+    
+    
 
-    /**
-     * Check if the C++ executable exists
-     *
-     * @return bool
-     */
+    
     public function isDolphinExecutableAvailable(): bool
     {
         $executablePath = $this->dolphinPath . '/dolphin';
         return file_exists($executablePath) && is_executable($executablePath);
     }
 
-    /**
-     * Build the C++ executable if not present
-     *
-     * @return bool
-     */
+    
     public function buildDolphinExecutable(): bool
     {
         if ($this->isDolphinExecutableAvailable()) {

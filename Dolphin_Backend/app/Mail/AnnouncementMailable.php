@@ -17,9 +17,7 @@ class AnnouncementMailable extends Mailable
     public $actionText;
     public $actionUrl;
 
-    /**
-     * Create a new message instance.
-     */
+    
     public function __construct($announcement, $displayName = null, $subject = null, $actionText = null, $actionUrl = null)
     {
         $this->announcement = $announcement;
@@ -29,19 +27,17 @@ class AnnouncementMailable extends Mailable
         $this->actionUrl = $actionUrl;
     }
 
-    /**
-     * Build the message.
-     */
+    
     public function build()
     {
-        // Prepare variables expected by the notifications email blade
+        
         $introLines = [$this->announcement->body];
         $outroLines = [];
         $greeting = $this->displayName ? ("Hello " . $this->displayName . ",") : null;
         $displayableActionUrl = $this->actionUrl;
 
         return $this->subject($this->subjectLine)
-            // Send proper HTML and explicit plain-text alternative
+            
             ->view('vendor.notifications.email')
             ->text('vendor.notifications.email_plain')
             ->with([
