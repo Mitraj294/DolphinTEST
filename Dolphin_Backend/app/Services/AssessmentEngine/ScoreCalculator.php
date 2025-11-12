@@ -2,6 +2,13 @@
 
 namespace App\Services\AssessmentEngine;
 
+/**
+ * ScoreCalculator
+ *
+ * Stateless helper that turns a list of normalized words into category ratios.
+ * Each dictionary (self | concept | adjusted) maps word -> { cat: A|B|C|D, w: weight }.
+ * We sum weights per category, then divide by total capacity of that category to get a 0..1 ratio.
+ */
 class ScoreCalculator
 {
     public function __construct(
@@ -12,6 +19,10 @@ class ScoreCalculator
      * Compute category ratios for a set of selected words under a given dictionary key:
      * - dictKey: 'self' | 'concept' | 'adjusted'
      * Returns [ 'A' => float, 'B' => float, 'C' => float, 'D' => float, 'avg' => float ]
+     */
+    /**
+     * Compute category ratios for a set of selected words under a given dictionary key.
+     * Returns: [ 'A' => float, 'B' => float, 'C' => float, 'D' => float, 'avg' => float ]
      */
     public function scores(array $selectedWords, string $dictKey): array
     {
@@ -41,6 +52,9 @@ class ScoreCalculator
 
     /**
      * Heuristic decision approach metric. Adjustable.
+     */
+    /**
+     * Simple heuristic decision approach metric: blend mean + dispersion.
      */
     public function decisionApproach(float $selfAvg, float $concAvg): float
     {

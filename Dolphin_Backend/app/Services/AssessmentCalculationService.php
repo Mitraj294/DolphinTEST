@@ -9,6 +9,23 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * AssessmentCalculationService
+ *
+ * Clean, self-contained pipeline to turn stored AssessmentResponse rows
+ * (selected words per user/attempt) into persisted AssessmentResult rows.
+ *
+ * High-level flow:
+ *   1) Fetch responses for user + attempt
+ *   2) Split selected words by assessment type (self/original vs concept/adjust)
+ *   3) Compute category ratios (A,B,C,D) + averages via ScoreCalculator
+ *   4) Store a normalized AssessmentResult row (one per type)
+ *
+ * Notes:
+ * - This native calculator does not depend on external engines (C++/Python).
+ * - Weight dictionaries live in resources/assessment_weights/*.txt
+ * - WordNormalizer ensures synonyms/hyphenation map consistently to weights
+ */
 class AssessmentCalculationService
 {
     // Deprecated external engine paths (kept for BC but unused)
@@ -28,6 +45,14 @@ class AssessmentCalculationService
     /**
      * Calculate (or return existing) result row for a specific assessment_id within an attempt.
      * assessment_id=1 => original, assessment_id=2 => adjust.
+     */
+    /**
+     * Calculate (or return existing) result row for a specific assessment within an attempt.
+     *
+     * Contract:
+     * - Inputs: userId, attemptId, assessmentId (1=self/original, 2=concept/adjust)
+     * - Output: AssessmentResult or null on failure
+     * - Error modes: returns null and logs on missing responses or exceptions
      */
     public function calculateResults(int $userId, int $attemptId, ?int $assessmentId = null): ?AssessmentResult
     {
@@ -99,6 +124,12 @@ class AssessmentCalculationService
     }
 
     
+    /**
+     * Split selected words into two buckets based on assessment_id
+     * - assessment_id=1 => self words ("original")
+     * - assessment_id=2 => concept words (inputs for adjustments)
+     * Returns array: ['self_words' => string[], 'concept_words' => string[]]
+     */
     protected function extractSelectedWords(Collection $responses): array
     {
         $selfWords = [];
@@ -124,6 +155,7 @@ class AssessmentCalculationService
             } elseif ($response->assessment_id == 2) {
                 $conceptWords = array_merge($conceptWords, $options);
             } else {
+                // Fallback for legacy/unknown values: first set goes to self, second to concept
                 if (empty($selfWords)) {
                     $selfWords = $options;
                 } else {
@@ -140,6 +172,10 @@ class AssessmentCalculationService
 
     /**
      * New native calculator computing all metrics without external systems.
+     */
+    /**
+     * Compute category ratios for self and concept dictionaries, plus a decision approach.
+     * Returns a simple stdClass with fields matching AssessmentResult columns (self_*, conc_*...).
      */
     protected function computeResults(array $selectedWords): object
     {
@@ -174,13 +210,18 @@ class AssessmentCalculationService
 
     
     
+    /**
+     * Persist a single AssessmentResult row for the given attempt + type.
+     * Type mapping: assessmentId 1 => 'original', 2 => 'adjust'.
+     */
     protected function storeResults(int $userId, int $attemptId, ?int $assessmentId, object $result, array $selectedWords): AssessmentResult
     {
         // Determine result type by assessment id: 1 => original, 2 => adjust (fallback to original if unknown)
         $type = ($assessmentId === 2) ? 'adjust' : 'original';
 
         
-        $wordCategories = $this->categorizeWords($selectedWords);
+    // Categorized words are stored as JSON arrays for transparency/debugging
+    $wordCategories = $this->categorizeWords($selectedWords);
 
         // Compute adjusted scores only for adjust attempts
         $adjA = 0; $adjB = 0; $adjC = 0; $adjD = 0; $adjAvg = 0; $adjCount = 0;
@@ -252,6 +293,10 @@ class AssessmentCalculationService
      * Convenience method: ensure both (original & adjust) result rows exist for an attempt.
      * Creates rows for assessment_id 1 and 2 if responses exist.
      */
+    /**
+     * Ensure we have both an 'original' and an 'adjust' result for an attempt
+     * when responses exist for assessment_id 1 and/or 2.
+     */
     public function ensureDualResults(int $userId, int $attemptId): array
     {
         $created = [];
@@ -275,6 +320,10 @@ class AssessmentCalculationService
 
     
     
+    /**
+     * Currently a pass-through wrapper to store raw word lists.
+     * Kept for future expansion (e.g., by-category grouping or validation).
+     */
     protected function categorizeWords(array $selectedWords): array
     {
         return [
@@ -290,6 +339,9 @@ class AssessmentCalculationService
     
 
     
+    /**
+     * Back-compat hook: external engine no longer required.
+     */
     public function isDolphinExecutableAvailable(): bool
     {
         // Always true: native calculator is built-in
@@ -297,6 +349,9 @@ class AssessmentCalculationService
     }
 
     
+    /**
+     * Back-compat hook: external engine build no-op.
+     */
     public function buildDolphinExecutable(): bool
     {
         // No-op: external build is deprecated

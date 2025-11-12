@@ -189,7 +189,9 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/assessment-attempts', [AssessmentResponseController::class, 'getUserAttempts']);
         Route::get('/assessment-timing', [AssessmentResponseController::class, 'getAssessmentTiming']);
 
-        // Assessment Results - C++ Algorithm Integration
+        // Assessment Results - Native Calculator (no external engine required)
+        // Endpoints produce/store results derived from AssessmentResponse rows
+        // Access is gated by subscription.check middleware above
         Route::prefix('assessment-results')->group(function () {
             Route::post('/calculate', [AssessmentResultController::class, 'calculate']);
             Route::get('/user', [AssessmentResultController::class, 'getUserResults']);

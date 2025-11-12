@@ -10,6 +10,16 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * AssessmentResultController
+ *
+ * Lightweight endpoints to:
+ * - Calculate results for a given attempt (on-demand)
+ * - List a user's results
+ * - Show a specific result
+ * - Compare original vs adjusted across attempts
+ * - Check system availability (always true with native engine)
+ */
 class AssessmentResultController extends Controller
 {
     protected $calculationService;
@@ -20,8 +30,15 @@ class AssessmentResultController extends Controller
     }
 
     
+    /**
+     * POST /api/assessment-results/calculate
+     * Body: { attempt_id: int, assessment_id?: 1|2 }
+     * Returns newly created or existing result for the requested type,
+     * or both if assessment_id is omitted.
+     */
     public function calculate(Request $request): JsonResponse
     {
+        // Auth guard
         if (!\Illuminate\Support\Facades\Auth::check()) {
             return response()->json(['error' => 'Unauthenticated.'], 401);
         }
@@ -47,6 +64,7 @@ class AssessmentResultController extends Controller
             $userId = Auth::id();
 
             
+            // Back-compat check (always true in native engine)
             if (!$this->calculationService->isDolphinExecutableAvailable()) {
                 Log::warning('Dolphin executable not found, attempting to build');
 
@@ -101,6 +119,11 @@ class AssessmentResultController extends Controller
     }
 
     
+    /**
+     * GET /api/assessment-results/user
+     * Query: assessment_id? (organization_assessment_id filter), type? ('original'|'adjust')
+     * Returns current user's results with relations for client display.
+     */
     public function getUserResults(Request $request): JsonResponse
     {
         try {
@@ -141,6 +164,9 @@ class AssessmentResultController extends Controller
     }
 
     
+    /**
+     * GET /api/assessment-results/{id}
+     */
     public function show($id): JsonResponse
     {
         try {
@@ -175,6 +201,11 @@ class AssessmentResultController extends Controller
     }
 
     
+    /**
+     * GET /api/assessment-results/compare
+     * Optional: assessment_id to scope
+     * Returns first 'original' and all 'adjust' in chronological order.
+     */
     public function compareResults(Request $request): JsonResponse
     {
         try {
@@ -213,6 +244,9 @@ class AssessmentResultController extends Controller
     }
 
     
+    /**
+     * GET /api/assessment-system/status
+     */
     public function checkSystemStatus(): JsonResponse
     {
         try {

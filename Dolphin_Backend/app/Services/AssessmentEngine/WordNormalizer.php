@@ -2,6 +2,14 @@
 
 namespace App\Services\AssessmentEngine;
 
+/**
+ * WordNormalizer
+ *
+ * Normalizes human-entered words to keys used by weight dictionaries by:
+ * - trimming and lowercasing
+ * - removing spaces, hyphens, punctuation
+ * - mapping a few known legacy aliases/misspellings to the canonical key
+ */
 class WordNormalizer
 {
     /**
@@ -10,6 +18,9 @@ class WordNormalizer
      * - remove spaces and hyphens
      * - trim punctuation
      * - fix a few known aliases/misspellings from legacy data
+     */
+    /**
+     * Normalize a selected word into a dictionary key.
      */
     public static function normalize(string $word): string
     {

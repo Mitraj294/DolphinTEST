@@ -5,11 +5,22 @@ namespace App\Services\AssessmentEngine;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * WeightRepository
+ *
+ * Loads and caches word weight dictionaries from flat files.
+ * Each line format: word,Category Weight
+ * Example: selfstarter,A 72
+ * Produces: [ 'self' => [ 'selfstarter' => ['cat'=>'A','w'=>72], ... ], 'concept' => ..., 'adjusted' => ... ]
+ */
 class WeightRepository
 {
     /**
      * Load and cache weight dictionaries for self, concept, and adjusted.
      * Returns array: [ 'self' => [word => ['cat' => 'A'|'B'|'C'|'D', 'w' => int]], ... ]
+     */
+    /**
+     * Return all dictionaries (cached for 1 hour).
      */
     public function all(): array
     {
@@ -26,6 +37,9 @@ class WeightRepository
      * Build category capacity sums per dictionary (sum of all weights for each category).
      * Returns: [ dict => [ 'A' => int, 'B' => int, 'C' => int, 'D' => int ] ]
      */
+    /**
+     * Build total weight capacity per category for each dict.
+     */
     public function capacities(array $dicts): array
     {
         $capacities = [];
@@ -39,6 +53,10 @@ class WeightRepository
         return $capacities;
     }
 
+    /**
+     * Parse a weight file into an associative array.
+     * Ignores blank lines, comment lines starting with //, malformed lines, and invalid categories.
+     */
     protected function loadFromFile(string $path): array
     {
         $result = [];
