@@ -27,7 +27,8 @@ class AssessmentResultController extends Controller
         }
         $validator = Validator::make($request->all(), [
             'attempt_id' => 'required|integer',
-            'assessment_id' => 'nullable|integer|exists:organization_assessments,id',
+            // This assessment_id refers to the question set (1=self/original, 2=concept/adjust), not organization_assessments
+            'assessment_id' => 'nullable|integer|in:1,2',
         ]);
 
         if ($validator->fails()) {
@@ -60,16 +61,26 @@ class AssessmentResultController extends Controller
 
             
             if ($status === 200) {
-                $result = $this->calculationService->calculateResults(
-                    $userId,
-                    $validated['attempt_id'],
-                    $validated['assessment_id'] ?? null
-                );
-
-                $responseData = [
-                    'message' => 'Results calculated successfully',
-                    'result' => $result
-                ];
+                if (!empty($validated['assessment_id'])) {
+                    $result = $this->calculationService->calculateResults(
+                        $userId,
+                        $validated['attempt_id'],
+                        (int)$validated['assessment_id']
+                    );
+                    $responseData = [
+                        'message' => 'Result calculated successfully',
+                        'result' => $result
+                    ];
+                } else {
+                    $results = $this->calculationService->ensureDualResults(
+                        $userId,
+                        $validated['attempt_id']
+                    );
+                    $responseData = [
+                        'message' => 'Results calculated successfully',
+                        'results' => $results
+                    ];
+                }
                 $status = 200;
             }
         } catch (\Exception $e) {

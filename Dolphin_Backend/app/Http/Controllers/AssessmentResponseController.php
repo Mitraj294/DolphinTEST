@@ -97,24 +97,20 @@ class AssessmentResponseController extends Controller
             
             try {
                 $calculationService = new AssessmentCalculationService();
-                $assessmentId = $responses[0]['assessment_id'] ?? null;
+                Log::info('Auto-calculating assessment results for both types', [
+                    'user_id' => $userId,
+                    'attempt_id' => $attemptId,
+                ]);
 
-                if ($assessmentId) {
-                    Log::info('Auto-calculating assessment results', [
+                $results = $calculationService->ensureDualResults($userId, $attemptId);
+
+                foreach ($results as $res) {
+                    Log::info('Assessment results calculated successfully', [
+                        'result_id' => $res->id,
                         'user_id' => $userId,
                         'attempt_id' => $attemptId,
-                        'assessment_id' => $assessmentId
+                        'type' => $res->type
                     ]);
-
-                    $result = $calculationService->calculateResults($userId, $attemptId);
-
-                    if ($result) {
-                        Log::info('Assessment results calculated successfully', [
-                            'result_id' => $result->id,
-                            'user_id' => $userId,
-                            'attempt_id' => $attemptId
-                        ]);
-                    }
                 }
             } catch (\Exception $e) {
                 
