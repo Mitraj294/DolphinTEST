@@ -2,8 +2,8 @@
 // Simple dry-run scanner for JavaScript and Vue files that contain comment tokens.
 // Usage: node find_js_vue_comments.js --path path/to/dir
 
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 
 function walk(dir, extList, fileList = []) {
   const files = fs.readdirSync(dir);
@@ -42,7 +42,8 @@ for (const f of files) {
       matches.push(f);
     }
   } catch (e) {
-    // ignore
+    // Warn when a file cannot be read so the scan output is actionable
+    console.warn('Failed to read file', f, e && e.message ? e.message : e);
   }
 }
 

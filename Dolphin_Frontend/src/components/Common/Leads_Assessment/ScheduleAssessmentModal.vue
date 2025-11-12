@@ -195,8 +195,8 @@ export default {
       const pushIfValid = (m) => {
         if (m && m.id !== undefined && m.id !== null) mergedById.set(Number(m.id), m);
       };
-      (existing || []).forEach(pushIfValid);
-      (toAdd || []).forEach(pushIfValid);
+      for (const m of (existing || [])) pushIfValid(m);
+      for (const m of (toAdd || [])) pushIfValid(m);
       
       return (this.members || []).filter((m) => mergedById.has(Number(m.id)));
     },
@@ -246,20 +246,12 @@ export default {
       
       const autoSelectedGroups = [];
       for (const group of this.groups) {
-        
         const groupMembers = this.members.filter(
           (member) => Array.isArray(member.group_ids) && member.group_ids.includes(group.id)
         );
-
-        if (groupMembers.length === 0) {
-          
-        } else {
-          const allSelected = groupMembers.every((gm) => selectedIds.has(Number(gm.id)));
-
-          if (allSelected) {
-            autoSelectedGroups.push(group);
-          }
-        }
+        if (!groupMembers.length) continue;
+        const allSelected = groupMembers.every((gm) => selectedIds.has(Number(gm.id)));
+        if (allSelected) autoSelectedGroups.push(group);
       }
 
       this.selectedGroupIds = autoSelectedGroups;
@@ -363,16 +355,21 @@ export default {
           headers: { ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
         });
         const membersData = response.data?.data || response.data || [];
-        return membersData.map((m) => ({
-          id: m.id,
-          name: `${m.first_name || ''} ${m.last_name || ''}`.trim(),
-          email: m.email,
-          group_ids: Array.isArray(m.groups)
-            ? m.groups.map((g) => g.id)
-            : Array.isArray(m.group_ids)
-              ? m.group_ids.map(Number)
-              : [],
-        }));
+        return membersData.map((m) => {
+          const name = `${m.first_name || ''} ${m.last_name || ''}`.trim();
+          let group_ids = [];
+          if (Array.isArray(m.groups)) {
+            group_ids = m.groups.map((g) => g.id);
+          } else if (Array.isArray(m.group_ids)) {
+            group_ids = m.group_ids.map(Number);
+          }
+          return {
+            id: m.id,
+            name,
+            email: m.email,
+            group_ids,
+          };
+        });
       } catch (err) {
         console.debug && console.debug('fetchMembers failed', err);
         return [];

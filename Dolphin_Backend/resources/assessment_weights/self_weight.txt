@@ -1,22 +1,4 @@
-// This is a list of the weight for Self words
-//
-// Template:
-// word,category weight
-//
-// Examples:
-// test,A 12
-// another-test,B 3
-//
-// Caution:
-//  - No spaces within a word
-//     * Example:
-//     * DO   "easy-going"
-//     * DONT "easy going"
-//
-//  - No spaces between word,category
-//
-//  - A single space between category and number
-//
+// Copied from dolphin-project-main/test_input/settings/selfWeight.txt
 submissive,A 6
 meek,A 16
 docile,A 22

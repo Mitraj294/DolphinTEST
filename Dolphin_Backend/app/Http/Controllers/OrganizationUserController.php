@@ -336,7 +336,12 @@ class OrganizationUserController extends Controller
                     $orgId = $membership->id;
                 }
             } catch (\Throwable $e) {
-                
+                    // Log the failure to inspect memberships — fallback logic will continue
+                    try {
+                        Log::warning('[OrganizationUserController] failed to read organizationMemberships', ['error' => $e->getMessage()]);
+                    } catch (\Throwable $_) {
+                        // ignore logging failures
+                    }
             }
         }
 

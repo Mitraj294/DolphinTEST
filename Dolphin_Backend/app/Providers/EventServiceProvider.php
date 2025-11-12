@@ -18,7 +18,8 @@ class EventServiceProvider extends ServiceProvider
     
     public function boot(): void
     {
-        
+        // No additional event discovery or bindings required here — listeners are declared
+        // via the $listen property. Keep this method available for future customization.
     }
 
     

@@ -12,7 +12,8 @@ class UpdateAnnouncementSentTimestamp
     
     public function __construct()
     {
-        
+        // No construction-time initialization required for this listener.
+        // The listener operates statelessly in response to events.
     }
 
     

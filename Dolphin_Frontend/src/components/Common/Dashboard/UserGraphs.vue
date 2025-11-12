@@ -59,10 +59,10 @@
 <script setup>
 import { ref, watch, computed, onMounted, nextTick } from 'vue';
 import Dropdown from '@/components/Common/Common_UI/Dropdown.vue';
-import { fetchUserResults, normalizeBarData } from '@/services/results';
+import { fetchUserResults, buildProjectionData } from '@/services/results';
 import VueECharts from 'vue-echarts';
 import * as echarts from 'echarts/core';
-import { BarChart } from 'echarts/charts';
+import { BarChart, ScatterChart } from 'echarts/charts';
 import {
   GridComponent,
   TooltipComponent,
@@ -73,6 +73,7 @@ import { CanvasRenderer } from 'echarts/renderers';
 
 echarts.use([
   BarChart,
+  ScatterChart,
   GridComponent,
   TooltipComponent,
   LegendComponent,
@@ -147,32 +148,108 @@ onMounted(async () => {
 });
 
 // Chart options
-const originalOption = computed(() => {
-  const data = normalizeBarData(latestOriginal.value)?.original;
-  if (!data || Object.values(data).some((v) => v == null)) return null;
-  return buildBarOption(data, 'Original Self');
-});
-
-const adjustedOption = computed(() => {
-  const data = normalizeBarData(latestAdjusted.value)?.adjusted;
-  if (!data || Object.values(data).some((v) => v == null)) return null;
-  return buildBarOption(data, 'Adjusted Self');
-});
+const originalOption = computed(() => buildProjectionOption(latestOriginal.value, 'Original Self', 'original'));
+const adjustedOption = computed(() => buildProjectionOption(latestAdjusted.value, 'Adjusted Self', 'adjust'));
 
 // Bar chart builder
-function buildBarOption(barData, title) {
+function buildProjectionOption(result, title, type) {
+  if (!result) return null;
+  const data = buildProjectionData(result, type === 'original' ? 'original' : 'adjust');
+  if (!data) return null;
+
+  const categories = [
+    'Collaborative',
+    'Internal Processor',
+    'Urgency',
+    'Unstructured',
+    'Decision Approach',
+  ];
+  const rightCategories = [
+    'Independent',
+    'External Processor',
+    'Methodical',
+    'Structured',
+    'Decision Approach',
+  ];
+
+  const points = [
+    { value: [data.collaborative, 0], name: 'A' },
+    { value: [data.internalProcessor, 1], name: 'B' },
+    { value: [data.urgency, 2], name: 'C' },
+    { value: [data.unstructured, 3], name: 'D' },
+  ];
+  const decisionPoint = { value: [data.decision, 4], name: 'DA' };
+
   return {
     title: { text: title, left: 'center', textStyle: { fontSize: 14 } },
-    grid: { left: 40, right: 10, top: 30, bottom: 30 },
-    xAxis: { type: 'category', data: ['A', 'B', 'C', 'D'] },
-    yAxis: { type: 'value', max: 100 },
-    tooltip: { trigger: 'axis' },
+    grid: { left: 140, right: 140, top: 30, bottom: 30 },
+    xAxis: {
+      type: 'value', min: 0, max: 100,
+      axisLabel: { formatter: (v) => {
+        if (v === 0) return '0';
+        if (v === 100) return '100';
+        return String(v);
+      } },
+      splitLine: { show: true, lineStyle: { type: 'solid', color: '#f0f0f0' } },
+    },
+    yAxis: [
+      {
+        type: 'category',
+        data: categories,
+        axisLabel: { formatter: (val) => `${val}` },
+        axisTick: { show: false },
+      },
+      {
+        type: 'category',
+        position: 'right',
+        data: rightCategories,
+        axisLabel: { formatter: (val) => `${val}` },
+        axisTick: { show: false },
+      },
+    ],
+    tooltip: {
+      trigger: 'item',
+      formatter: (p) => {
+        if (Array.isArray(p.value)) {
+          const left = categories[p.value[1]];
+          const right = rightCategories[p.value[1]];
+          return `${p.name}: ${p.value[0]}%\n${left} ⇄ ${right}`;
+        }
+        return `${p.name}: ${p.value}%`;
+      },
+    },
     series: [
       {
-        type: 'bar',
-        data: [barData.a, barData.b, barData.c, barData.d],
-        itemStyle: { color: '#0164A5' },
-        barWidth: '45%',
+        name: 'Points',
+        type: 'scatter',
+        data: points,
+        encode: { x: 0, y: 1 },
+        symbolSize: 16,
+        itemStyle: { color: '#0a74c5' },
+        label: {
+          show: true,
+          formatter: '{b}',
+          color: '#fff',
+          fontWeight: '600',
+        },
+        emphasis: { scale: true },
+        markLine: {
+          silent: true,
+          symbol: 'none',
+          lineStyle: { type: 'dashed', color: '#888' },
+          data: [{ xAxis: 50 }],
+        },
+        z: 3,
+      },
+      {
+        name: 'Decision',
+        type: 'scatter',
+        data: [decisionPoint],
+        encode: { x: 0, y: 1 },
+        symbolSize: 16,
+        itemStyle: { color: '#2a9d8f' },
+        label: { show: true, formatter: '{b}', color: '#fff', fontWeight: '600' },
+        z: 3,
       },
     ],
   };

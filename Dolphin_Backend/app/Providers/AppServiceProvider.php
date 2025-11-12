@@ -16,7 +16,8 @@ class AppServiceProvider extends ServiceProvider
     
     public function register(): void
     {
-        
+        // Intentionally left blank — no container bindings are required at this time.
+        // Keep this method to allow future early-binding of services if needed.
     }
 
     

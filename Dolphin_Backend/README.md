@@ -73,6 +73,30 @@ composer install --dev
 - If email isn't sending, check `config/mail.php` and credentials in `.env`.
 - OAuth: Storage contains `oauth-private.key` and `oauth-public.key`. If missing, run `php artisan passport:install`.
 
+### Native Assessment Engine (Replaces external dolphin project)
+
+The assessment scoring logic is now fully implemented in PHP and no longer depends on the legacy `dolphin-project-main` (C++/Python) folder or its `input` / `results` tables. Key components:
+
+- `app/Services/AssessmentEngine/WeightRepository.php` — loads weight dictionaries from `resources/assessment_weights`.
+- `app/Services/AssessmentEngine/ScoreCalculator.php` — computes per-category ratios (A/B/C/D) and decision approach.
+- `app/Services/AssessmentEngine/WordNormalizer.php` — normalizes selected words to match weight keys.
+- `app/Services/AssessmentCalculationService.php` — orchestrates extraction from `assessment_responses` and persists rows into `assessment_results`.
+
+Recompute historical results if needed:
+
+```bash
+php artisan assessments:recompute --rebuild
+# Limit scope:
+php artisan assessments:recompute --user=42 --attempt=1 --rebuild
+```
+
+Safely removing the old external folder:
+1. Delete or archive `dolphin-project-main`.
+2. Remove any related ENV vars (e.g., `PYTHON_PATH`).
+3. Optionally drop legacy external tables if they existed (`input`, `results`) after confirming nothing references them.
+
+The methods `isDolphinExecutableAvailable()` and `buildDolphinExecutable()` now always return success for backward compatibility with existing controllers.
+
 ## Local-only notes
 - This project is locked to localhost for development:
 	- Backend: http://127.0.0.1:8000

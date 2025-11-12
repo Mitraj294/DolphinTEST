@@ -1,1 +1,0 @@
-clang++ -std=c++11 code/main.cpp -o dolphin

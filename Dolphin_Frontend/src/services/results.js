@@ -51,3 +51,25 @@ export function normalizeBarData(result) {
 
   return { original, adjusted };
 }
+
+// Projection mapping helper for new wiring charts.
+// Maps category scores (A,B,C,D) + decision approach into rows.
+// Assumptions (can be refined later):
+//  Row order: Collaborative(A) vs Independent, Internal Processor(B) vs External Processor,
+//             Urgency(C) vs Methodical, Unstructured(D) vs Structured, Decision Approach(dec_approach)
+// Each row value is a percentage (0-100) leaning toward the left trait (e.g., Collaborative).
+// For display we use left-lean %; right-lean can be inferred as 100 - value.
+export function buildProjectionData(result, type = 'original') {
+  if (!result) return null;
+  const toPct = (v) => (typeof v === 'number' ? Math.round(v * 100) : 0);
+  const isOriginal = type === 'original';
+  const prefix = isOriginal ? 'self_' : 'adj_';
+  const data = {
+    collaborative: toPct(result[prefix + 'a']),
+    internalProcessor: toPct(result[prefix + 'b']),
+    urgency: toPct(result[prefix + 'c']),
+    unstructured: toPct(result[prefix + 'd']),
+    decision: toPct(result.dec_approach),
+  };
+  return data;
+}

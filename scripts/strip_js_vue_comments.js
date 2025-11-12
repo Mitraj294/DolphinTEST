@@ -4,7 +4,7 @@
 // - For .vue files: only processes the contents of <script>...</script> blocks (including <script setup>).
 // Usage: node strip_js_vue_comments.js --files file1,file2,... [--apply]
 
-const fs = require('fs');
+const fs = require('node:fs');
 
 function stripCommentsFromJs(src) {
   let out = '';
@@ -57,15 +57,25 @@ function stripCommentsFromJs(src) {
     }
   }
   // collapse 3+ newlines to 2
-  return out.replace(/\n{3,}/g, '\n\n');
+  return out.replaceAll(/\n{3,}/g, '\n\n');
 }
 
 function processVueFile(content) {
-  // find all <script ...>...</script> (non-greedy)
-  return content.replace(/<script([\s\S]*?)>([\s\S]*?)<\/script>/gi, (m, attrs, inner) => {
+  // find all <script ...>...</script> (non-greedy) and reconstruct to avoid using replace with a callback
+  let out = '';
+  let lastIndex = 0;
+  const regex = /<script([\s\S]*?)>([\s\S]*?)<\/script>/gi;
+  let match;
+  while ((match = regex.exec(content)) !== null) {
+    out += content.slice(lastIndex, match.index);
+    const attrs = match[1];
+    const inner = match[2];
     const stripped = stripCommentsFromJs(inner);
-    return `<script${attrs}>${stripped}</script>`;
-  });
+    out += `<script${attrs}>${stripped}</script>`;
+    lastIndex = regex.lastIndex;
+  }
+  out += content.slice(lastIndex);
+  return out;
 }
 
 function main() {
@@ -79,19 +89,23 @@ function main() {
   const files = args[filesArgIndex+1].split(',').map(s => s.trim()).filter(Boolean);
   const changed = [];
   for (const f of files) {
-    if (!fs.existsSync(f)) { console.warn('Not found', f); continue; }
-    const src = fs.readFileSync(f, 'utf8');
-    let out = src;
-    if (f.endsWith('.vue')) {
-      out = processVueFile(src);
-    } else if (f.endsWith('.js') || f.endsWith('.ts')) {
-      out = stripCommentsFromJs(src);
-    } else {
+    if (!fs.existsSync(f)) {
+      console.warn('Not found', f);
       continue;
     }
-    if (out !== src) {
+    const src = fs.readFileSync(f, 'utf8');
+    let newContent;
+    if (f.endsWith('.vue')) {
+      newContent = processVueFile(src);
+    } else if (f.endsWith('.js') || f.endsWith('.ts')) {
+      newContent = stripCommentsFromJs(src);
+    } else {
+      // unsupported file type
+      continue;
+    }
+    if (newContent !== src) {
       changed.push(f);
-      if (apply) fs.writeFileSync(f, out, 'utf8');
+      if (apply) fs.writeFileSync(f, newContent, 'utf8');
     }
   }
   if (changed.length === 0) {

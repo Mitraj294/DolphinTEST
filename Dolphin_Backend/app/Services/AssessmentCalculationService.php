@@ -11,51 +11,61 @@ use Illuminate\Support\Facades\Log;
 
 class AssessmentCalculationService
 {
+    // Deprecated external engine paths (kept for BC but unused)
     protected string $dolphinPath;
     protected string $pythonPath;
     protected string $dolphinDbConnection;
 
     public function __construct()
     {
-        
+        // Keep defaults but we'll not use them anymore
         $this->dolphinPath = base_path('../dolphin-project-main');
         $this->pythonPath = env('PYTHON_PATH', 'python3');
         $this->dolphinDbConnection = 'dolphin_clean';
     }
 
     
-    public function calculateResults(int $userId, int $attemptId, ?int $organizationAssessmentId = null): ?AssessmentResult
+    /**
+     * Calculate (or return existing) result row for a specific assessment_id within an attempt.
+     * assessment_id=1 => original, assessment_id=2 => adjust.
+     */
+    public function calculateResults(int $userId, int $attemptId, ?int $assessmentId = null): ?AssessmentResult
     {
         try {
             Log::info('Starting assessment calculation', [
                 'user_id' => $userId,
                 'attempt_id' => $attemptId,
-                'assessment_id' => $organizationAssessmentId
+                'assessment_id' => $assessmentId
             ]);
 
-            
-            $responses = AssessmentResponse::where('user_id', $userId)
-                ->where('attempt_id', $attemptId)
-                ->get();
+            // Pull responses for this user/attempt. We may need both assessment_id sets for scoring.
+            $responsesQuery = AssessmentResponse::where('user_id', $userId)
+                ->where('attempt_id', $attemptId);
+            $responses = $responsesQuery->get();
 
             if ($responses->isEmpty()) {
                 throw new \Exception("No responses found for user {$userId}, attempt {$attemptId}");
             }
 
-            
-            $existingResult = AssessmentResult::where('user_id', $userId)
-                ->where('attempt_id', $attemptId)
-                ->first();
-
-            if ($existingResult) {
-                Log::info('Result already exists for this attempt', [
-                    'result_id' => $existingResult->id,
-                    'attempt_id' => $attemptId
-                ]);
-                return $existingResult;
+            // If an assessmentId was provided determine the type and check for existing row by type.
+            $precomputedType = null;
+            if ($assessmentId !== null) {
+                $precomputedType = ($assessmentId === 2) ? 'adjust' : 'original';
+                $existingResult = AssessmentResult::where('user_id', $userId)
+                    ->where('attempt_id', $attemptId)
+                    ->where('type', $precomputedType)
+                    ->first();
+                if ($existingResult) {
+                    Log::info('Result already exists for this attempt & type', [
+                        'result_id' => $existingResult->id,
+                        'attempt_id' => $attemptId,
+                        'type' => $precomputedType
+                    ]);
+                    return $existingResult;
+                }
             }
 
-            
+            // Gather selected words separated by assessment type
             $selectedWords = $this->extractSelectedWords($responses);
 
             Log::info('Extracted words', [
@@ -63,18 +73,11 @@ class AssessmentCalculationService
                 'concept_words_count' => count($selectedWords['concept_words'])
             ]);
 
-            
-            $user = User::findOrFail($userId);
-            $email = $user->email;
+            // Compute results natively in PHP (no external engine)
+            $result = $this->computeResults($selectedWords);
 
             
-            $this->prepareInputData($email, $selectedWords);
-
-            
-            $result = $this->runDolphinAlgorithm($email);
-
-            
-            $assessmentResult = $this->storeResults($userId, $attemptId, $organizationAssessmentId, $result, $selectedWords);
+            $assessmentResult = $this->storeResults($userId, $attemptId, $assessmentId, $result, $selectedWords);
 
             Log::info('Assessment calculation completed successfully', [
                 'user_id' => $userId,
@@ -102,7 +105,7 @@ class AssessmentCalculationService
         $conceptWords = [];
 
         foreach ($responses as $response) {
-            
+            // selected_options may be JSON string or array
             $options = is_array($response->selected_options)
                 ? $response->selected_options
                 : json_decode($response->selected_options, true);
@@ -115,16 +118,12 @@ class AssessmentCalculationService
                 continue;
             }
 
-            
-            
-            
+            // assessment_id 1 => self, 2 => concept
             if ($response->assessment_id == 1) {
                 $selfWords = array_merge($selfWords, $options);
             } elseif ($response->assessment_id == 2) {
                 $conceptWords = array_merge($conceptWords, $options);
             } else {
-                
-                
                 if (empty($selfWords)) {
                     $selfWords = $options;
                 } else {
@@ -139,94 +138,67 @@ class AssessmentCalculationService
         ];
     }
 
-    
-    
-    protected function prepareInputData(string $email, array $selectedWords): void
+    /**
+     * New native calculator computing all metrics without external systems.
+     */
+    protected function computeResults(array $selectedWords): object
     {
-        try {
-            
-            DB::connection($this->dolphinDbConnection)->table('input')->updateOrInsert(
-                ['email' => $email],
-                [
-                    'self_words' => json_encode($selectedWords['self_words']),
-                    'concept_words' => json_encode($selectedWords['concept_words'])
-                ]
-            );
+        $calculator = new \App\Services\AssessmentEngine\ScoreCalculator(new \App\Services\AssessmentEngine\WeightRepository());
 
-            Log::info('Input data prepared for C++ algorithm', [
-                'email' => $email,
-                'self_words_count' => count($selectedWords['self_words']),
-                'concept_words_count' => count($selectedWords['concept_words'])
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to prepare input data', [
-                'email' => $email,
-                'error' => $e->getMessage()
-            ]);
-            throw new \Exception("Failed to prepare input data: " . $e->getMessage());
-        }
-    }
+        $selfScores = $calculator->scores($selectedWords['self_words'] ?? [], 'self');
+        $concScores = $calculator->scores($selectedWords['concept_words'] ?? [], 'concept');
 
-    
-    protected function runDolphinAlgorithm(string $email): object
-    {
-        
-        $command = sprintf(
-            "cd %s && ./dolphin '%s' 2>&1",
-            escapeshellarg($this->dolphinPath),
-            escapeshellarg($email)
-        );
+        // Prepare a plain object with properties matching previous external 'results' row
+        $res = new \stdClass();
+        $res->self_a = $selfScores['A'];
+        $res->self_b = $selfScores['B'];
+        $res->self_c = $selfScores['C'];
+        $res->self_d = $selfScores['D'];
+        $res->self_avg = $selfScores['avg'];
 
-        Log::info('Running dolphin algorithm', [
-            'command' => $command,
-            'email' => $email
-        ]);
+        $res->conc_a = $concScores['A'];
+        $res->conc_b = $concScores['B'];
+        $res->conc_c = $concScores['C'];
+        $res->conc_d = $concScores['D'];
+        $res->conc_avg = $concScores['avg'];
 
-        $output = [];
-        $returnVar = 0;
-        exec($command, $output, $returnVar);
+        $res->dec_approach = $calculator->decisionApproach($res->self_avg, $res->conc_avg);
 
-        $outputString = implode("\n", $output);
+        // Totals are counts of selected words
+        $res->self_total_words = is_array($selectedWords['self_words'] ?? null) ? count($selectedWords['self_words']) : 0;
+        $res->conc_total_words = is_array($selectedWords['concept_words'] ?? null) ? count($selectedWords['concept_words']) : 0;
+        $res->adj_total_words  = 0; // will be set when storing if needed
 
-        if ($returnVar !== 0) {
-            Log::error('Dolphin algorithm execution failed', [
-                'return_code' => $returnVar,
-                'output' => $outputString
-            ]);
-            throw new \Exception("Dolphin algorithm failed with code {$returnVar}: {$outputString}");
-        }
-
-        Log::info('Dolphin algorithm executed successfully', [
-            'email' => $email,
-            'output_lines' => count($output)
-        ]);
-
-        
-        $result = DB::connection($this->dolphinDbConnection)
-            ->table('results')
-            ->where('email', $email)
-            ->first();
-
-        if (!$result) {
-            throw new \Exception("No results generated for {$email}. Algorithm may have failed silently.");
-        }
-
-        return $result;
+        return $res;
     }
 
     
     
-    protected function storeResults(int $userId, int $attemptId, ?int $organizationAssessmentId, object $result, array $selectedWords): AssessmentResult
+    protected function storeResults(int $userId, int $attemptId, ?int $assessmentId, object $result, array $selectedWords): AssessmentResult
     {
-        
-        $existingResults = AssessmentResult::where('user_id', $userId)->count();
-        $type = $existingResults > 0 ? 'adjust' : 'original';
+        // Determine result type by assessment id: 1 => original, 2 => adjust (fallback to original if unknown)
+        $type = ($assessmentId === 2) ? 'adjust' : 'original';
 
         
         $wordCategories = $this->categorizeWords($selectedWords);
 
+        // Compute adjusted scores only for adjust attempts
+        $adjA = 0; $adjB = 0; $adjC = 0; $adjD = 0; $adjAvg = 0; $adjCount = 0;
+        if ($type === 'adjust') {
+            $calculator = new \App\Services\AssessmentEngine\ScoreCalculator(new \App\Services\AssessmentEngine\WeightRepository());
+            $adjScores = $calculator->scores($selectedWords['self_words'] ?? [], 'adjusted');
+            $adjA = $adjScores['A'];
+            $adjB = $adjScores['B'];
+            $adjC = $adjScores['C'];
+            $adjD = $adjScores['D'];
+            $adjAvg = $adjScores['avg'];
+            $adjCount = is_array($selectedWords['self_words'] ?? null) ? count($selectedWords['self_words']) : 0;
+        }
+
         $assessmentResult = AssessmentResult::create([
-            'organization_assessment_id' => $organizationAssessmentId,
+            // We do NOT set organization_assessment_id here because incoming assessment_id (1/2)
+            // refers to the question set, not the organization_assessments table.
+            'organization_assessment_id' => null,
             'user_id' => $userId,
             'attempt_id' => $attemptId,
             'type' => $type,
@@ -247,7 +219,7 @@ class AssessmentCalculationService
             
             'self_total_count' => $result->self_total_words ?? 0,
             'conc_total_count' => $result->conc_total_words ?? 0,
-            'adj_total_count' => $result->adj_total_words ?? 0,
+            'adj_total_count' => $adjCount,
             
             'self_total_words' => $wordCategories['self_words'],
             'conc_total_words' => $wordCategories['concept_words'],
@@ -259,11 +231,11 @@ class AssessmentCalculationService
             'task_d' => 0,
             'task_avg' => 0,
             
-            'adj_a' => 0,
-            'adj_b' => 0,
-            'adj_c' => 0,
-            'adj_d' => 0,
-            'adj_avg' => 0,
+            'adj_a' => $adjA,
+            'adj_b' => $adjB,
+            'adj_c' => $adjC,
+            'adj_d' => $adjD,
+            'adj_avg' => $adjAvg,
         ]);
 
         Log::info('Results stored in assessment_results table', [
@@ -276,12 +248,35 @@ class AssessmentCalculationService
         return $assessmentResult;
     }
 
+    /**
+     * Convenience method: ensure both (original & adjust) result rows exist for an attempt.
+     * Creates rows for assessment_id 1 and 2 if responses exist.
+     */
+    public function ensureDualResults(int $userId, int $attemptId): array
+    {
+        $created = [];
+        // Determine which assessment ids are present in responses
+        $ids = AssessmentResponse::where('user_id', $userId)
+            ->where('attempt_id', $attemptId)
+            ->select('assessment_id')
+            ->distinct()
+            ->pluck('assessment_id')
+            ->toArray();
+        foreach ([1,2] as $aid) {
+            if (in_array($aid, $ids, true)) {
+                $res = $this->calculateResults($userId, $attemptId, $aid);
+                if ($res) {
+                    $created[] = $res;
+                }
+            }
+        }
+        return $created;
+    }
+
     
     
     protected function categorizeWords(array $selectedWords): array
     {
-        
-        
         return [
             'self_words' => $selectedWords['self_words'],
             'concept_words' => $selectedWords['concept_words'],
@@ -297,36 +292,14 @@ class AssessmentCalculationService
     
     public function isDolphinExecutableAvailable(): bool
     {
-        $executablePath = $this->dolphinPath . '/dolphin';
-        return file_exists($executablePath) && is_executable($executablePath);
+        // Always true: native calculator is built-in
+        return true;
     }
 
     
     public function buildDolphinExecutable(): bool
     {
-        if ($this->isDolphinExecutableAvailable()) {
-            return true;
-        }
-
-        $command = sprintf(
-            "cd %s && bash make.sh 2>&1",
-            escapeshellarg($this->dolphinPath)
-        );
-
-        Log::info('Building dolphin executable', ['command' => $command]);
-
-        $output = [];
-        $returnVar = 0;
-        exec($command, $output, $returnVar);
-
-        if ($returnVar !== 0) {
-            Log::error('Failed to build dolphin executable', [
-                'return_code' => $returnVar,
-                'output' => implode("\n", $output)
-            ]);
-            return false;
-        }
-
-        return $this->isDolphinExecutableAvailable();
+        // No-op: external build is deprecated
+        return true;
     }
 }

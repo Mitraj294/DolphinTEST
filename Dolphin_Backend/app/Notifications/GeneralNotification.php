@@ -86,7 +86,8 @@ class GeneralNotification extends Notification implements ShouldQueue
             try {
                 $toEmail = $notifiable->routeNotificationFor('mail');
             } catch (\Exception $e) {
-                
+                // Log and continue — we couldn't resolve an email from the anonymous notifiable
+                Log::warning('[Notification] Failed to resolve email for AnonymousNotifiable', ['error' => $e->getMessage()]);
             }
         }
 

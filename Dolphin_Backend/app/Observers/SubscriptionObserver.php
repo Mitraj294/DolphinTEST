@@ -22,7 +22,13 @@ class SubscriptionObserver
                 $org->save();
             }
         } catch (Exception $e) {
+            // Log the exception so issues during org update are visible and do not fail the observer
             
+            try {
+                \Illuminate\Support\Facades\Log::warning('[SubscriptionObserver] failed to update organizations from subscription', ['error' => $e->getMessage()]);
+            } catch (Exception $_) {
+                // swallow logging errors to avoid cascading failures from observers
+            }
         }
     }
 

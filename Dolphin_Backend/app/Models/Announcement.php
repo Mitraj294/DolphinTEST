@@ -86,7 +86,12 @@ class Announcement extends Model
             
             $this->attributes['schedule_time'] = $dt->format('H:i:s');
         } catch (\Exception $e) {
-            
+            // Log parse failures so malformed scheduled_at values are traceable
+            try {
+                \Illuminate\Support\Facades\Log::warning('[Announcement] failed to parse scheduledAt', ['value' => $scheduledAt, 'error' => $e->getMessage()]);
+            } catch (\Exception $_) {
+                // ignore logging failures
+            }
         }
     }
 }
