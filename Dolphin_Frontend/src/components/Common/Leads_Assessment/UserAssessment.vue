@@ -29,10 +29,10 @@
               gap: 12px;
             ">
             <button v-if="step > 1" class="user-assessment-back-btn" @click="goToBack">Back</button>
-            <button v-if="step < totalSteps" class="user-assessment-next-btn" :disabled="!canProceed" @click="goToNext">
+            <button v-if="step < totalSteps" class="user-assessment-next-btn" @click="nextWithConfirm">
               Next
             </button>
-            <button v-else class="user-assessment-next-btn" :disabled="!canProceed" @click="handleSubmit">
+            <button v-else class="user-assessment-next-btn" @click="submitWithConfirm">
               Submit
             </button>
           </div>
@@ -294,6 +294,26 @@ export default {
         }
       }
     };
+
+    // Allow proceeding to next question even when no selection after confirmation
+    const nextWithConfirm = () => {
+      if (canProceed.value) {
+        goToNext();
+        return;
+      }
+      // Use native confirm to avoid adding UI library dependency. This is simple
+      // and matches requirement: ask "are you sure" and then proceed.
+      // eslint-disable-next-line no-alert
+      const ok = globalThis.confirm('You have not selected any words for this question. Are you sure you want to continue?');
+      if (ok) {
+        // Record end time for current question
+        questionEndTimes.value[step.value - 1] = new Date().toISOString();
+        step.value++;
+        if (!questionStartTimes.value[step.value - 1]) {
+          questionStartTimes.value[step.value - 1] = new Date().toISOString();
+        }
+      }
+    };
     const goToBack = () => {
       if (step.value > 1) {
         step.value--;
@@ -305,8 +325,9 @@ export default {
     };
 
     // Submit
-    const handleSubmit = async () => {
-      if (!canProceed.value) return;
+    // Accept an optional force flag so callers can bypass the canProceed guard
+    const handleSubmit = async (force = false) => {
+      if (!canProceed.value && !force) return;
       const storage = require('@/services/storage').default;
       const authToken = storage.get('authToken');
       if (!authToken) {
@@ -322,8 +343,8 @@ export default {
         return;
       }
 
-      // Record end time for the last question
-      questionEndTimes.value[step.value - 1] = new Date().toISOString();
+  // Record end time for the last question
+  questionEndTimes.value[step.value - 1] = new Date().toISOString();
 
       // Build responses array as expected by new backend (assessment-based)
       const buildResponsesPayload = () =>
@@ -370,6 +391,19 @@ export default {
       await submitAnswers(responsesPayload, authToken);
     };
 
+    // Submit with confirmation when no selections have been made.
+    const submitWithConfirm = async () => {
+      if (canProceed.value) {
+        await handleSubmit();
+        return;
+      }
+      // eslint-disable-next-line no-alert
+      const ok = globalThis.confirm('You have not selected any words. Are you sure you want to submit?');
+      if (ok) {
+        await handleSubmit(true);
+      }
+    };
+
     onMounted(fetchQuestionsAndAnswers);
 
     return {
@@ -382,8 +416,10 @@ export default {
       currentSelectedWords,
       canProceed,
       goToNext,
+      nextWithConfirm,
       goToBack,
       handleSubmit,
+      submitWithConfirm,
       isSubscribed,
       router,
     };

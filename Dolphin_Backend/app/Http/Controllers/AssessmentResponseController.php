@@ -38,7 +38,9 @@ class AssessmentResponseController extends Controller
                 
                 
                 'responses.*.assessment_id' => 'required|exists:assessment,id',
-                'responses.*.selected_options' => 'required|array',
+                // allow empty arrays when users intentionally skip a question
+                // 'present' ensures the key exists (so we can record an empty array)
+                'responses.*.selected_options' => 'present|array',
                 'responses.*.start_time' => 'nullable|date',
                 'responses.*.end_time' => 'nullable|date',
                 'attempt_id' => 'nullable|integer',
@@ -97,7 +99,7 @@ class AssessmentResponseController extends Controller
             
             try {
                 $calculationService = new AssessmentCalculationService();
-                Log::info('Auto-calculating assessment results for both types', [
+                Log::info('Auto-calculating assessment result for attempt', [
                     'user_id' => $userId,
                     'attempt_id' => $attemptId,
                 ]);
@@ -105,7 +107,7 @@ class AssessmentResponseController extends Controller
                 $results = $calculationService->ensureDualResults($userId, $attemptId);
 
                 foreach ($results as $res) {
-                    Log::info('Assessment results calculated successfully', [
+                    Log::info('Assessment result calculated successfully', [
                         'result_id' => $res->id,
                         'user_id' => $userId,
                         'attempt_id' => $attemptId,

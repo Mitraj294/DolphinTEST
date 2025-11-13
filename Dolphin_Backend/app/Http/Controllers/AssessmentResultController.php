@@ -32,20 +32,19 @@ class AssessmentResultController extends Controller
     
     /**
      * POST /api/assessment-results/calculate
-     * Body: { attempt_id: int, assessment_id?: 1|2 }
-     * Returns newly created or existing result for the requested type,
-     * or both if assessment_id is omitted.
+     * Body: { attempt_id: int }
+     * Returns newly created or existing result for the requested attempt.
+     * The type ('original' or 'adjust') is determined by the attempt number.
      */
     public function calculate(Request $request): JsonResponse
     {
         // Auth guard
-        if (!\Illuminate\Support\Facades\Auth::check()) {
+        if (!Auth::check()) {
             return response()->json(['error' => 'Unauthenticated.'], 401);
         }
+
         $validator = Validator::make($request->all(), [
             'attempt_id' => 'required|integer',
-            // This assessment_id refers to the question set (1=self/original, 2=concept/adjust), not organization_assessments
-            'assessment_id' => 'nullable|integer|in:1,2',
         ]);
 
         if ($validator->fails()) {
@@ -56,51 +55,26 @@ class AssessmentResultController extends Controller
         }
 
         $validated = $validator->validated();
-        $attemptId = $validated['attempt_id'] ?? null;
-        $responseData = [];
-        $status = 200;
+        $attemptId = $validated['attempt_id'];
 
         try {
             $userId = Auth::id();
 
-            
-            // Back-compat check (always true in native engine)
-            if (!$this->calculationService->isDolphinExecutableAvailable()) {
-                Log::warning('Dolphin executable not found, attempting to build');
+            // The calculation service now handles all logic internally.
+            // We just need to provide the user and attempt ID.
+            $result = $this->calculationService->calculateResults($userId, $attemptId);
 
-                if (!$this->calculationService->buildDolphinExecutable()) {
-                    
-                    $responseData = [
-                        'error' => 'Assessment calculation system is not available. Please contact support.'
-                    ];
-                    $status = 503;
-                }
+            if (!$result) {
+                // The service logs the specific error, so we return a generic message.
+                return response()->json([
+                    'error' => 'Failed to calculate results. Please check the logs for details.'
+                ], 500);
             }
 
-            
-            if ($status === 200) {
-                if (!empty($validated['assessment_id'])) {
-                    $result = $this->calculationService->calculateResults(
-                        $userId,
-                        $validated['attempt_id'],
-                        (int)$validated['assessment_id']
-                    );
-                    $responseData = [
-                        'message' => 'Result calculated successfully',
-                        'result' => $result
-                    ];
-                } else {
-                    $results = $this->calculationService->ensureDualResults(
-                        $userId,
-                        $validated['attempt_id']
-                    );
-                    $responseData = [
-                        'message' => 'Results calculated successfully',
-                        'results' => $results
-                    ];
-                }
-                $status = 200;
-            }
+            return response()->json([
+                'message' => 'Result calculated successfully',
+                'result' => $result
+            ]);
         } catch (\Exception $e) {
             Log::error('Failed to calculate assessment results', [
                 'error' => $e->getMessage(),
@@ -108,14 +82,11 @@ class AssessmentResultController extends Controller
                 'attempt_id' => $attemptId
             ]);
 
-            $responseData = [
-                'error' => 'Failed to calculate results. Please try again or contact support.',
+            return response()->json([
+                'error' => 'An unexpected error occurred. Please try again or contact support.',
                 'message' => $e->getMessage()
-            ];
-            $status = 500;
+            ], 500);
         }
-
-        return response()->json($responseData, $status);
     }
 
     

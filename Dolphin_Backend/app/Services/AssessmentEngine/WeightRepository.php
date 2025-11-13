@@ -4,6 +4,7 @@ namespace App\Services\AssessmentEngine;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 /**
  * WeightRepository
@@ -25,10 +26,17 @@ class WeightRepository
     public function all(): array
     {
         return Cache::remember('assessment_weights_v1', 3600, function () {
+            // Load algorithm definitions from the DB only. If unavailable, return empty maps.
+            $fromDb = $this->loadFromDb();
+            if (!empty($fromDb)) {
+                return $fromDb;
+            }
+
+            Log::warning('No algorithm row found in DB; returning empty weight maps (DB-only mode)');
             return [
-                'self'     => $this->loadFromFile(resource_path('assessment_weights/self_weight.txt')),
-                'concept'  => $this->loadFromFile(resource_path('assessment_weights/concept_weight.txt')),
-                'adjusted' => $this->loadFromFile(resource_path('assessment_weights/adjusted_weight.txt')),
+                'self' => [],
+                'concept' => [],
+                'adjusted' => [],
             ];
         });
     }
@@ -91,5 +99,60 @@ class WeightRepository
             $result[$norm] = ['cat' => $cat, 'w' => $w];
         }
         return $result;
+    }
+
+    /**
+     * Attempt to load algorithm weights from the `algorithms` DB table.
+     * Expects a single row with JSON arrays in `self_table`, `conc_table`, `adjust_table`.
+     * Returns same shape as file loader: [ 'self' => [norm => ['cat'=>..., 'w'=>...]], ... ]
+     */
+    protected function loadFromDb(): array
+    {
+        try {
+            $row = DB::table('algorithms')
+                ->where('is_global', 1)
+                ->orderByDesc('version')
+                ->first();
+
+            if (!$row) {
+                return [];
+            }
+
+            $out = ['self' => [], 'concept' => [], 'adjusted' => []];
+
+            $maps = [
+                'self' => $row->self_table ?? null,
+                'concept' => $row->conc_table ?? null,
+                'adjusted' => $row->adjust_table ?? null,
+            ];
+
+            foreach ($maps as $key => $json) {
+                if (empty($json)) {
+                    continue;
+                }
+                $items = json_decode($json, true);
+                if (!is_array($items)) {
+                    continue;
+                }
+                foreach ($items as $item) {
+                    if (!isset($item['word'])) {
+                        continue;
+                    }
+                    $word = (string) ($item['word'] ?? '');
+                    $w = isset($item['weight']) ? (int) $item['weight'] : 0;
+                    $cat = isset($item['category']) ? strtoupper(trim((string) $item['category'])) : null;
+                    if (!in_array($cat, ['A','B','C','D'], true)) {
+                        continue;
+                    }
+                    $norm = WordNormalizer::normalize($word);
+                    $out[$key][$norm] = ['cat' => $cat, 'w' => $w];
+                }
+            }
+
+            return $out;
+        } catch (\Exception $e) {
+            Log::warning('Failed to load algorithms from DB, falling back to files', ['error' => $e->getMessage()]);
+            return [];
+        }
     }
 }

@@ -54,43 +54,41 @@ class AssessmentCalculationService
      * - Output: AssessmentResult or null on failure
      * - Error modes: returns null and logs on missing responses or exceptions
      */
-    public function calculateResults(int $userId, int $attemptId, ?int $assessmentId = null): ?AssessmentResult
+    public function calculateResults(int $userId, int $attemptId): ?AssessmentResult
     {
         try {
+            // Determine the result type based on the attempt number.
+            $type = ($attemptId > 1) ? 'adjust' : 'original';
+
             Log::info('Starting assessment calculation', [
                 'user_id' => $userId,
                 'attempt_id' => $attemptId,
-                'assessment_id' => $assessmentId
+                'type' => $type
             ]);
 
-            // Pull responses for this user/attempt. We may need both assessment_id sets for scoring.
-            $responsesQuery = AssessmentResponse::where('user_id', $userId)
-                ->where('attempt_id', $attemptId);
-            $responses = $responsesQuery->get();
+            // A single attempt should only have one result row. Check if it already exists.
+            $existingResult = AssessmentResult::where('user_id', $userId)
+                ->where('attempt_id', $attemptId)
+                ->first();
+            if ($existingResult) {
+                Log::info('Result already exists for this attempt. Calculation skipped.', [
+                    'result_id' => $existingResult->id,
+                    'attempt_id' => $attemptId,
+                    'type' => $existingResult->type
+                ]);
+                return $existingResult;
+            }
+
+            // Pull all responses for this user/attempt (for both assessment_id 1 and 2).
+            $responses = AssessmentResponse::where('user_id', $userId)
+                ->where('attempt_id', $attemptId)
+                ->get();
 
             if ($responses->isEmpty()) {
                 throw new \Exception("No responses found for user {$userId}, attempt {$attemptId}");
             }
 
-            // If an assessmentId was provided determine the type and check for existing row by type.
-            $precomputedType = null;
-            if ($assessmentId !== null) {
-                $precomputedType = ($assessmentId === 2) ? 'adjust' : 'original';
-                $existingResult = AssessmentResult::where('user_id', $userId)
-                    ->where('attempt_id', $attemptId)
-                    ->where('type', $precomputedType)
-                    ->first();
-                if ($existingResult) {
-                    Log::info('Result already exists for this attempt & type', [
-                        'result_id' => $existingResult->id,
-                        'attempt_id' => $attemptId,
-                        'type' => $precomputedType
-                    ]);
-                    return $existingResult;
-                }
-            }
-
-            // Gather selected words separated by assessment type
+            // Gather selected words, separating them into 'self' and 'concept' buckets.
             $selectedWords = $this->extractSelectedWords($responses);
 
             Log::info('Extracted words', [
@@ -98,11 +96,11 @@ class AssessmentCalculationService
                 'concept_words_count' => count($selectedWords['concept_words'])
             ]);
 
-            // Compute results natively in PHP (no external engine)
+            // Compute scores for self and concept words.
             $result = $this->computeResults($selectedWords);
 
-            
-            $assessmentResult = $this->storeResults($userId, $attemptId, $assessmentId, $result, $selectedWords);
+            // Store a single result for this attempt with the correct type.
+            $assessmentResult = $this->storeResults($userId, $attemptId, $type, $result, $selectedWords);
 
             Log::info('Assessment calculation completed successfully', [
                 'user_id' => $userId,
@@ -118,7 +116,6 @@ class AssessmentCalculationService
                 'trace' => $e->getTraceAsString()
             ]);
 
-            
             return null;
         }
     }
@@ -211,34 +208,50 @@ class AssessmentCalculationService
     
     
     /**
-     * Persist a single AssessmentResult row for the given attempt + type.
-     * Type mapping: assessmentId 1 => 'original', 2 => 'adjust'.
+     * Persist a single AssessmentResult row for the given attempt.
+     * The type ('original' or 'adjust') is passed in, determined by the attempt_id.
      */
-    protected function storeResults(int $userId, int $attemptId, ?int $assessmentId, object $result, array $selectedWords): AssessmentResult
+    protected function storeResults(int $userId, int $attemptId, string $type, object $result, array $selectedWords): AssessmentResult
     {
-        // Determine result type by assessment id: 1 => original, 2 => adjust (fallback to original if unknown)
-        $type = ($assessmentId === 2) ? 'adjust' : 'original';
+        // Categorized words are stored as JSON arrays for transparency/debugging
+        $wordCategories = $this->categorizeWords($selectedWords);
 
-        
-    // Categorized words are stored as JSON arrays for transparency/debugging
-    $wordCategories = $this->categorizeWords($selectedWords);
-
-        // Compute adjusted scores only for adjust attempts
+    // Compute adjusted scores only for 'adjust' type attempts.
+        // Important: adjusted scores should be computed only from the subset of
+        // user-selected self words that exist in the algorithm's adjust table.
         $adjA = 0; $adjB = 0; $adjC = 0; $adjD = 0; $adjAvg = 0; $adjCount = 0;
-        if ($type === 'adjust') {
+    // Prepare adj words storage (used later when persisting)
+    $adjWordsForStorage = [];
+
+    if ($type === 'adjust') {
             $calculator = new \App\Services\AssessmentEngine\ScoreCalculator(new \App\Services\AssessmentEngine\WeightRepository());
-            $adjScores = $calculator->scores($selectedWords['self_words'] ?? [], 'adjusted');
+
+            // Load adjusted dictionary keys so we can intersect with user's self words.
+            $wr = new \App\Services\AssessmentEngine\WeightRepository();
+            $dicts = $wr->all();
+            $adjustedDict = $dicts['adjusted'] ?? [];
+
+            $selfWords = is_array($selectedWords['self_words'] ?? null) ? $selectedWords['self_words'] : [];
+            $filteredSelfWords = [];
+            foreach ($selfWords as $w) {
+                $norm = \App\Services\AssessmentEngine\WordNormalizer::normalize((string) $w);
+                if (isset($adjustedDict[$norm])) {
+                    $filteredSelfWords[] = $w;
+                }
+            }
+
+            // Use only filtered words for adjusted scoring and counts.
+            $adjScores = $calculator->scores($filteredSelfWords, 'adjusted');
             $adjA = $adjScores['A'];
             $adjB = $adjScores['B'];
             $adjC = $adjScores['C'];
             $adjD = $adjScores['D'];
             $adjAvg = $adjScores['avg'];
-            $adjCount = is_array($selectedWords['self_words'] ?? null) ? count($selectedWords['self_words']) : 0;
+            $adjCount = count($filteredSelfWords);
+            $adjWordsForStorage = $filteredSelfWords;
         }
 
         $assessmentResult = AssessmentResult::create([
-            // We do NOT set organization_assessment_id here because incoming assessment_id (1/2)
-            // refers to the question set, not the organization_assessments table.
             'organization_assessment_id' => null,
             'user_id' => $userId,
             'attempt_id' => $attemptId,
@@ -264,13 +277,10 @@ class AssessmentCalculationService
             
             'self_total_words' => $wordCategories['self_words'],
             'conc_total_words' => $wordCategories['concept_words'],
-            'adj_total_words' => $wordCategories['adj_words'],
-            
-            'task_a' => 0,
-            'task_b' => 0,
-            'task_c' => 0,
-            'task_d' => 0,
-            'task_avg' => 0,
+            // For 'adjust' type, adj_total_words should contain the words used for adj scores.
+            'adj_total_words' => $adjWordsForStorage,
+
+            'task_a' => 0, 'task_b' => 0, 'task_c' => 0, 'task_d' => 0, 'task_avg' => 0,
             
             'adj_a' => $adjA,
             'adj_b' => $adjB,
@@ -290,32 +300,13 @@ class AssessmentCalculationService
     }
 
     /**
-     * Convenience method: ensure both (original & adjust) result rows exist for an attempt.
-     * Creates rows for assessment_id 1 and 2 if responses exist.
-     */
-    /**
-     * Ensure we have both an 'original' and an 'adjust' result for an attempt
-     * when responses exist for assessment_id 1 and/or 2.
+     * This method now serves as the primary entry point for calculating a single result for an attempt.
+     * It ensures one result record is created per attempt, with the type determined by the attempt number.
      */
     public function ensureDualResults(int $userId, int $attemptId): array
     {
-        $created = [];
-        // Determine which assessment ids are present in responses
-        $ids = AssessmentResponse::where('user_id', $userId)
-            ->where('attempt_id', $attemptId)
-            ->select('assessment_id')
-            ->distinct()
-            ->pluck('assessment_id')
-            ->toArray();
-        foreach ([1,2] as $aid) {
-            if (in_array($aid, $ids, true)) {
-                $res = $this->calculateResults($userId, $attemptId, $aid);
-                if ($res) {
-                    $created[] = $res;
-                }
-            }
-        }
-        return $created;
+        $result = $this->calculateResults($userId, $attemptId);
+        return $result ? [$result] : [];
     }
 
     
