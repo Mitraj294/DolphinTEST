@@ -15,52 +15,67 @@ class RecomputeAssessmentResults extends Command
 
     public function handle(AssessmentCalculationService $service): int
     {
-        $userOpt = $this->option('user');
-        $attemptOpt = $this->option('attempt');
+        $user = $this->option('user');
+        $attempt = $this->option('attempt');
         $rebuild = (bool) $this->option('rebuild');
 
         $query = AssessmentResponse::query();
-        if ($userOpt) {
-            $query->where('user_id', (int)$userOpt);
+        if ($user) {
+            $query->where('user_id', (int) $user);
         }
-        if ($attemptOpt) {
-            $query->where('attempt_id', (int)$attemptOpt);
+        if ($attempt) {
+            $query->where('attempt_id', (int) $attempt);
         }
-        $grouped = $query->select('user_id', 'attempt_id')
+
+        $groups = $query->select('user_id', 'attempt_id')
             ->groupBy('user_id', 'attempt_id')
             ->orderBy('user_id')
             ->orderBy('attempt_id')
             ->get();
 
-        $this->info('Recomputing for '.$grouped->count().' attempt groups...');
+        $this->info('Recomputing for '.$groups->count().' attempt groups...');
 
-        $count = 0; $errors = 0;
-        foreach ($grouped as $g) {
+        $success = 0;
+        $errors = 0;
+
+        foreach ($groups as $group) {
             try {
                 if ($rebuild) {
-                    AssessmentResult::where('user_id', $g->user_id)
-                        ->where('attempt_id', $g->attempt_id)
+                    AssessmentResult::where('user_id', $group->user_id)
+                        ->where('attempt_id', $group->attempt_id)
                         ->delete();
                 }
-                // Ensure separate results for assessment_id 1 and 2 when present
-                $results = $service->ensureDualResults($g->user_id, $g->attempt_id);
-                if (count($results) > 0) {
+
+                $results = $service->ensureDualResults((int) $group->user_id, (int) $group->attempt_id);
+
+                if (!empty($results)) {
                     foreach ($results as $res) {
-                        $count++;
-                        $this->line("OK user={$g->user_id} attempt={$g->attempt_id} aid={$res->organization_assessment_id} type={$res->type} -> result={$res->id}");
+                        $success++;
+                        $this->line(sprintf(
+                            'OK user=%d attempt=%d aid=%s type=%s -> result=%d',
+                            $group->user_id,
+                            $group->attempt_id,
+                            $res->organization_assessment_id ?? 'null',
+                            $res->type ?? 'unknown',
+                            $res->id
+                        ));
                     }
                 } else {
                     $errors++;
-                    $this->warn("FAILED user={$g->user_id} attempt={$g->attempt_id}");
+                    $this->warn("FAILED user={$group->user_id} attempt={$group->attempt_id}");
                 }
             } catch (\Throwable $e) {
                 $errors++;
-                Log::error('Recompute failed', ['user_id' => $g->user_id, 'attempt_id' => $g->attempt_id, 'error' => $e->getMessage()]);
-                $this->error("ERROR user={$g->user_id} attempt={$g->attempt_id} :: {$e->getMessage()}");
+                Log::error('Recompute failed', [
+                    'user_id' => $group->user_id,
+                    'attempt_id' => $group->attempt_id,
+                    'error' => $e->getMessage(),
+                ]);
+                $this->error("ERROR user={$group->user_id} attempt={$group->attempt_id} :: {$e->getMessage()}");
             }
         }
 
-        $this->info("Done. Success={$count}, Errors={$errors}");
+        $this->info("Done. Success={$success}, Errors={$errors}");
         return $errors === 0 ? self::SUCCESS : self::FAILURE;
     }
 }

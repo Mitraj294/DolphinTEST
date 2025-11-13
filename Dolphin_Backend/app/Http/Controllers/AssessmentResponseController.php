@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 class AssessmentResponseController extends Controller
 {
@@ -29,114 +30,92 @@ class AssessmentResponseController extends Controller
     }
 
     
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, AssessmentCalculationService $calculationService): JsonResponse
     {
-        try {
-            $validator = Validator::make($request->all(), [
-                'responses' => 'required|array',
-                
-                
-                
-                'responses.*.assessment_id' => 'required|exists:assessment,id',
-                // allow empty arrays when users intentionally skip a question
-                // 'present' ensures the key exists (so we can record an empty array)
-                'responses.*.selected_options' => 'present|array',
-                'responses.*.start_time' => 'nullable|date',
-                'responses.*.end_time' => 'nullable|date',
-                'attempt_id' => 'nullable|integer',
-            ]);
+        $validator = Validator::make($request->all(), [
+            'responses' => 'required|array',
+            'responses.*.assessment_id' => 'required|exists:assessment,id',
+            'responses.*.selected_options' => 'present|array',
+            'responses.*.start_time' => 'nullable|date',
+            'responses.*.end_time' => 'nullable|date',
+            'attempt_id' => 'nullable|integer',
+        ]);
 
-            if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
-            }
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
 
-            $responses = $request->input('responses');
-            $attemptId = $request->input('attempt_id');
-            $userId = Auth::id();
+        $responses = $request->input('responses');
+        $attemptId = $request->input('attempt_id');
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+        $userId = $user->id;
 
-            if (empty($userId)) {
-                return response()->json(['error' => 'Unauthenticated.'], 401);
-            }
+        if (empty($attemptId)) {
+            $maxAttempt = DB::table('assessment_responses')
+                ->where('user_id', $userId)
+                ->max('attempt_id') ?: 0;
+            $attemptId = ((int) $maxAttempt) + 1;
+        }
 
-            
-            if (empty($attemptId)) {
-                $maxAttempt = (int) DB::table('assessment_responses')
-                    ->where('user_id', $userId)
-                    ->max('attempt_id');
-                $attemptId = $maxAttempt + 1;
-            }
+        DB::transaction(function () use ($responses, $userId, $attemptId) {
+            foreach ($responses as $responseData) {
+                $assessmentResponse = AssessmentResponse::create([
+                    'user_id' => $userId,
+                    'attempt_id' => $attemptId,
+                    'assessment_id' => $responseData['assessment_id'],
+                    'selected_options' => json_encode($responseData['selected_options']),
+                ]);
 
-            DB::transaction(function () use ($responses, $userId, $attemptId) {
-                foreach ($responses as $responseData) {
-                    
-                    $assessmentResponse = AssessmentResponse::create([
-                        'user_id' => $userId,
-                        'attempt_id' => $attemptId,
-                        'assessment_id' => $responseData['assessment_id'],
-                        'selected_options' => json_encode($responseData['selected_options']),
-                    ]);
+                if (!empty($responseData['start_time']) && !empty($responseData['end_time'])) {
+                    try {
+                        $startTime = Carbon::parse($responseData['start_time']);
+                        $endTime = Carbon::parse($responseData['end_time']);
+                        $timeSpent = $endTime->diffInSeconds($startTime);
 
-                    
-                    if (!empty($responseData['start_time']) && !empty($responseData['end_time'])) {
-                        try {
-                            $startTime = \Carbon\Carbon::parse($responseData['start_time']);
-                            $endTime = \Carbon\Carbon::parse($responseData['end_time']);
-                            $timeSpent = $endTime->getTimestamp() - $startTime->getTimestamp();
-
-                            AssessmentTime::create([
-                                'assessment_response_id' => $assessmentResponse->id,
-                                'start_time' => $startTime,
-                                'end_time' => $endTime,
-                                'time_spent' => $timeSpent,
-                            ]);
-                        } catch (\Throwable $e) {
-                            Log::warning('Failed to store assessment timing', ['error' => $e->getMessage()]);
-                        }
+                        AssessmentTime::create([
+                            'assessment_response_id' => $assessmentResponse->id,
+                            'start_time' => $startTime,
+                            'end_time' => $endTime,
+                            'time_spent' => $timeSpent,
+                        ]);
+                    } catch (\Throwable $e) {
+                        Log::warning('Failed to store assessment timing', ['error' => $e->getMessage()]);
                     }
                 }
-            });
-
-            
-            try {
-                $calculationService = new AssessmentCalculationService();
-                Log::info('Auto-calculating assessment result for attempt', [
-                    'user_id' => $userId,
-                    'attempt_id' => $attemptId,
-                ]);
-
-                $results = $calculationService->ensureDualResults($userId, $attemptId);
-
-                foreach ($results as $res) {
-                    Log::info('Assessment result calculated successfully', [
-                        'result_id' => $res->id,
-                        'user_id' => $userId,
-                        'attempt_id' => $attemptId,
-                        'type' => $res->type
-                    ]);
-                }
-            } catch (\Exception $e) {
-                
-                Log::error('Failed to auto-calculate assessment results', [
-                    'user_id' => $userId,
-                    'attempt_id' => $attemptId,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
             }
+        });
 
-            return response()->json([
-                'message' => 'Assessment responses saved successfully',
-                'attempt_id' => $attemptId
-            ], 201);
-        } catch (\Exception $e) {
-            Log::error('Failed to store assessment responses.', [
-                'user_id' => Auth::id(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+        // Auto-calculate results for this attempt (best-effort)
+        try {
+            Log::info('Auto-calculating assessment result for attempt', [
+                'user_id' => $userId,
+                'attempt_id' => $attemptId,
             ]);
 
-            return response()->json(['error' => 'An error occurred while saving responses.'], 500);
+            $results = $calculationService->ensureDualResults($userId, $attemptId);
+            foreach ($results as $res) {
+                Log::info('Assessment result calculated successfully', [
+                    'result_id' => $res->id,
+                    'user_id' => $userId,
+                    'attempt_id' => $attemptId,
+                    'type' => $res->type
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to auto-calculate assessment results', [
+                'user_id' => $userId,
+                'attempt_id' => $attemptId,
+                'error' => $e->getMessage(),
+            ]);
         }
+
+        return response()->json([
+            'message' => 'Assessment responses saved successfully',
+            'attempt_id' => $attemptId,
+        ], 201);
     }
 
     

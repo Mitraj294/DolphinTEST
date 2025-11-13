@@ -2,15 +2,23 @@ digraph AssessmentDeps {
 rankdir=LR;
 node [shape=box, style=rounded];
 
-"routes/api.php" -> "AssessmentResultController\n(app/Http/Controllers/AssessmentResultController.php)";
-"routes/api.php" -> "AssessmentResponseController\n(app/Http/Controllers/AssessmentResponseController.php)";
+// Current dependency graph (auto-generated from code scan)
 
-"AssessmentResultController\n(app/Http/Controllers/AssessmentResultController.php)" -> "AssessmentCalculationService\n(app/Services/AssessmentCalculationService.php)";
-"AssessmentResultController\n(app/Http/Controllers/AssessmentResultController.php)" -> "AssessmentResult\n(app/Models/AssessmentResult.php)";
+"routes/api.php" -> "AssessmentController\n(app/Http/Controllers/AssessmentController.php)";
+"routes/api.php" -> "AssessmentResponseController\n(app/Http/Controllers/AssessmentResponseController.php)";
+"routes/api.php" -> "AssessmentResultController\n(app/Http/Controllers/AssessmentResultController.php)";
+"routes/api.php" -> "AssessmentScheduleController\n(app/Http/Controllers/AssessmentScheduleController.php)";
+"routes/api.php" -> "SendAssessmentController\n(app/Http/Controllers/SendAssessmentController.php)";
+"routes/api.php" -> "SubscriptionController\n(app/Http/Controllers/SubscriptionController.php)";
+"routes/api.php" -> "Billing\\BillingController\n(app/Http/Controllers/Billing/BillingController.php)";
 
 "AssessmentResponseController\n(app/Http/Controllers/AssessmentResponseController.php)" -> "AssessmentResponse\n(app/Models/AssessmentResponse.php)";
 "AssessmentResponseController\n(app/Http/Controllers/AssessmentResponseController.php)" -> "AssessmentTime\n(app/Models/AssessmentTime.php)";
+"AssessmentResponseController\n(app/Http/Controllers/AssessmentResponseController.php)" -> "Assessment\n(app/Models/Assessment.php)";
 "AssessmentResponseController\n(app/Http/Controllers/AssessmentResponseController.php)" -> "AssessmentCalculationService\n(app/Services/AssessmentCalculationService.php)";
+
+"AssessmentResultController\n(app/Http/Controllers/AssessmentResultController.php)" -> "AssessmentCalculationService\n(app/Services/AssessmentCalculationService.php)";
+"AssessmentResultController\n(app/Http/Controllers/AssessmentResultController.php)" -> "AssessmentResult\n(app/Models/AssessmentResult.php)";
 
 "AssessmentCalculationService\n(app/Services/AssessmentCalculationService.php)" -> "AssessmentResponse\n(app/Models/AssessmentResponse.php)";
 "AssessmentCalculationService\n(app/Services/AssessmentCalculationService.php)" -> "AssessmentResult\n(app/Models/AssessmentResult.php)";
@@ -20,9 +28,12 @@ node [shape=box, style=rounded];
 "ScoreCalculator\n(app/Services/AssessmentEngine/ScoreCalculator.php)" -> "WeightRepository\n(app/Services/AssessmentEngine/WeightRepository.php)";
 "ScoreCalculator\n(app/Services/AssessmentEngine/ScoreCalculator.php)" -> "WordNormalizer\n(app/Services/AssessmentEngine/WordNormalizer.php)";
 
-"WeightRepository\n(app/Services/AssessmentEngine/WeightRepository.php)" -> "resources/assessment_weights/self_weight.txt";
-"WeightRepository\n(app/Services/AssessmentEngine/WeightRepository.php)" -> "resources/assessment_weights/concept_weight.txt";
-"WeightRepository\n(app/Services/AssessmentEngine/WeightRepository.php)" -> "resources/assessment_weights/adjusted_weight.txt";
+// Resource file nodes removed: this deployment does not use resource files.
+
+// DB algorithm row (preferred source)
+"WeightRepository\n(app/Services/AssessmentEngine/WeightRepository.php)" -> "algorithms (DB table)";
+
+"algorithms (DB table)" [shape=component, style=filled, fillcolor=lightgrey];
 
 "RecomputeAssessmentResults\n(app/Console/Commands/RecomputeAssessmentResults.php)" -> "AssessmentCalculationService\n(app/Services/AssessmentCalculationService.php)";
 "RecomputeAssessmentResults\n(app/Console/Commands/RecomputeAssessmentResults.php)" -> "AssessmentResponse\n(app/Models/AssessmentResponse.php)";
@@ -33,9 +44,8 @@ node [shape=box, style=rounded];
 "Kernel\n(app/Http/Kernel.php)" -> "CheckSubscriptionStatus\n(app/Http/Middleware/CheckSubscriptionStatus.php)";
 
 "Dolphin_Frontend/src/services/results.js" -> "/api/assessment-results/user";
-"/api/assessment-results/user" -> "AssessmentResultController\n(app/Http/Controllers/AssessmentResultController.php)";
 "Dolphin_Frontend/src/components/Common/Leads_Assessment/UserAssessment.vue" -> "/api/assessment-responses";
-"/api/assessment-responses" -> "AssessmentResponseController\n(app/Http/Controllers/AssessmentResponseController.php)";
+"Dolphin_Frontend/src/components/Common/Dashboard/UserGraphs.vue" -> "/api/assessment-results/user";
 
 // stylistic
 "AssessmentCalculationService\n(app/Services/AssessmentCalculationService.php)" [shape=note];
@@ -43,4 +53,6 @@ node [shape=box, style=rounded];
 "ScoreCalculator\n(app/Services/AssessmentEngine/ScoreCalculator.php)" [shape=component];
 "AssessmentResult\n(app/Models/AssessmentResult.php)" [shape=oval];
 "AssessmentResponse\n(app/Models/AssessmentResponse.php)" [shape=oval];
+
 }
+

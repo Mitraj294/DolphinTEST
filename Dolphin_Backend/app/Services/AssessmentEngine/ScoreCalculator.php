@@ -11,9 +11,9 @@ namespace App\Services\AssessmentEngine;
  */
 class ScoreCalculator
 {
-    public function __construct(
-        protected WeightRepository $weights
-    ) {}
+    public function __construct(protected WeightRepository $weights)
+    {
+    }
 
     /**
      * Compute category ratios for a set of selected words under a given dictionary key:
@@ -28,25 +28,26 @@ class ScoreCalculator
     {
         $dicts = $this->weights->all();
         $dict = $dicts[$dictKey] ?? [];
-        $capacities = $this->weights->capacities($dicts)[$dictKey] ?? ['A'=>1,'B'=>1,'C'=>1,'D'=>1];
+        $capacitiesPerDict = $this->weights->capacities($dicts);
+        $capacities = $capacitiesPerDict[$dictKey] ?? ['A' => 1, 'B' => 1, 'C' => 1, 'D' => 1];
 
         $sum = ['A' => 0, 'B' => 0, 'C' => 0, 'D' => 0];
         foreach ($selectedWords as $w) {
             $k = WordNormalizer::normalize((string) $w);
             if (isset($dict[$k])) {
                 $entry = $dict[$k];
-                $sum[$entry['cat']] += $entry['w'];
+                $cat = $entry['cat'];
+                $sum[$cat] += $entry['w'];
             }
         }
-        // Normalize against category capacity to produce independent ratios 0..1
-        $ratio = [
-            'A' => $capacities['A'] ? $sum['A'] / $capacities['A'] : 0.0,
-            'B' => $capacities['B'] ? $sum['B'] / $capacities['B'] : 0.0,
-            'C' => $capacities['C'] ? $sum['C'] / $capacities['C'] : 0.0,
-            'D' => $capacities['D'] ? $sum['D'] / $capacities['D'] : 0.0,
-        ];
-        $avg = ($ratio['A'] + $ratio['B'] + $ratio['C'] + $ratio['D']) / 4.0;
-        $ratio['avg'] = $avg;
+
+        $ratio = [];
+        foreach (['A', 'B', 'C', 'D'] as $cat) {
+            $capacity = $capacities[$cat] ?? 0;
+            $ratio[$cat] = $capacity > 0 ? (float) $sum[$cat] / $capacity : 0.0;
+        }
+
+        $ratio['avg'] = ($ratio['A'] + $ratio['B'] + $ratio['C'] + $ratio['D']) / 4.0;
         return $ratio;
     }
 
@@ -60,7 +61,7 @@ class ScoreCalculator
     {
         $mean = ($selfAvg + $concAvg) / 2.0;
         $dispersion = abs($selfAvg - $concAvg);
-        // Weighted combination
-        return max(0.0, min(1.0, $mean * 0.8 + $dispersion * 0.2));
+        $value = $mean * 0.8 + $dispersion * 0.2;
+        return (float) max(0.0, min(1.0, $value));
     }
 }
