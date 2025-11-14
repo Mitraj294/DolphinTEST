@@ -143,6 +143,7 @@ export default {
   data() {
     return {
       assessmentId: null,
+      organizationAssessmentId: null,
       rows: [],
       summary: { total_sent: 0, submitted: 0, pending: 0 },
       tableColumns: [
@@ -172,13 +173,14 @@ export default {
       if (!this.assessmentId) return;
       try {
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
-        const res = await axios.get(`${API_BASE_URL}/api/assessments/${this.assessmentId}/summary`);
+        const params = {};
+        if (this.organizationAssessmentId) params.organization_assessment_id = this.organizationAssessmentId;
+        const res = await axios.get(`${API_BASE_URL}/api/assessments/${this.assessmentId}/summary`, { params });
         const data = res.data;
 
-        // Set navbar title from the fetched data
-        if (data.assessment && data.assessment.name) {
-          const assessmentName = data.assessment.name;
-          // Use the event bus to update the navbar title
+        // Set navbar title from the fetched data; prefer organization assignment name when present
+        const assessmentName = (data.assessment && (data.assessment.organization_assessment_name || data.assessment.name)) || null;
+        if (assessmentName) {
           if (this.$root && this.$root.$emit) {
             this.$root.$emit('page-title-override', `Assessment ${assessmentName} Summary`);
           }
@@ -229,6 +231,7 @@ export default {
   },
   created() {
     this.assessmentId = this.$route.params.assessmentId;
+    this.organizationAssessmentId = this.$route.params.organizationAssessmentId || null;
     this.fetchSummary();
   },
   beforeDestroy() {

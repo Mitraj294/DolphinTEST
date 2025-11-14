@@ -65,16 +65,11 @@ export async function createCheckoutSession(priceId, opts = {}) {
 }
 
 export async function fetchSubscriptionStatus(orgId = null) {
-  try {
-    const role = (storage.get('role') || '').toString().toLowerCase();
-    if (role !== 'organizationadmin') return { status: 'none' };
-  } catch (e) {
-    console.debug(
-      'fetchSubscriptionStatus: could not read role from storage, attempting API call',
-      e
-    );
-  }
-
+  // Always attempt to call the backend status endpoint. Previously we
+  // short-circuited for non-organization-admin roles (returning 'none') to
+  // avoid 403 responses, but that made it hard for callers to decide on UX.
+  // Let the backend return 403/unathorized and translate that into a clear
+  // `status: 'none'` payload with an explanatory `message` where appropriate.
   try {
     const headers = authHeaders();
     const url = orgId
@@ -97,14 +92,26 @@ export async function fetchSubscriptionStatus(orgId = null) {
       latest_amount_paid: data.latest_amount_paid || null,
       currency: data.currency || null,
       payment_method: data.payment_method || null,
+      message: data.message || null,
+      unauthorized: false,
     };
   } catch (err) {
-    console.debug &&
-      console.debug(
-        'fetchSubscriptionStatus: failed to get subscription status',
-        err?.message || err
-      );
-    return { status: 'none' };
+    // If unauthorized (403), return a consistent payload indicating the
+    // user cannot view/manage subscription for this org. Callers can use
+    // `unauthorized` to surface alternate UX (CTA or info) instead of hiding
+    // subscription state completely.
+    const statusCode = err?.response?.status;
+    if (statusCode === 403) {
+      const body = err.response?.data || {};
+      return {
+        status: body.status || 'none',
+        message: body.message || 'Unauthorized to view subscription status',
+        unauthorized: true,
+      };
+    }
+
+    console.debug && console.debug('fetchSubscriptionStatus: failed to get subscription status', err?.message || err);
+    return { status: 'none', message: 'Unable to fetch subscription status', unauthorized: false };
   }
 }
 

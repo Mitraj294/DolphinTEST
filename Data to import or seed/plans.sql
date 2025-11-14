@@ -1,0 +1,3 @@
+INSERT INTO `plans` (`id`, `name`, `slug`, `stripe_price_id`, `interval`, `amount`, `currency`, `description`, `status`, `created_at`, `updated_at`) VALUES
+(1, 'Basic', 'basic', 'price_1SERsJPnfSZSgS1XktSvPTQr', 'monthly', 250, 'USD', 'Monthly subscription plan for small teams.', 'active', '2025-06-27 04:13:31', '2025-06-27 04:13:31'),
+(2, 'Standard', 'standard', 'price_1SERriPnfSZSgS1XYnWP4uM2', 'yearly', 2500, 'USD', 'Annual subscription plan with 2 months free.', 'active', '2025-06-27 04:13:31', '2025-06-27 04:13:31');

@@ -52,9 +52,11 @@
                 <div class="plan-meta-row small">
                   (Next bill on
                   {{
-                    subscription.current_period_end
-                      ? formatDate(subscription.current_period_end)
-                      : 'N/A'
+                    subscription.end
+                        ? formatDate(subscription.end)
+                        : subscription.ends_at
+                          ? formatDate(subscription.ends_at)
+                          : 'N/A'
                   }})
                 </div>
               </div>
@@ -95,12 +97,9 @@
                       }}{{ invoice.amount ?? invoice.amount_paid ?? invoice.amount_due ?? '' }}
                     </td>
                     <td data-label="Receipt">
-                      <a v-if="invoice.pdfUrl" :href="invoice.pdfUrl" target="_blank" rel="noopener"
-                        >View Receipt</a
-                      >
                       <a
-                        v-else-if="invoice.hosted_invoice_url"
-                        :href="invoice.hosted_invoice_url"
+                        v-if="invoice.pdfUrl"
+                        :href="invoice.pdfUrl"
                         target="_blank"
                         rel="noopener"
                         >View Receipt</a
@@ -178,8 +177,28 @@ export default {
           this.invoices = [];
         }
 
+        // Normalize invoice objects so the template can rely on `pdfUrl`.
+        const latestInvoiceFromSub = this.subscription?.latest_invoice || null;
+        this.invoices = this.invoices.map((inv) => {
+          inv.pdfUrl =
+            inv.pdfUrl ||
+            inv.invoice_pdf ||
+            inv.invoice_url ||
+            inv.hosted_invoice_url ||
+            (latestInvoiceFromSub && (latestInvoiceFromSub.invoice_pdf || latestInvoiceFromSub.invoice_url)) ||
+            null;
+          return inv;
+        });
+
         if ((!this.invoices || this.invoices.length === 0) && this.subscription) {
-          this.invoices = [this.synthesizeSubscriptionSummary(this.subscription)];
+          const synth = this.synthesizeSubscriptionSummary(this.subscription);
+          // ensure pdfUrl is set from subscription.latest_invoice when available
+          synth.pdfUrl =
+            this.subscription?.latest_invoice?.invoice_pdf ||
+            this.subscription?.latest_invoice?.invoice_url ||
+            this.subscription?.latest_invoice?.hosted_invoice_url ||
+            null;
+          this.invoices = [synth];
         }
       } catch (e) {
         console.debug && console.debug('Failed to load billing details:', e);

@@ -52,6 +52,65 @@ class AssessmentResponseController extends Controller
         }
         $userId = $user->id;
 
+        // Prevent multiple submissions for the same assessment by the same user.
+        // Use the model helper to centralize the logic. If any assessment in the
+        // payload has already been submitted by this user, refuse the entire
+        // request with HTTP 409 and list the IDs.
+        try {
+            // Determine duplicate submissions with awareness of organization_assessment_id.
+            // If an incoming response includes an organization_assessment_id (or a
+            // top-level one was provided), only consider it a duplicate when the
+            // user has already submitted for the same assessment AND the same
+            // organization_assessment_id. If no org id is provided for the
+            // incoming response, preserve the previous behavior (any prior
+            // submission for that assessment blocks the request).
+            $topOrgAssessmentId = $request->input('organization_assessment_id');
+
+            $already = [];
+            foreach ($responses as $r) {
+                $aid = isset($r['assessment_id']) ? (int)$r['assessment_id'] : null;
+                if (is_null($aid)) {
+                    continue;
+                }
+
+                $orgId = null;
+                if (isset($r['organization_assessment_id']) && $r['organization_assessment_id'] !== null) {
+                    $orgId = (string)$r['organization_assessment_id'];
+                } elseif (!empty($topOrgAssessmentId)) {
+                    $orgId = (string)$topOrgAssessmentId;
+                }
+
+                if ($orgId !== null) {
+                    // Only treat as duplicate if a prior response exists for the
+                    // same user, assessment and organization_assessment_id.
+                    $exists = AssessmentResponse::where('user_id', $userId)
+                        ->where('assessment_id', $aid)
+                        ->where('organization_assessment_id', $orgId)
+                        ->exists();
+                    if ($exists) {
+                        $already[] = $aid;
+                    }
+                } else {
+                    // No org-assessment context provided — use previous global
+                    // behavior: any prior submission for this assessment blocks.
+                    if (AssessmentResponse::hasUserSubmitted($userId, $aid)) {
+                        $already[] = $aid;
+                    }
+                }
+            }
+
+            if (!empty($already)) {
+                return response()->json([
+                    'message' => 'You have already submitted response(s) for one or more assessments.',
+                    'already_submitted' => array_values(array_unique($already)),
+                ], 409);
+            }
+        } catch (\Throwable $e) {
+            // If anything goes wrong checking duplicates, log and continue
+            // gracefully — we don't want to block submissions on a non-critical
+            // read error.
+            Log::warning('Failed to verify prior submissions before storing.', ['error' => $e->getMessage()]);
+        }
         if (empty($attemptId)) {
             $maxAttempt = DB::table('assessment_responses')
                 ->where('user_id', $userId)
@@ -59,12 +118,15 @@ class AssessmentResponseController extends Controller
             $attemptId = ((int) $maxAttempt) + 1;
         }
 
-        DB::transaction(function () use ($responses, $userId, $attemptId) {
+        DB::transaction(function () use ($responses, $userId, $attemptId, $request) {
+            $topOrgAssessmentId = $request->input('organization_assessment_id');
             foreach ($responses as $responseData) {
+                $orgAssessmentId = $responseData['organization_assessment_id'] ?? $topOrgAssessmentId ?? null;
                 $assessmentResponse = AssessmentResponse::create([
                     'user_id' => $userId,
                     'attempt_id' => $attemptId,
                     'assessment_id' => $responseData['assessment_id'],
+                    'organization_assessment_id' => $orgAssessmentId,
                     'selected_options' => json_encode($responseData['selected_options']),
                 ]);
 
@@ -154,6 +216,41 @@ class AssessmentResponseController extends Controller
                 'error' => $e->getMessage()
             ]);
             return response()->json(['error' => 'Could not retrieve responses.'], 500);
+        }
+    }
+
+
+    /**
+     * Return a compact list of assessment_ids the authenticated user has submitted
+     * along with a submitted_at timestamp for each. Used by frontend to detect
+     * already-submitted assignments and show the thank-you page.
+     */
+    public function getSubmissionStatus(Request $request): JsonResponse
+    {
+        try {
+            $userId = Auth::id();
+            if (empty($userId)) {
+                return response()->json(['error' => 'Unauthenticated.'], 401);
+            }
+
+            // Return submission rows grouped by assessment and organization_assessment
+            // so frontend can determine which organization assignment was submitted.
+            $rows = AssessmentResponse::where('user_id', $userId)
+                ->select('assessment_id', 'organization_assessment_id', DB::raw('MIN(created_at) as submitted_at'))
+                ->groupBy('assessment_id', 'organization_assessment_id')
+                ->get()
+                ->map(function ($r) {
+                    return [
+                        'assessment_id' => (int)$r->assessment_id,
+                        'organization_assessment_id' => $r->organization_assessment_id !== null ? (int)$r->organization_assessment_id : null,
+                        'submitted_at' => $r->submitted_at,
+                    ];
+                });
+
+            return response()->json($rows);
+        } catch (\Exception $e) {
+            Log::error('Failed to retrieve submission status.', ['user_id' => Auth::id(), 'error' => $e->getMessage()]);
+            return response()->json(['error' => 'Could not retrieve submission status.'], 500);
         }
     }
 

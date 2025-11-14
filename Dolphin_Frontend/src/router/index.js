@@ -386,21 +386,32 @@ const handleAuthenticatedRoutes = async (to, role, next) => {
   }
   try {
     const subscriptionStatus = await fetchSubscriptionStatus();
-    storage.set('subscription_status', subscriptionStatus.status);
+    // If backend returned an explicit unauthorized marker, normalize to 'none'
+    // but keep the unauthorized flag for callers to surface messaging.
+    const status = subscriptionStatus.unauthorized ? 'none' : subscriptionStatus.status;
+    storage.set('subscription_status', status);
 
     if (subscriptionStatus.status === 'expired') {
       handleExpiredSubscription(to, next);
       return;
     }
-    if (subscriptionStatus.status === 'none' && role === ROLES.ORGANIZATIONADMIN) {
+
+    // If the caller is an org admin and there's no active subscription info
+    // (or the call was unauthorized), treat this as expired/none and redirect
+    // them to the manage subscription flow so they can resolve it.
+    if ((status === 'none' || subscriptionStatus.unauthorized) && role === ROLES.ORGANIZATIONADMIN) {
       handleExpiredSubscription(to, next);
       return;
     }
+
     checkPermissionsAndNavigate(to, role, next);
   } catch (error) {
     console.debug?.('Error fetching subscription status:', error);
-    storage.clear();
-    next('/');
+    // On error, avoid clearing all storage (it may log the user out unexpectedly).
+    // Instead, redirect to login if unauthenticated, otherwise block navigation.
+    const authToken = storage.get('authToken');
+    if (!authToken) return next('/');
+    return next('/dashboard');
   }
 };
 

@@ -204,6 +204,58 @@ class AssessmentController extends Controller
     }
 
 
+    /**
+     * Return a small payload indicating how many organization-assessments
+     * the authenticated user is a member of. Frontend uses this to decide
+     * whether an organization-admin should be shown assignment pages.
+     */
+    public function assignedCount(): JsonResponse
+    {
+        try {
+            $user = request()->user();
+            if (!$user) {
+                return response()->json(['count' => 0]);
+            }
+
+            $count = \Illuminate\Support\Facades\DB::table('organization_assessment_member')
+                ->where('user_id', $user->id)
+                ->count();
+
+            return response()->json(['count' => (int)$count]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('[AssessmentController@assignedCount] failed', ['error' => $e->getMessage()]);
+            return response()->json(['count' => 0], 500);
+        }
+    }
+
+
+    /**
+     * Return the list of organization assessments the authenticated user
+     * is a member of. This returns id, name and assigned_at for each.
+     */
+    public function assignedList(): JsonResponse
+    {
+        try {
+            $user = request()->user();
+            if (!$user) {
+                return response()->json(['assigned' => []]);
+            }
+
+            $rows = \Illuminate\Support\Facades\DB::table('organization_assessment_member as oam')
+                ->join('organization_assessments as oa', 'oa.id', '=', 'oam.organization_assessment_id')
+                ->where('oam.user_id', $user->id)
+                ->select('oa.id', 'oa.name', 'oam.created_at as assigned_at')
+                ->orderBy('oam.created_at', 'desc')
+                ->get();
+
+            return response()->json(['assigned' => $rows]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('[AssessmentController@assignedList] failed', ['error' => $e->getMessage()]);
+            return response()->json(['assigned' => []], 500);
+        }
+    }
+
+
 
 
 

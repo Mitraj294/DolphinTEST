@@ -49,19 +49,36 @@
                   </template>
                   <template v-else> Choose from our plans and start using Dolphin today. </template>
                 </p>
+                <div v-if="unauthorized" class="manage-subtitle red" style="margin-top:8px;">
+                  {{ unauthorizedMessage || 'You are not authorized to view subscription details for this organization.' }}
+                </div>
               </div>
 
               <div class="manage-actions">
-                <button class="btn btn-primary" @click="navigateToPlans" :disabled="loading">
+                <button
+                  class="btn btn-primary"
+                  @click="onPrimaryButtonClick"
+                  :disabled="loading"
+                >
                   <template v-if="loading">Checking...</template>
                   <template v-else>
                     <span v-if="isSubscribed">Manage Subscription</span>
+                    <span v-else-if="unauthorized">Explore Subscriptions</span>
                     <span v-else>Explore Subscriptions</span>
                   </template>
                 </button>
 
                 <button
-                  v-if="hasBillingHistory"
+                  v-if="unauthorized"
+                  class="btn btn-outline"
+                  @click="contactOrgAdmin"
+                  :disabled="loading"
+                >
+                  Contact Org Admin
+                </button>
+
+                <button
+                  v-else-if="hasBillingHistory"
                   class="btn btn-outline"
                   @click="goToBillingDetails"
                   :disabled="loading"
@@ -94,12 +111,16 @@ export default {
       loading: true,
       isSubscribed: false,
       hasBillingHistory: false,
+      unauthorized: false,
+      unauthorizedMessage: null,
     };
   },
   async mounted() {
     try {
       const res = await fetchSubscriptionStatus();
-      this.status = res.status || 'none';
+      this.unauthorized = !!res.unauthorized;
+      this.unauthorizedMessage = res.message || null;
+      this.status = (res.status || 'none');
       this.plan_name = res.plan_name || null;
       this.subscriptionEnd = res.subscription_end;
       this.isSubscribed = this.status === 'active';
@@ -162,40 +183,10 @@ export default {
           });
       }
     },
-    async handleButton() {
-      if (this.isSubscribed) {
-        // Open Stripe customer portal
-        try {
-          this.loading = true;
-          const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || '';
-          const axios = require('axios');
-          const storage = require('@/services/storage').default;
-          const token = storage.get('authToken');
-          const headers = token ? { Authorization: `Bearer ${token}` } : {};
-          const resp = await axios.post(
-            `${API_BASE_URL}/api/stripe/customer-portal`,
-            {},
-            { headers }
-          );
-          const url = resp?.data?.url;
-          if (url) {
-            if (typeof globalThis !== 'undefined' && globalThis.location) {
-              globalThis.location.href = url;
-            } else {
-              console.debug &&
-                console.debug('Unable to redirect to Stripe portal without window.location', {
-                  url,
-                });
-            }
-          }
-        } catch (e) {
-          console.debug && console.debug('Failed to open customer portal:', e);
-        } finally {
-          this.loading = false;
-        }
-      } else {
-        this.$router.push({ name: 'SubscriptionPlans' });
-      }
+    handleButton() {
+      // Redirect to the public plans page instead of attempting
+      // to open the (missing) customer portal endpoint.
+      return this.navigateToPlans();
     },
     goToBillingDetails() {
       const orgId = this.$route.query.orgId || null;

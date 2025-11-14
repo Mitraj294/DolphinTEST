@@ -450,10 +450,14 @@ export default {
       }
     },
     goToSummary(item) {
-      this.$router.push({
-        name: 'AssessmentSummary',
-        params: { assessmentId: item.id },
-      });
+      const orgAssessmentId =
+        item.organization_assessment_id || (item.organization_assessment && item.organization_assessment.id) ||
+        (item.schedule && item.schedule.organization_assessment_id) || null;
+
+      const params = { assessmentId: item.id };
+      if (orgAssessmentId) params.organizationAssessmentId = orgAssessmentId;
+
+      this.$router.push({ name: 'AssessmentSummary', params });
     },
 
     // --- Pagination ---

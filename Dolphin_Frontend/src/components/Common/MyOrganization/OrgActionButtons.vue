@@ -196,6 +196,32 @@ export default {
 
         // Use only the fetched users (API now returns only users with role 'user')
         this.availableUsersForMember = fetched;
+
+        // ALSO fetch current organization members so we can pre-select them
+        // in the multi-select dropdown (so already-added users appear selected).
+        try {
+          const membersRes = await axios.get(`${API_BASE_URL}/api/organization/members`, {
+            headers: { Authorization: `Bearer ${authToken}` },
+          });
+
+          const membersData = Array.isArray(membersRes.data?.data)
+            ? membersRes.data.data
+            : Array.isArray(membersRes.data)
+            ? membersRes.data
+            : [];
+
+          // Build a set of member ids for quick lookup
+          const memberIds = new Set(membersData.map((m) => m.id));
+
+          // Pre-select any fetched users who are already members
+          this.newMember.selectedUsers = this.availableUsersForMember.filter((u) =>
+            memberIds.has(u.id)
+          );
+        } catch (err2) {
+          // If the members endpoint fails, just leave selectedUsers empty
+          console.debug && console.debug('Failed to fetch current org members:', err2);
+          this.newMember.selectedUsers = [];
+        }
       } catch (e) {
         console.debug && console.debug('Failed to fetch available users:', e);
         this.availableUsersForMember = [];

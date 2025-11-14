@@ -176,9 +176,12 @@ class StripeWebhookController extends Controller
 
         $endsAt = $currentPeriodEnd;
         if (! $endsAt && $plan) {
-            if ($plan->type === 'monthly') {
+            // Plans table uses `interval` (monthly/yearly). Use that field
+            // as a fallback when Stripe does not provide current_period_end.
+            $interval = $plan->interval ?? null;
+            if ($interval === 'monthly') {
                 $endsAt = $startedAt ? $startedAt->copy()->addMonth() : null;
-            } elseif ($plan->type === 'yearly') {
+            } elseif ($interval === 'yearly') {
                 $endsAt = $startedAt ? $startedAt->copy()->addYear() : null;
             }
         }
@@ -203,6 +206,31 @@ class StripeWebhookController extends Controller
                 'payment_method_label' => $this->formatPaymentMethodLabel($paymentMethod),
             ]
         );
+
+        // If the Checkout Session included an invoice id (common when payment
+        // is collected immediately), retrieve that invoice and ensure we
+        // create the corresponding `SubscriptionInvoice` row so billing
+        // history shows up even if Stripe delivered invoice webhooks in a
+        // different order than checkout.session.completed.
+        try {
+            $sessionInvoiceId = $session->invoice ?? null;
+            if (! empty($sessionInvoiceId)) {
+                try {
+                    $invoiceObj = \Stripe\Invoice::retrieve($sessionInvoiceId);
+                    if ($invoiceObj) {
+                        // Reuse existing logic to create SubscriptionInvoice
+                        $this->handleInvoicePaid($invoiceObj);
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to retrieve invoice from Stripe after checkout session', [
+                        'invoice_id' => $sessionInvoiceId,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Error while attempting to persist invoice after checkout session', ['error' => $e->getMessage()]);
+        }
 
 
         try {

@@ -129,6 +129,9 @@ Route::middleware('auth:api')->group(function () {
 
     // Make assessments list available to all authenticated users (no subscription required)
     Route::get('/assessments-list', [AssessmentResponseController::class, 'getAssessments']);
+    // Small helper: how many organization-assessments is the authenticated user a member of
+    Route::get('/organization-assessments/assigned-count', [AssessmentController::class, 'assignedCount']);
+    Route::get('/organization-assessments/assigned-list', [AssessmentController::class, 'assignedList']);
 
     Route::prefix('profile')->group(function () {
         Route::get('/', [AuthController::class, 'profile']);
@@ -186,6 +189,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/assessments-list', [AssessmentResponseController::class, 'getAssessments']);
         Route::post('/assessment-responses', [AssessmentResponseController::class, 'store']);
         Route::get('/assessment-responses', [AssessmentResponseController::class, 'getUserResponses']);
+        Route::get('/assessment-submissions', [AssessmentResponseController::class, 'getSubmissionStatus']);
         Route::get('/assessment-attempts', [AssessmentResponseController::class, 'getUserAttempts']);
         Route::get('/assessment-timing', [AssessmentResponseController::class, 'getAssessmentTiming']);
 

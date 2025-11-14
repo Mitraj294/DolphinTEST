@@ -248,6 +248,7 @@ class AuthController extends Controller
         try {
             $token = $request->user()->token();
         } catch (\Exception $e) {
+            Log::warning('Failed to fetch token status', ['error' => $e->getMessage()]);
 
         }
 

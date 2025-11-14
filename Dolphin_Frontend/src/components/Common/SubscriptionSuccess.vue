@@ -166,10 +166,45 @@ const shouldShowPlanSummary = computed(
 );
 
 const formattedAmount = computed(() => {
-  const amount = subscription.value?.plan_amount || planAmount.value;
-  if (!amount) return '';
-  const n = Number.parseFloat(String(amount).replaceAll(',', ''));
-  if (!Number.isFinite(n)) return amount;
+  // Try several common places where the backend or Stripe session may store
+  // the plan amount. Accept values in dollars (e.g. 250) or cents
+  // (e.g. 25000) and normalize to a human-friendly string like "250" or
+  // "250.00" when needed.
+  const candidates = [
+    subscription.value?.plan_amount,
+    planAmount.value,
+    subscription.value?.amount,
+    subscription.value?.plan?.amount,
+    subscription.value?.plan?.price,
+    subscription.value?.plan_amount_cents,
+    subscription.value?.amount_total,
+    subscription.value?.plan?.amount_cents,
+  ];
+
+  let raw = null;
+  for (const c of candidates) {
+    if (c !== null && c !== undefined && c !== '') {
+      raw = c;
+      break;
+    }
+  }
+
+  if (raw === null || raw === undefined || raw === '') return '—';
+
+  // Normalize strings and numbers
+  let n = Number.parseFloat(String(raw).replaceAll(',', '').trim());
+  if (!Number.isFinite(n)) {
+    // If it's not a number, return as-is
+    return String(raw);
+  }
+
+  // Heuristic: if value looks like cents (>=1000 and no decimal), divide by 100
+  if (Number.isInteger(n) && n >= 1000) {
+    // If the value seems very large it's likely stored in cents
+    // (e.g. 25000 -> 250.00)
+    n = n / 100;
+  }
+
   const amountStr = n % 1 === 0 ? n.toFixed(0) : n.toFixed(2);
   return `${amountStr}`;
 });

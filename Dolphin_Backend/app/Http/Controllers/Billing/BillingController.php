@@ -64,6 +64,7 @@ class BillingController extends Controller
                     'status' => $latestInvoice->status ?? null,
                     'paid_at' => $latestInvoice->paid_at ?? null,
                     'invoice_url' => $latestInvoice->hosted_invoice_url ?? null,
+                    'invoice_pdf' => $latestInvoice->invoice_pdf ?? null,
                 ] : null,
                 'payment_method' => [
                     'id' => $subscription->default_payment_method_id,
@@ -305,7 +306,9 @@ class BillingController extends Controller
             'payment_method' => $subscription->payment_method_label,
             'amount' => $invoice->amount_paid,
             'currency' => $invoice->currency,
-            'pdfUrl' => $invoice->hosted_invoice_url,
+            // Prefer the direct invoice PDF when available, otherwise fall back
+            // to the hosted invoice URL.
+            'pdfUrl' => $invoice->invoice_pdf ?? $invoice->hosted_invoice_url,
             'description' => $plan ? ($plan->name . ' subscription (' . $symbol . ($invoice->amount_paid ?? $plan->amount) . '/' . ($plan->interval ?? '') . ')') : 'Subscription payment',
             'invoice_id' => $invoice->id,
             'stripe_invoice_id' => $invoice->stripe_invoice_id,

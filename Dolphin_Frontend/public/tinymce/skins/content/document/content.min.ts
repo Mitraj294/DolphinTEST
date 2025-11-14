@@ -1,3 +1,3 @@
 export interface Classes {
-  'mce-content-body': string;
-}
+  "mce-content-body": string;
+};

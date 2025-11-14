@@ -19,6 +19,7 @@ class AssessmentResponse extends Model
         'attempt_id',
         'assessment_id',
         'selected_options',
+        'organization_assessment_id',
     ];
 
     public function user(): BelongsTo
@@ -32,6 +33,12 @@ class AssessmentResponse extends Model
         return $this->belongsTo(Assessment::class);
     }
 
+    /** Link back to the organization assessment assignment when available */
+    public function organizationAssessment(): BelongsTo
+    {
+        return $this->belongsTo(OrganizationAssessment::class, 'organization_assessment_id');
+    }
+
     /** Timing aggregate (if stored) for an attempt id */
     public function attemptTime(): BelongsTo
     {
@@ -42,5 +49,17 @@ class AssessmentResponse extends Model
     public function time(): HasOne
     {
         return $this->hasOne(AssessmentTime::class);
+    }
+
+    /**
+     * Check whether a given user has previously submitted responses for an assessment.
+     *
+     * @param int|string $userId
+     * @param int|string $assessmentId
+     * @return bool
+     */
+    public static function hasUserSubmitted($userId, $assessmentId): bool
+    {
+        return self::where('user_id', $userId)->where('assessment_id', $assessmentId)->exists();
     }
 }

@@ -2,51 +2,91 @@
   <div class="user-assessment-outer">
     <div class="user-assessment-card">
       <template v-if="!submitted">
-        <div class="user-assessment-header">
-          <div class="user-assessment-title">
-            {{ currentQuestion.question || `Question ${step}` }}
+        <template v-if="showAssessment === false">
+          <div class="user-assessment-no-assignment" style="padding: 40px; text-align: center">
+            <h3 style="margin-bottom: 12px">No assigned assessments</h3>
+            <p style="color: #666; margin-bottom: 18px">
+              Heyy!! You Are Not Assigned To Any Organization Assessments.
+            </p>
+            <p style="color: #666; margin-bottom: 18px">
+              Check Your Previous Assessment's Details Here.
+            </p>
+            <button class="user-assessment-next-btn" @click="router.push('/dashboard')">
+              View Previous Assessment's Details
+            </button>
           </div>
-        </div>
-        <div class="user-assessment-table-container">
-          <div class="user-assessment-words-grid">
-            <label
-              v-for="(option, idx) in currentQuestion.options"
-              :key="`${option}-${idx}`"
-              class="user-assessment-checkbox-label"
-              :class="{ checked: currentSelectedWords.includes(option) }"
-            >
-              <span class="user-assessment-checkbox-custom"></span>
-              <input type="checkbox" :value="option" v-model="selectedWords[step - 1]" />
-              {{ option }}
-            </label>
+        </template>
+        <template v-else>
+          <div class="user-assessment-header">
+            <div class="user-assessment-title">
+              {{ currentQuestion.question || `Question ${step}` }}
+            </div>
           </div>
-        </div>
-        <div class="user-assessment-footer">
-          <div style="flex: 1; display: flex; align-items: center">
-            <span class="user-assessment-step-btn"> Question {{ step }} of {{ totalSteps }} </span>
-          </div>
+          <!-- show organization-assessment name when available -->
           <div
-            style="
-              flex: 1;
-              display: flex;
-              justify-content: flex-end;
-              align-items: center;
-              gap: 12px;
-            "
+            v-if="currentQuestion.organization_assessment"
+            style="text-align: center; margin-top: 8px; color: #333"
           >
-            <button v-if="step > 1" class="user-assessment-back-btn" @click="goToBack">Back</button>
-            <button
-              v-if="step < totalSteps"
-              class="user-assessment-next-btn"
-              @click="nextWithConfirm"
-            >
-              Next
-            </button>
-            <button v-else class="user-assessment-next-btn" @click="submitWithConfirm">
-              Submit
-            </button>
+            <strong>{{ currentQuestion.organization_assessment.name }}</strong>
           </div>
-        </div>
+          <div class="user-assessment-table-container">
+            <!-- show description when present -->
+            <div
+              v-if="currentQuestion.description"
+              style="
+                max-width: 900px;
+                margin: 12px auto 18px auto;
+                color: #444;
+                line-height: 1.5;
+                padding: 0 12px;
+              "
+            >
+              {{ currentQuestion.description }}
+            </div>
+            <div class="user-assessment-words-grid">
+              <label
+                v-for="(option, idx) in currentQuestion.options"
+                :key="`${option}-${idx}`"
+                class="user-assessment-checkbox-label"
+                :class="{ checked: currentSelectedWords.includes(option) }"
+              >
+                <span class="user-assessment-checkbox-custom"></span>
+                <input type="checkbox" :value="option" v-model="selectedWords[step - 1]" />
+                {{ option }}
+              </label>
+            </div>
+          </div>
+          <div class="user-assessment-footer">
+            <div style="flex: 1; display: flex; align-items: center">
+              <span class="user-assessment-step-btn">
+                Question {{ step }} of {{ totalSteps }}
+              </span>
+            </div>
+            <div
+              style="
+                flex: 1;
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                gap: 12px;
+              "
+            >
+              <button v-if="step > 1" class="user-assessment-back-btn" @click="goToBack">
+                Back
+              </button>
+              <button
+                v-if="step < totalSteps"
+                class="user-assessment-next-btn"
+                @click="nextWithConfirm"
+              >
+                Next
+              </button>
+              <button v-else class="user-assessment-next-btn" @click="submitWithConfirm">
+                Submit
+              </button>
+            </div>
+          </div>
+        </template>
       </template>
       <template v-else>
         <div class="user-assessment-success-card">
@@ -89,6 +129,7 @@ import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { fetchSubscriptionStatus } from '@/services/subscription';
+import storage from '@/services/storage';
 
 const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || '';
 
@@ -184,6 +225,11 @@ export default {
     const questions = ref([]);
     const selectedWords = ref([]); // Array of arrays, one per question
     const submitted = ref(false);
+    const showAssessment = ref(true); // whether to render the assessment UI
+
+    // For organization admins: whether they are assigned to any org-assessments
+    // null = unknown, false = none, true = has assignments
+    const isOrgAdminAssigned = ref(null);
 
     // Track user subscription status
     const isSubscribed = ref(false); // Default: not subscribed
@@ -191,6 +237,8 @@ export default {
     // Track timing for each question
     const questionStartTimes = ref([]); // Array of start times, one per question
     const questionEndTimes = ref([]); // Array of end times, one per question
+
+    const role = ref(storage.get('role') || '');
 
     const totalSteps = computed(() => questions.value.length);
     const currentQuestion = computed(
@@ -219,6 +267,7 @@ export default {
             return {
               id: assessment.id,
               question: assessment.title,
+              description: assessment.description || '',
               options: options,
             };
           });
@@ -231,6 +280,22 @@ export default {
             questionStartTimes.value[0] = new Date().toISOString();
           }
         }
+      };
+
+      // Load any organization-assessment assignments for this user (if authenticated)
+      const loadAssignments = async (headers) => {
+        try {
+          const res = await axios.get(
+            `${API_BASE_URL}/api/organization-assessments/assigned-list`,
+            { headers }
+          );
+          if (res && res.data && Array.isArray(res.data.assigned)) {
+            return res.data.assigned;
+          }
+        } catch (e) {
+          console.debug && console.debug('Failed to load assignments', e);
+        }
+        return [];
       };
 
       // Helper to fetch previous responses (replacing answers)
@@ -267,6 +332,23 @@ export default {
         await loadQuestions(headers, params);
         await loadAnswers(headers, params);
 
+        // load assignments (if logged in)
+        let assignments = [];
+        if (headers.Authorization) {
+          assignments = await loadAssignments(headers);
+        }
+        // If there are assignments, use the first one as the active org-assessment
+        const activeAssignment = assignments && assignments.length > 0 ? assignments[0] : null;
+        if (!activeAssignment) {
+          // no assignment → hide UI for all users (show 'No assigned assessments')
+          showAssessment.value = false;
+        } else {
+          // attach active assignment metadata so UI can display the org assessment name
+          for (const q of questions.value) {
+            q.organization_assessment = { id: activeAssignment.id, name: activeAssignment.name };
+          }
+        }
+
         // Fetch subscription status via shared service which will skip the
         // network call for non-organization-admin roles to avoid 403s.
         try {
@@ -275,6 +357,67 @@ export default {
         } catch (err) {
           console.debug && console.debug('Failed to fetch subscription status (via service):', err);
           isSubscribed.value = 'expired';
+        }
+
+        // assigned-count is no longer required; we already called assigned-list
+        // and set `showAssessment` accordingly. Keep `isOrgAdminAssigned` null
+        // unless further needs arise.
+
+        // Fetch submission status for the authenticated user so the frontend
+        // can detect when an admin-assigned assessment has already been
+        // submitted and show the thank-you view instead of the assessment.
+        try {
+          if (headers.Authorization) {
+            const subRes = await axios.get(`${API_BASE_URL}/api/assessment-submissions`, {
+              headers,
+            });
+              if (Array.isArray(subRes.data)) {
+                  const submittedMap = {};
+                  for (const row of subRes.data) {
+                    submittedMap[String(row.assessment_id)] = row.submitted_at || true;
+                  }
+
+                  const activeAssignment = assignments && assignments.length > 0 ? assignments[0] : null;
+                  const hasAnySubmission = Array.isArray(subRes.data) && subRes.data.length > 0;
+                  const hasPendingQuestion =
+                    questions.value.length > 0 &&
+                    questions.value.some((q) => !submittedMap[String(q.id)]);
+
+                  if (activeAssignment) {
+                    // If there's an active assignment, prefer showing the assessment
+                    // UI when any of the current questions are still pending.
+                    if (hasPendingQuestion) {
+                      submitted.value = false;
+                      showAssessment.value = true;
+                    } else if (hasAnySubmission) {
+                      // No pending questions -> user already submitted for this
+                      // assignment (or earlier) so show success.
+                      submitted.value = true;
+                      showAssessment.value = false;
+                    } else {
+                      // No submissions and no pending questions (edge case) — show assessment
+                      submitted.value = false;
+                      showAssessment.value = true;
+                    }
+                  } else {
+                    // No active assignment: if the user has any prior submissions,
+                    // show the success/thank-you view; otherwise show the "no
+                    // assigned assessments" message.
+                    if (hasAnySubmission) {
+                      submitted.value = true;
+                      showAssessment.value = false;
+                    } else {
+                      submitted.value = false;
+                      showAssessment.value = false;
+                    }
+                  }
+              }
+          }
+        } catch (err) {
+          // Non-fatal: if the endpoint is unavailable or returns 403 for
+          // non-admins, simply ignore and allow normal flow.
+          console.debug &&
+            console.debug('Failed to fetch assessment submissions status:', err?.message || err);
         }
       } catch (error) {
         if (error.response?.status === 401) {
@@ -371,19 +514,41 @@ export default {
 
       const submitAnswers = async (payload, token) => {
         try {
-          await axios.post(
-            `${API_BASE_URL}/api/assessment-responses`,
-            { responses: payload },
-            {
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+          // Include active organization_assessment_id when present so backend
+          // persists the link between organization-assessment and responses.
+          const topOrgAssessmentId =
+            (questions.value[0] &&
+              questions.value[0].organization_assessment &&
+              questions.value[0].organization_assessment.id) ||
+            null;
+          const body = topOrgAssessmentId
+            ? { responses: payload, organization_assessment_id: topOrgAssessmentId }
+            : { responses: payload };
+
+          await axios.post(`${API_BASE_URL}/api/assessment-responses`, body, {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          });
           submitted.value = true;
         } catch (error) {
-          const isAuthError = error.response?.status === 401;
+          const status = error.response?.status;
+          // If backend returns 409 Conflict, the assessment was already submitted.
+          if (status === 409) {
+            submitted.value = true;
+            if (toast && typeof toast.add === 'function') {
+              toast.add({
+                severity: 'info',
+                summary: 'Already submitted',
+                detail: 'This assessment has already been submitted.',
+                sticky: false,
+              });
+            }
+            return;
+          }
+
+          const isAuthError = status === 401;
           const errorMessage = isAuthError
             ? 'Your session has expired. Please log in again.'
             : 'Failed to submit assessment. Please try again.';
@@ -425,6 +590,9 @@ export default {
       questions,
       selectedWords,
       submitted,
+      showAssessment,
+      isOrgAdminAssigned,
+      role,
       totalSteps,
       currentQuestion,
       currentSelectedWords,
