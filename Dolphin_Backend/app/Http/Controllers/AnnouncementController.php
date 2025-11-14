@@ -2,17 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Announcement;
-use Illuminate\Http\Request;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\Log;
-use App\Notifications\GeneralNotification;
 use App\Http\Resources\AnnouncementResource;
+use App\Models\Announcement;
+use App\Notifications\GeneralNotification;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 class AnnouncementController extends Controller
 {
-    
     public function index()
     {
         $announcements = Announcement::orderBy('schedule_date', 'desc')
@@ -22,45 +21,45 @@ class AnnouncementController extends Controller
         return response()->json(['announcements' => AnnouncementResource::collection($announcements)]);
     }
 
-    
+
     public function store(Request $request)
     {
         $validated = $request->validate([
-            
+
             'message' => 'required|string',
             'schedule_date' => 'nullable|date',
             'schedule_time' => 'nullable|date_format:H:i',
-            
+
             'organization_ids' => 'nullable|array',
             'organization_ids.*' => 'integer|exists:organizations,id',
             'admin_ids' => 'nullable|array',
             'admin_ids.*' => 'integer|exists:users,id',
             'group_ids' => 'nullable|array',
             'group_ids.*' => 'integer|exists:groups,id',
-            
+
             'scheduled_at' => 'nullable|date',
         ]);
 
-        
+
         if (!empty($validated['scheduled_at']) && (empty($validated['schedule_date']) || empty($validated['schedule_time']))) {
             try {
                 $dt = Carbon::parse($validated['scheduled_at']);
                 $validated['schedule_date'] = $validated['schedule_date'] ?? $dt->toDateString();
                 $validated['schedule_time'] = $validated['schedule_time'] ?? $dt->format('H:i');
             } catch (\Exception $e) {
-                
+
             }
         }
 
-            $announcement = Announcement::create([
-            'message' => $validated['message'],
-            'schedule_date' => $validated['schedule_date'] ?? null,
-            'schedule_time' => $validated['schedule_time'] ?? null,
-            
-            'sender_id' => $request->user()?->id ?? null,
-            ]);
+        $announcement = Announcement::create([
+        'message' => $validated['message'],
+        'schedule_date' => $validated['schedule_date'] ?? null,
+        'schedule_time' => $validated['schedule_time'] ?? null,
 
-        
+        'sender_id' => $request->user()?->id ?? null,
+        ]);
+
+
         if (!empty($validated['organization_ids'])) {
             $announcement->organizations()->syncWithoutDetaching($validated['organization_ids']);
         }
@@ -71,25 +70,25 @@ class AnnouncementController extends Controller
             $announcement->groups()->syncWithoutDetaching($validated['group_ids']);
         }
 
-        
+
         try {
             $recipients = $this->getRecipientsForAnnouncement($announcement);
             $notification = new GeneralNotification($announcement);
 
-            
+
             if (!empty($announcement->schedule_date) && !empty($announcement->schedule_time)) {
                 $dtString = $announcement->schedule_date . ' ' . $announcement->schedule_time;
                 try {
                     $when = Carbon::parse($dtString);
                     $notification->delay($when);
                 } catch (\Exception $e) {
-                    
+
                 }
             }
 
             if ($recipients->count() > 0) {
                 Notification::send($recipients, $notification);
-                
+
                 $announcement->sent_at = now();
                 $announcement->save();
             }
@@ -98,7 +97,7 @@ class AnnouncementController extends Controller
                 'announcement_id' => $announcement->id,
                 'error' => $e->getMessage(),
             ]);
-            
+
         }
 
         return response()->json([
@@ -107,7 +106,7 @@ class AnnouncementController extends Controller
         ], 201);
     }
 
-    
+
     public function show(string $id)
     {
         try {
@@ -119,7 +118,7 @@ class AnnouncementController extends Controller
         }
     }
 
-    
+
     public function update(Request $request, string $id)
     {
         $announcement = Announcement::findOrFail($id);
@@ -138,7 +137,7 @@ class AnnouncementController extends Controller
         ]);
     }
 
-    
+
     public function destroy(string $id)
     {
         try {
@@ -151,7 +150,7 @@ class AnnouncementController extends Controller
         }
     }
 
-    
+
     public function todayScheduled()
     {
         try {
@@ -166,7 +165,7 @@ class AnnouncementController extends Controller
         }
     }
 
-    
+
     public function byDateRange(Request $request)
     {
         $request->validate([
@@ -189,23 +188,23 @@ class AnnouncementController extends Controller
         }
     }
 
-    
+
     private function getRecipientsForAnnouncement(Announcement $announcement)
     {
-        
+
         try {
             $announcement->load(['organizations.members', 'groups.users', 'admins']);
 
             $adminUsers = $announcement->admins ?? collect();
             $orgUsers = $announcement->organizations->flatMap(function ($org) {
-                return $org->members ?? collect(); 
+                return $org->members ?? collect();
             });
 
             $groupUsers = $announcement->groups->flatMap(function ($group) {
                 return $group->users ?? collect();
             });
 
-            
+
             return $adminUsers->merge($orgUsers)->merge($groupUsers)->unique('id');
         } catch (\Throwable $e) {
             Log::warning('[getRecipientsForAnnouncement] failed to load recipients', ['announcement_id' => $announcement->id ?? null, 'error' => $e->getMessage()]);

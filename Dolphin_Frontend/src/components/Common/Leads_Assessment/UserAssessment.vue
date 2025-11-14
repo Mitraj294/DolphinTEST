@@ -9,8 +9,12 @@
         </div>
         <div class="user-assessment-table-container">
           <div class="user-assessment-words-grid">
-            <label v-for="(option, idx) in currentQuestion.options" :key="`${option}-${idx}`"
-              class="user-assessment-checkbox-label" :class="{ checked: currentSelectedWords.includes(option) }">
+            <label
+              v-for="(option, idx) in currentQuestion.options"
+              :key="`${option}-${idx}`"
+              class="user-assessment-checkbox-label"
+              :class="{ checked: currentSelectedWords.includes(option) }"
+            >
               <span class="user-assessment-checkbox-custom"></span>
               <input type="checkbox" :value="option" v-model="selectedWords[step - 1]" />
               {{ option }}
@@ -21,15 +25,21 @@
           <div style="flex: 1; display: flex; align-items: center">
             <span class="user-assessment-step-btn"> Question {{ step }} of {{ totalSteps }} </span>
           </div>
-          <div style="
+          <div
+            style="
               flex: 1;
               display: flex;
               justify-content: flex-end;
               align-items: center;
               gap: 12px;
-            ">
+            "
+          >
             <button v-if="step > 1" class="user-assessment-back-btn" @click="goToBack">Back</button>
-            <button v-if="step < totalSteps" class="user-assessment-next-btn" @click="nextWithConfirm">
+            <button
+              v-if="step < totalSteps"
+              class="user-assessment-next-btn"
+              @click="nextWithConfirm"
+            >
               Next
             </button>
             <button v-else class="user-assessment-next-btn" @click="submitWithConfirm">
@@ -43,8 +53,13 @@
           <div class="user-assessment-success-icon">
             <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
               <circle cx="40" cy="40" r="40" fill="#2ECC40" />
-              <path d="M25 42l13 13 17-23" stroke="#fff" stroke-width="5" stroke-linecap="round"
-                stroke-linejoin="round" />
+              <path
+                d="M25 42l13 13 17-23"
+                stroke="#fff"
+                stroke-width="5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
             </svg>
           </div>
           <div class="user-assessment-success-title">
@@ -57,11 +72,7 @@
             survived not only five centuries, but also the leap into electronic typesetting,
             remaining essentially unchanged
           </div>
-          <button
-      
-            class="user-assessment-success-btn"
-            @click="router.push('/dashboard')"
-          >
+          <button class="user-assessment-success-btn" @click="router.push('/dashboard')">
             For Result Go to Dashboard
           </button>
           <div style="margin-top: 16px"></div>
@@ -201,7 +212,6 @@ export default {
         });
         if (Array.isArray(resQ.data)) {
           // Transform assessment data to match old question format for compatibility
-          
 
           questions.value = resQ.data.map((assessment) => {
             const options = normalizeFormDefinition(assessment.form_definition);
@@ -304,7 +314,9 @@ export default {
       // Use native confirm to avoid adding UI library dependency. This is simple
       // and matches requirement: ask "are you sure" and then proceed.
       // eslint-disable-next-line no-alert
-      const ok = globalThis.confirm('You have not selected any words for this question. Are you sure you want to continue?');
+      const ok = globalThis.confirm(
+        'You have not selected any words for this question. Are you sure you want to continue?'
+      );
       if (ok) {
         // Record end time for current question
         questionEndTimes.value[step.value - 1] = new Date().toISOString();
@@ -343,8 +355,8 @@ export default {
         return;
       }
 
-  // Record end time for the last question
-  questionEndTimes.value[step.value - 1] = new Date().toISOString();
+      // Record end time for the last question
+      questionEndTimes.value[step.value - 1] = new Date().toISOString();
 
       // Build responses array as expected by new backend (assessment-based)
       const buildResponsesPayload = () =>
@@ -398,7 +410,9 @@ export default {
         return;
       }
       // eslint-disable-next-line no-alert
-      const ok = globalThis.confirm('You have not selected any words. Are you sure you want to submit?');
+      const ok = globalThis.confirm(
+        'You have not selected any words. Are you sure you want to submit?'
+      );
       if (ok) {
         await handleSubmit(true);
       }

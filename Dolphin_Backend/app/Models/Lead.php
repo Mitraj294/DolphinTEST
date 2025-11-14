@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Lead extends Model
 {
@@ -22,7 +22,7 @@ class Lead extends Model
         'registered_at',
     ];
 
-    
+
     protected $casts = [
         'assessment_sent_at' => 'datetime',
         'registered_at' => 'datetime',

@@ -4,25 +4,25 @@ namespace App\Observers;
 
 use App\Models\Organization;
 use App\Models\Subscription;
-use Illuminate\Support\Facades\Log;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class OrganizationObserver
 {
     protected function applyLatestSubscriptionToOrg(Organization $organization)
     {
         try {
-            
+
             if (empty($organization->user_id)) {
                 return;
             }
             $latest = null;
-            
+
             $latest = Subscription::where('user_id', $organization->user_id)
                 ->orderBy('started_at', 'desc')
                 ->first();
             if ($latest) {
-                
+
                 $changed = false;
                 if ($organization->contract_start != ($latest->started_at ?? $latest->subscription_start ?? null)) {
                     $organization->contract_start = $latest->started_at ?? $latest->subscription_start ?? null;
@@ -52,7 +52,7 @@ class OrganizationObserver
 
     public function updated(Organization $organization)
     {
-        
+
         $this->applyLatestSubscriptionToOrg($organization);
     }
 }

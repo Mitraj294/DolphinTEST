@@ -8,10 +8,9 @@ use Illuminate\Support\Facades\Log;
 
 class ReconcileLeadsWithUsers extends Command
 {
-    
     protected $signature = 'leads:reconcile-with-users {--dry-run}';
 
-    
+
     protected $description = 'Reconcile leads with users by email and mark leads as Registered when a user exists';
 
     public function handle()
@@ -21,7 +20,7 @@ class ReconcileLeadsWithUsers extends Command
 
         $this->info('Starting leads <> users reconciliation' . ($dryRun ? ' (dry-run)' : ''));
 
-        
+
         $rows = DB::select(
             "SELECT l.id AS lead_id, l.email AS lead_email, l.status AS lead_status, l.registered_at AS lead_registered_at, u.id AS user_id, u.created_at AS user_created_at
              FROM leads l
@@ -38,7 +37,7 @@ class ReconcileLeadsWithUsers extends Command
             }
 
             if (!$dryRun) {
-                
+
                 DB::beginTransaction();
                 try {
                     $updated = DB::update(

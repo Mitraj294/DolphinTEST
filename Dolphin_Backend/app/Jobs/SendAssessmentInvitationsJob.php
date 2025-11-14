@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Jobs;
+
 use App\Models\OrganizationAssessment;
 use App\Models\User;
 use App\Notifications\AssessmentInvitation;
@@ -10,11 +12,15 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 class SendAssessmentInvitationsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
     public int $assessmentId;
     public function __construct(int $assessmentId)
     {

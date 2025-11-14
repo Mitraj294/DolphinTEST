@@ -17,7 +17,7 @@ class AnnouncementMailable extends Mailable
     public $actionText;
     public $actionUrl;
 
-    
+
     public function __construct($announcement, $displayName = null, $subject = null, $actionText = null, $actionUrl = null)
     {
         $this->announcement = $announcement;
@@ -27,17 +27,17 @@ class AnnouncementMailable extends Mailable
         $this->actionUrl = $actionUrl;
     }
 
-    
+
     public function build()
     {
-        
+
         $introLines = [$this->announcement->body];
         $outroLines = [];
-        $greeting = $this->displayName ? ("Hello " . $this->displayName . ",") : null;
+        $greeting = $this->displayName ? ('Hello ' . $this->displayName . ',') : null;
         $displayableActionUrl = $this->actionUrl;
 
         return $this->subject($this->subjectLine)
-            
+
             ->view('vendor.notifications.email')
             ->text('vendor.notifications.email_plain')
             ->with([

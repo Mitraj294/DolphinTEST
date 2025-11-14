@@ -2,10 +2,10 @@
 
 namespace App\Notifications;
 
+use App\Mail\AnnouncementMailable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
-use App\Mail\AnnouncementMailable;
 use Illuminate\Support\Facades\Log;
 
 class GeneralNotification extends Notification implements ShouldQueue
@@ -24,12 +24,12 @@ class GeneralNotification extends Notification implements ShouldQueue
         return $this->announcement;
     }
 
-    
+
     public function via($notifiable)
     {
         $channels = [];
 
-        
+
         if ($notifiable instanceof \App\Models\User) {
             $channels[] = 'database';
             if ($this->hasValidEmail($notifiable->email ?? null)) {
@@ -38,9 +38,9 @@ class GeneralNotification extends Notification implements ShouldQueue
             return array_unique($channels);
         }
 
-        
+
         try {
-            
+
             if ($notifiable instanceof \Illuminate\Notifications\AnonymousNotifiable) {
                 $route = $notifiable->routeNotificationFor('mail');
                 if ($this->routeHasValidEmail($route)) {
@@ -49,11 +49,11 @@ class GeneralNotification extends Notification implements ShouldQueue
                 return array_unique($channels);
             }
         } catch (\Exception $e) {
-            
+
             Log::warning('[Notification] Failed to inspect AnonymousNotifiable route', ['error' => $e->getMessage()]);
         }
 
-        
+
         if (is_object($notifiable) && property_exists($notifiable, 'email') && $this->hasValidEmail($notifiable->email)) {
             $channels[] = 'mail';
         }
@@ -61,7 +61,7 @@ class GeneralNotification extends Notification implements ShouldQueue
         return array_unique($channels);
     }
 
-    
+
     public function toDatabase($notifiable)
     {
         return [
@@ -73,14 +73,14 @@ class GeneralNotification extends Notification implements ShouldQueue
         ];
     }
 
-    
+
     public function toMail($notifiable)
     {
-        
+
         $displayName = $this->resolveDisplayName($notifiable);
         $subject = $this->announcement->subject ?? 'New Announcement';
 
-        
+
         $toEmail = $notifiable->email ?? null;
         if (!$toEmail && $notifiable instanceof \Illuminate\Notifications\AnonymousNotifiable) {
             try {
@@ -91,7 +91,7 @@ class GeneralNotification extends Notification implements ShouldQueue
             }
         }
 
-        
+
         return (new AnnouncementMailable(
             $this->announcement,
             $displayName,
@@ -99,13 +99,13 @@ class GeneralNotification extends Notification implements ShouldQueue
         ))->to($toEmail);
     }
 
-    
+
     private function hasValidEmail($email): bool
     {
         return is_string($email) && filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
     }
 
-    
+
     private function routeHasValidEmail($route): bool
     {
         if (is_string($route)) {
@@ -123,7 +123,7 @@ class GeneralNotification extends Notification implements ShouldQueue
         return false;
     }
 
-    
+
     private function resolveDisplayName($notifiable): string
     {
         $name = '';
@@ -145,7 +145,7 @@ class GeneralNotification extends Notification implements ShouldQueue
         return (string) $name;
     }
 
-    
+
     private function anonymousRouteDisplayName($route): string
     {
         if (is_string($route)) {
@@ -159,7 +159,7 @@ class GeneralNotification extends Notification implements ShouldQueue
         return '';
     }
 
-    
+
     private function objectDisplayName($notifiable): string
     {
         if (property_exists($notifiable, 'name') && $notifiable->name) {

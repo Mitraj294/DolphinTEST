@@ -168,18 +168,11 @@ export default {
     };
   },
   computed: {
-    
-    
-    
-    
-    
     filteredMembers() {
       return this.members;
     },
   },
   methods: {
-    
-    
     groupMembersFor(groupId) {
       const gid = typeof groupId === 'object' && groupId ? groupId.id : groupId;
       return this.members.filter(
@@ -188,34 +181,26 @@ export default {
       );
     },
 
-    
-    
     mergeMembersById(existing = [], toAdd = []) {
       const mergedById = new Map();
       const pushIfValid = (m) => {
         if (m && m.id !== undefined && m.id !== null) mergedById.set(Number(m.id), m);
       };
-      for (const m of (existing || [])) pushIfValid(m);
-      for (const m of (toAdd || [])) pushIfValid(m);
-      
+      for (const m of existing || []) pushIfValid(m);
+      for (const m of toAdd || []) pushIfValid(m);
+
       return (this.members || []).filter((m) => mergedById.has(Number(m.id)));
     },
 
-    
     allGroupMembersSelected(group, selectedIdSet) {
       const groupMembers = this.groupMembersFor(group.id);
       if (!groupMembers.length) return false;
       return groupMembers.every((gm) => selectedIdSet.has(Number(gm.id)));
     },
 
-    
-    
-    
-    
     onGroupSelection(selectedGroups) {
       this.selectedGroupIds = selectedGroups;
 
-      
       if (!Array.isArray(selectedGroups) || selectedGroups.length === 0) {
         return;
       }
@@ -223,27 +208,21 @@ export default {
       const selectedGroupIds = selectedGroups.map((g) => g.id);
       const selectedGroupIdSet = new Set(selectedGroupIds);
 
-      
       const groupMembers = this.members.filter(
         (member) =>
           Array.isArray(member.group_ids) &&
           member.group_ids.some((gid) => selectedGroupIdSet.has(gid))
       );
 
-      
       const existing = Array.isArray(this.selectedMemberIds) ? this.selectedMemberIds : [];
       this.selectedMemberIds = this.mergeMembersById(existing, groupMembers);
     },
 
     onMemberSelection(selectedMembers) {
-      
       this.selectedMemberIds = Array.isArray(selectedMembers) ? selectedMembers : [];
 
-      
       const selectedIds = new Set(this.selectedMemberIds.map((m) => Number(m.id)));
 
-      
-      
       const autoSelectedGroups = [];
       for (const group of this.groups) {
         const groupMembers = this.members.filter(
@@ -260,7 +239,6 @@ export default {
     async schedule() {
       this.isSubmitting = true;
       try {
-        
         if (!this.scheduleDate || !this.scheduleTime) {
           this.toast.add({
             severity: 'warn',
@@ -270,16 +248,15 @@ export default {
           this.isSubmitting = false;
           return;
         }
-        
-        
+
         const payload = {
           assessment_id: this.assessment_id,
           date: this.scheduleDate,
           time: this.scheduleTime,
           group_ids: this.selectedGroupIds.map((g) => g.id),
-          user_ids: this.selectedMemberIds.map((m) => m.id), 
-          member_ids: this.selectedMemberIds.map((m) => m.id), 
-          
+          user_ids: this.selectedMemberIds.map((m) => m.id),
+          member_ids: this.selectedMemberIds.map((m) => m.id),
+
           selectedMembers: (this.selectedMemberIds || []).map((m) => ({
             id: m.id,
             email: m.email,
@@ -311,19 +288,14 @@ export default {
 
     async checkExistingSchedule() {
       if (!this.assessment_id) {
-        
         this.scheduledLoading = false;
         return;
       }
 
       this.scheduledLoading = true;
       try {
-        
-        
         this.scheduledStatus = null;
         this.scheduledDetails = null;
-
-        
       } catch (error) {
         this.scheduledStatus = null;
         console.debug && console.debug('Error checking schedule status:', error);

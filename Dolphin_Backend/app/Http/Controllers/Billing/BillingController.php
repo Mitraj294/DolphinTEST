@@ -3,27 +3,26 @@
 namespace App\Http\Controllers\Billing;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Organization;
 use App\Models\Subscription;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class BillingController extends Controller
 {
-    
     public function current(Request $request)
     {
-        
-        
-        
+
+
+
         $user = $request->user();
-        
-        
-        
-        
-        
-        
+
+
+
+
+
+
         if (
             ! $user ||
             ! method_exists($user, 'hasRole') ||
@@ -75,15 +74,15 @@ class BillingController extends Controller
                 ],
             ]);
         } catch (\Throwable $e) {
-            
+
             return response()->json(null);
         }
     }
 
-    
+
     public function status(Request $request)
     {
-        
+
         $user = $request->user();
         if (
             ! $user ||
@@ -134,10 +133,10 @@ class BillingController extends Controller
         }
     }
 
-    
+
     public function history(Request $request)
     {
-        
+
         $user = $request->user();
         if (
             ! $user ||
@@ -149,7 +148,7 @@ class BillingController extends Controller
         try {
             $user = $this->resolveUser($request);
 
-            
+
             try {
                 Log::info('BillingController::history - resolved user', [
                     'authenticated_user_id' => $request->user()?->id ?? null,
@@ -167,7 +166,7 @@ class BillingController extends Controller
 
             $subscriptions = $user->subscriptions()->with(['plan', 'invoices'])->latest('created_at')->get();
 
-            
+
             try {
                 $ids = $subscriptions->pluck('id')->toArray();
                 Log::info('BillingController::history - subscriptions found', [
@@ -181,12 +180,12 @@ class BillingController extends Controller
                 ]);
             }
 
-            
-            
-            
-            
-            
-            
+
+
+
+
+
+
             $history = $subscriptions->flatMap([$this, 'formatHistoryPayload'])->toArray();
 
             return response()->json($history);
@@ -195,27 +194,27 @@ class BillingController extends Controller
         }
     }
 
-    
+
     private function resolveUser(Request $request): ?\App\Models\User
     {
-        
+
         $authenticatedUser = $request->user();
         if (!$authenticatedUser) {
             return null;
         }
-        
+
         $orgId = $request->query('org_id') ?: $request->input('org_id');
         if ($orgId && method_exists($authenticatedUser, 'hasRole') && $authenticatedUser->hasRole('superadmin')) {
             $organization = Organization::find($orgId);
             return $organization?->user;
         }
 
-        
-        
-        
-        
+
+
+
+
         if (method_exists($authenticatedUser, 'hasRole') && $authenticatedUser->hasRole('organizationadmin')) {
-            
+
             $userOrgId = $authenticatedUser->organization_id ?? null;
             if ($userOrgId) {
                 $organization = Organization::find($userOrgId);
@@ -224,9 +223,9 @@ class BillingController extends Controller
                 }
             }
 
-            
-            
-            
+
+
+
             try {
                 $memberOrg = $authenticatedUser->organizationMemberships()->first();
                 if ($memberOrg && $memberOrg->user) {
@@ -243,10 +242,10 @@ class BillingController extends Controller
         return $authenticatedUser;
     }
 
-    
+
     private function resolveCurrentSubscription(Request $request): ?Subscription
     {
-        
+
         $user = $this->resolveUser($request);
         if (! $user) {
             return null;
@@ -260,10 +259,10 @@ class BillingController extends Controller
             ?? $user->subscriptions()->with(['plan', 'invoices'])->latest('created_at')->first();
     }
 
-    
+
     private function resolveLatestSubscription(Request $request): ?Subscription
     {
-        
+
         $user = $this->resolveUser($request);
         if (! $user) {
             return null;
@@ -272,10 +271,10 @@ class BillingController extends Controller
         return $user->subscriptions()->with(['plan', 'invoices'])->latest('created_at')->first();
     }
 
-    
+
     private function formatHistoryPayload(Subscription $subscription): array
     {
-        
+
         $invoices = $subscription->invoices instanceof Collection
             ? $subscription->invoices
             : Collection::wrap($subscription->invoices ?? []);
@@ -294,7 +293,7 @@ class BillingController extends Controller
         return $history;
     }
 
-    
+
     private function formatInvoicePayload($invoice, Subscription $subscription, $plan, string $symbol): array
     {
         return [
@@ -313,7 +312,7 @@ class BillingController extends Controller
         ];
     }
 
-    
+
     private function formatSubscriptionSummary(Subscription $subscription, $plan, string $symbol): array
     {
         return [

@@ -10,17 +10,16 @@ use Illuminate\Support\Facades\Log;
 
 class ProcessScheduledAssessments extends Command
 {
-    
     protected $signature = 'assessments:process-scheduled';
 
-    
+
     protected $description = 'Process organization assessments that are due to be sent (send_at).';
 
     public function handle(): int
     {
         $now = Carbon::now();
 
-        
+
         $due = OrganizationAssessment::whereNotNull('send_at')
             ->where('send_at', '<=', $now)
             ->with(['members'])
@@ -33,14 +32,14 @@ class ProcessScheduledAssessments extends Command
 
         foreach ($due as $assessment) {
             try {
-                
+
                 $pending = $assessment->members()->whereNull('organization_assessment_member.notified_at')->exists();
                 if (! $pending) {
-                    
+
                     continue;
                 }
 
-                
+
                 dispatch(new SendAssessmentInvitationsJob($assessment->id));
                 Log::info('[ProcessScheduledAssessments] dispatched job', ['assessment_id' => $assessment->id]);
                 $this->info("Dispatched assessment {$assessment->id}");

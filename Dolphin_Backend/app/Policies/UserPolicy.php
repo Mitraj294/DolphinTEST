@@ -6,11 +6,10 @@ use App\Models\User;
 
 class UserPolicy
 {
-    
     public function impersonate(User $user, User $targetUser): bool
     {
-        
-        
+
+
         $isRequesterSuperAdmin = method_exists($user, 'hasRole')
             ? $user->hasRole('superadmin')
             : false;

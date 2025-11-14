@@ -13,13 +13,13 @@ class SubscriptionReceipt extends Mailable
 
     public $subscription;
 
-    
+
     public function __construct(array $subscription)
     {
         $this->subscription = $subscription;
     }
 
-    
+
     public function build()
     {
         $subject = 'Your Dolphin receipt' . (isset($this->subscription['invoice_number']) ? ' — Invoice #' . $this->subscription['invoice_number'] : '');

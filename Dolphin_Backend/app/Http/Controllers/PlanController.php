@@ -10,7 +10,7 @@ class PlanController extends Controller
 {
     public function index()
     {
-        
+
         $user = request()->user();
         if (! $user || ! method_exists($user, 'hasRole') || ! $user->hasRole('organizationadmin')) {
             return response()->json(['error' => 'Unauthorized.'], 403);
@@ -20,14 +20,14 @@ class PlanController extends Controller
             $plans = Plan::where('status', 'active')->get(['id', 'name', 'stripe_price_id', 'amount', 'currency', 'interval', 'description', 'slug']);
             return response()->json(['plans' => $plans]);
         } catch (\Throwable $e) {
-            
+
             return response()->json(['plans' => []]);
         }
     }
 
     public function store(Request $request)
     {
-        
+
         if (!$request->user() || !$request->user()->hasRole('superadmin')) {
             return response()->json(['error' => 'Unauthorized.'], 403);
         }
@@ -53,7 +53,7 @@ class PlanController extends Controller
 
     public function show(string $id)
     {
-        
+
         $user = request()->user();
         if (! $user || ! method_exists($user, 'hasRole') || ! $user->hasRole('organizationadmin')) {
             return response()->json(['error' => 'Unauthorized.'], 403);
@@ -72,7 +72,7 @@ class PlanController extends Controller
 
     public function update(Request $request, string $id)
     {
-        
+
         if (!$request->user() || !$request->user()->hasRole('superadmin')) {
             return response()->json(['error' => 'Unauthorized.'], 403);
         }
@@ -105,7 +105,7 @@ class PlanController extends Controller
 
     public function destroy(string $id)
     {
-        
+
         $user = request()->user();
         if (!$user || !$user->hasRole('superadmin')) {
             return response()->json(['error' => 'Unauthorized.'], 403);

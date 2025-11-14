@@ -5,18 +5,17 @@ module.exports = {
     node: true,
     es2021: true,
   },
-  parser: "vue-eslint-parser",
+  parser: 'vue-eslint-parser',
   parserOptions: {
-    parser: "@babel/eslint-parser",
+    parser: '@babel/eslint-parser',
     requireConfigFile: false,
     ecmaVersion: 2021,
-    sourceType: "module",
+    sourceType: 'module',
   },
-  extends: ["eslint:recommended", "plugin:prettier/recommended"],
-  plugins: ["prettier"],
+  extends: ['eslint:recommended', 'plugin:prettier/recommended'],
+  plugins: ['prettier'],
   rules: {
-
-    "vue/html-self-closing": ["off"],
-    "prettier/prettier": ["warn"]
+    'vue/html-self-closing': ['off'],
+    'prettier/prettier': ['warn'],
   },
 };

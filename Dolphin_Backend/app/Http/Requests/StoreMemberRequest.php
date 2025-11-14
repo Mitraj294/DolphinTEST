@@ -11,7 +11,7 @@ class StoreMemberRequest extends FormRequest
         return $this->user()->hasRole('organizationadmin');
     }
 
-    
+
     public function rules(): array
     {
         return [
@@ -26,7 +26,7 @@ class StoreMemberRequest extends FormRequest
         ];
     }
 
-    
+
     public function messages(): array
     {
         return [

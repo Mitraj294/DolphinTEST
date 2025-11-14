@@ -12,7 +12,6 @@ use Illuminate\Validation\Rule;
 
 class OrganizationController extends Controller
 {
-    
     public function index(Request $request)
     {
         $user = $request->user()->load('roles');
@@ -36,30 +35,30 @@ class OrganizationController extends Controller
 
         $organizationsCollection = $query->get();
 
-        
+
         $userIds = $organizationsCollection->pluck('user_id')->filter()->unique()->values()->all();
         $latestSubscriptions = [];
         if (!empty($userIds)) {
-            
-            
+
+
             $subs = Subscription::whereIn('user_id', $userIds)
                 ->orderByDesc('ends_at')
                 ->get()
                 ->groupBy('user_id')
-                ->map(fn($group) => $group->first());
+                ->map(fn ($group) => $group->first());
 
-            
+
             foreach ($subs as $uid => $s) {
                 $latestSubscriptions[$uid] = $s;
             }
         }
 
-        $organizations = $organizationsCollection->map(fn($org) => $this->formatOrganizationPayload($org, $latestSubscriptions[$org->user_id] ?? null));
+        $organizations = $organizationsCollection->map(fn ($org) => $this->formatOrganizationPayload($org, $latestSubscriptions[$org->user_id] ?? null));
 
         return response()->json($organizations);
     }
 
-    
+
     public function show(Request $request, Organization $organization)
     {
         $user = $request->user();
@@ -82,7 +81,7 @@ class OrganizationController extends Controller
         return response()->json($this->formatOrganizationPayload($organization));
     }
 
-    
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -98,7 +97,7 @@ class OrganizationController extends Controller
             'certified_staff' => 'nullable|integer',
         ]);
 
-        
+
         $organizationData = [
             'user_id' => $validated['user_id'],
             'name' => $validated['name'],
@@ -114,7 +113,7 @@ class OrganizationController extends Controller
 
         $organization = Organization::create($organizationData);
 
-        
+
         try {
             $addr = $request->only(['address', 'address_line_1', 'address_line_2', 'country_id', 'state_id', 'city_id', 'zip', 'zip_code']);
             $hasAddr = false;
@@ -142,11 +141,11 @@ class OrganizationController extends Controller
         return response()->json($this->formatOrganizationPayload($organization->fresh()), 201);
     }
 
-    
+
     public function update(Request $request, Organization $organization)
     {
-        
-        
+
+
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
@@ -172,7 +171,7 @@ class OrganizationController extends Controller
 
         try {
             DB::transaction(function () use ($organization, $validated) {
-                
+
                 $organizationData = array_intersect_key($validated, array_flip([
                     'name',
                     'size',
@@ -211,7 +210,7 @@ class OrganizationController extends Controller
                     $organization->user->update($userData);
                 }
 
-                
+
                 if (!empty($orgAddressData)) {
                     $orgAddressData['organization_id'] = $organization->id;
                     \App\Models\OrganizationAddress::updateOrCreate(
@@ -228,11 +227,11 @@ class OrganizationController extends Controller
         }
     }
 
-    
+
     public function destroy(Organization $organization)
     {
-        
-        
+
+
 
         $organization->delete();
 
@@ -243,7 +242,7 @@ class OrganizationController extends Controller
     {
         $user = $org->user;
 
-        
+
         $latestSubscription = $providedLatestSubscription;
         if (!$latestSubscription && $org->user_id) {
             $latestSubscription = Subscription::where('user_id', $org->user_id)
@@ -255,7 +254,7 @@ class OrganizationController extends Controller
             ? trim($org->salesPerson->first_name . ' ' . $org->salesPerson->last_name)
             : null;
 
-        
+
         $userRole = $user && $user->roles->count() > 0
             ? $user->roles->first()->name ?? null
             : null;
@@ -290,7 +289,7 @@ class OrganizationController extends Controller
             'sales_person_id' => $org->sales_person_id,
             'sales_person' => $salesPersonName,
             'certified_staff' => $org->certified_staff,
-            
+
             'active_subscription' => ($latestSubscription && $latestSubscription->status === 'active') ? 1 : 0,
             'expired_subscription' => ($latestSubscription && $latestSubscription->status === 'expired') ? 1 : 0,
             'no_subscription' => $latestSubscription ? 0 : 1,

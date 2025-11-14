@@ -2,25 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\Role;
 use App\Models\Organization;
+use App\Models\Role;
+use App\Models\User;
+use App\Notifications\NewUserInvitation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Password;
-use App\Notifications\NewUserInvitation;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Schema;
 
 class UserController extends Controller
 {
-    
-
     public function index()
     {
         $users = User::with(['country', 'roles'])->get()->map(function ($user) {
@@ -30,7 +28,7 @@ class UserController extends Controller
         return response()->json(['users' => $users]);
     }
 
-    
+
 
     public function store(Request $request)
     {
@@ -50,20 +48,20 @@ class UserController extends Controller
 
             $user = $this->createUserWithRelations($validatedData);
 
-            
+
             try {
-                
-                
+
+
                 $broker = Password::broker();
                 $token = $broker->createToken($user);
-                
+
                 $resetUrl = route('password.reset', ['token' => $token, 'email' => $user->email]);
             } catch (\Exception $e) {
-                
+
                 $resetUrl = null;
             }
 
-            
+
             try {
                 $user->notify(new NewUserInvitation($plainPassword, $resetUrl));
             } catch (\Exception $e) {
@@ -84,13 +82,13 @@ class UserController extends Controller
         }
     }
 
-    
+
 
     public function updateRole(Request $request, User $user)
     {
-        
-        
-        
+
+
+
         $rules = [
             'first_name' => 'sometimes|string|max:255',
             'last_name' => 'sometimes|string|max:255',
@@ -105,15 +103,15 @@ class UserController extends Controller
             if ($incomingEmail && $incomingEmail !== $user->email) {
                 $rules['email'] = ['sometimes', 'email', Rule::unique('users', 'email')];
             } else {
-                
+
                 $rules['email'] = ['sometimes', 'email'];
             }
         }
 
         $validatedData = $request->validate($rules);
 
-    
-    
+
+
         $oldRole = $user->roles()->first();
         $oldRoleName = $oldRole->name ?? null;
 
@@ -139,17 +137,17 @@ class UserController extends Controller
                 }
             });
 
-            
-            
-            
-            
+
+
+
+
             try {
                 $newRole = $validatedData['role'] ?? null;
                 if ($oldRoleName === 'organizationadmin' && $newRole !== 'organizationadmin') {
                     Organization::where('user_id', $user->id)->update(['last_contacted' => now()]);
                 }
             } catch (\Exception $e) {
-                
+
                 Log::warning('Failed to update organization last_contacted after role change', ['user_id' => $user->id, 'error' => $e->getMessage()]);
             }
 
@@ -160,12 +158,12 @@ class UserController extends Controller
         }
     }
 
-    
+
     public function softDelete(User $user)
     {
         try {
             $user->delete();
-            
+
             if (is_null($user->deleted_at)) {
                 $user->deleted_at = now();
                 $user->save();
@@ -177,30 +175,30 @@ class UserController extends Controller
         }
     }
 
-    
+
     public function impersonate(Request $request, User $user)
     {
-        
+
         if ($request->user()->cannot('impersonate', $user)) {
             Log::warning('Unauthorized impersonation attempt', ['actor_id' => $request->user()?->id, 'target_id' => $user->id]);
             return response()->json(['message' => 'Unauthorized.'], 403);
         }
 
-        
+
         Log::info('Impersonation attempt started', ['actor_id' => $request->user()?->id, 'target_id' => $user->id]);
 
         try {
-            
+
             Log::debug('Creating impersonation token', ['target_user_id' => $user->id]);
             try {
                 $tokenResult = $user->createToken('ImpersonationToken', ['impersonate']);
             } catch (\Exception $e) {
-                
+
                 Log::warning('createToken threw exception during impersonation', ['target_user_id' => $user->id, 'error' => $e->getMessage()]);
                 if (str_contains($e->getMessage(), 'Personal access client not found')) {
                     Log::warning('Personal access client missing — attempting to create DB client rows', ['error' => $e->getMessage()]);
                     try {
-                        
+
                         $pacExists = false;
                         try {
                             $pacExists = \Illuminate\Support\Facades\DB::table('oauth_personal_access_clients')->exists();
@@ -210,11 +208,11 @@ class UserController extends Controller
                         }
 
                         if (!$pacExists) {
-                            
+
                             $secret = \Illuminate\Support\Str::random(40);
                             $clientId = null;
                             try {
-                                
+
                                 $cols = Schema::getColumnListing('oauth_clients');
                                 $payload = [];
                                 if (in_array('id', $cols)) {
@@ -252,7 +250,7 @@ class UserController extends Controller
                                     $payload['updated_at'] = now();
                                 }
 
-                                
+
                                 \Illuminate\Support\Facades\DB::table('oauth_clients')->insert($payload);
                                 $clientId = $payload['id'] ?? null;
                                 Log::info('Inserted oauth_clients personal access client', ['client_id' => $clientId, 'payload_keys' => array_keys($payload)]);
@@ -276,17 +274,17 @@ class UserController extends Controller
                         }
                     } catch (\Exception $ae) {
                         Log::error('Failed to create personal access client rows during impersonation fallback', ['error' => $ae->getMessage()]);
-                        throw $e; 
+                        throw $e;
                     }
 
-                    
+
                     $tokenResult = $user->createToken('ImpersonationToken', ['impersonate']);
                 } else {
                     throw $e;
                 }
             }
 
-            
+
             if (isset($tokenResult->token)) {
                 $tokenResult->token->expires_at = now()->addHours(1);
                 $tokenResult->token->save();
@@ -304,7 +302,7 @@ class UserController extends Controller
                 'expires_at' => $expiresAtStr,
             ]);
         } catch (\Exception $e) {
-            
+
             $logContext = [
                 'actor_id' => $request->user()?->id,
                 'target_user_id' => $user->id,
@@ -312,7 +310,7 @@ class UserController extends Controller
                 'error_trace' => $e->getTraceAsString(),
             ];
 
-            
+
             if (str_contains($e->getMessage(), 'Personal access client not found')) {
                 try {
                     $oauthClientsExists = Schema::hasTable('oauth_clients');
@@ -329,7 +327,7 @@ class UserController extends Controller
 
             Log::error('Impersonation failed', $logContext);
 
-            
+
             if (str_contains($e->getMessage(), 'Personal access client not found')) {
                 $diagnostic = [];
                 try {
@@ -347,15 +345,15 @@ class UserController extends Controller
                 return response()->json(['message' => $message, 'details' => $details], 500);
             }
 
-            
+
             $responseMsg = config('app.debug') ? $e->getMessage() : 'Failed to impersonate user.';
             return response()->json(['message' => $responseMsg], 500);
         }
     }
 
-    
 
-    
+
+
 
     private function createUserWithRelations(array $data): User
     {
@@ -369,7 +367,7 @@ class UserController extends Controller
                     'size' => $data['size'] ?? null,
                 ]);
 
-                
+
                 $user->organization_id = $org->id;
                 $user->save();
             }
@@ -385,7 +383,7 @@ class UserController extends Controller
         });
     }
 
-    
+
 
     private function formatUserPayload(User $user): array
     {

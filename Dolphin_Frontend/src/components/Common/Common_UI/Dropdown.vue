@@ -57,7 +57,6 @@ export default {
   },
   computed: {
     widthStyle() {
-      
       return getWidthStyle(this.dropdownWidth);
     },
     displayLabel() {

@@ -269,7 +269,6 @@ export default {
   },
   computed: {
     isReferralSourceOther() {
-      
       if (!this.form.referral_source_id) return false;
       const selected = this.referralSources.find((r) => r.id === this.form.referral_source_id);
       return selected && selected.name && selected.name.toLowerCase() === 'other';
@@ -289,7 +288,6 @@ export default {
   },
 
   methods: {
-    
     getLeadId() {
       const q = this.$route.query;
       return this.$route.params.id || q.id || null;
@@ -335,7 +333,6 @@ export default {
         }
       }
 
-      
       let first = q.first_name || null;
       let last = q.last_name || null;
       if (!first && !last && q.name) {
@@ -371,16 +368,14 @@ export default {
     },
 
     fillForm(leadObj) {
-      
       const org = leadObj.organization || {};
       const orgAddress = org.address || {};
 
       this.form = {
-        
         first_name: leadObj.first_name || '',
         last_name: leadObj.last_name || '',
         name: leadObj.name || null,
-        
+
         ...(!leadObj.first_name && leadObj.name
           ? {
               first_name: (leadObj.name || '').split(/\s+/)[0] || '',
@@ -389,13 +384,13 @@ export default {
           : {}),
         email: leadObj.email || '',
         phone_number: leadObj.phone_number || leadObj.phone || '',
-        
+
         referral_source_id: org.referral_source_id || leadObj.referral_source_id || null,
         referral_other_text: org.referral_other_text || leadObj.referral_other_text || '',
-        
+
         organization_name: org.name || leadObj.organization_name || '',
         organization_size: org.size || leadObj.organization_size || '',
-        
+
         address_line_1:
           orgAddress.address_line_1 || leadObj.address_line_1 || leadObj.address || '',
         address_line_2: orgAddress.address_line_2 || leadObj.address_line_2 || '',

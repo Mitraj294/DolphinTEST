@@ -1,8 +1,8 @@
-const fs = require("node:fs");
-const path = require("node:path");
+const fs = require('node:fs');
+const path = require('node:path');
 
-const src = path.resolve(__dirname, "..", "node_modules", "tinymce");
-const dest = path.resolve(__dirname, "..", "public", "tinymce");
+const src = path.resolve(__dirname, '..', 'node_modules', 'tinymce');
+const dest = path.resolve(__dirname, '..', 'public', 'tinymce');
 
 function copyRecursiveSync(srcDir, destDir) {
   if (!fs.existsSync(srcDir)) {
@@ -29,8 +29,8 @@ function copyRecursiveSync(srcDir, destDir) {
 try {
   console.log(`Copying TinyMCE from ${src} -> ${dest} ...`);
   copyRecursiveSync(src, dest);
-  console.log("TinyMCE copy complete.");
+  console.log('TinyMCE copy complete.');
 } catch (err) {
-  console.error("Failed to copy TinyMCE assets:", err);
+  console.error('Failed to copy TinyMCE assets:', err);
   process.exit(1);
 }

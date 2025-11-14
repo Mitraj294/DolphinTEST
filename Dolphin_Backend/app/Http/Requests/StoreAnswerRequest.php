@@ -12,7 +12,7 @@ class StoreAnswerRequest extends FormRequest
         return Auth::check();
     }
 
-    
+
     public function rules(): array
     {
         return [

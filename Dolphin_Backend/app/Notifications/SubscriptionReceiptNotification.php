@@ -2,11 +2,11 @@
 
 namespace App\Notifications;
 
+use App\Mail\SubscriptionReceipt;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use App\Mail\SubscriptionReceipt;
+use Illuminate\Notifications\Notification;
 
 class SubscriptionReceiptNotification extends Notification implements ShouldQueue
 {
@@ -26,10 +26,10 @@ class SubscriptionReceiptNotification extends Notification implements ShouldQueu
 
     public function toMail($notifiable)
     {
-        
-        
-        
-        
+
+
+
+
         $recipient = $notifiable->routeNotificationFor('mail', $this) ?? null;
 
         $mailable = new SubscriptionReceipt($this->subscription);

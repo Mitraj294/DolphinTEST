@@ -1,15 +1,18 @@
 <?php
+
 namespace App\Http\Controllers;
+
+use App\Models\User;
 use App\Notifications\GenericEmail;
 use App\Services\UrlBuilder;
-use App\Models\User;
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\DB;
-use Carbon\CarbonImmutable;
+
 class ScheduledEmailController extends Controller
 {
     public function store(Request $request): JsonResponse

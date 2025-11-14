@@ -563,7 +563,9 @@ textarea {
   color: #222;
   cursor: pointer;
   border: 2px solid #f8f9fb;
-  transition: border 0.18s, background 0.18s;
+  transition:
+    border 0.18s,
+    background 0.18s;
   user-select: none;
 }
 
@@ -572,7 +574,7 @@ textarea {
   border: 2px solid #0074c2;
 }
 
-.user-assessment-checkbox-label input[type="checkbox"] {
+.user-assessment-checkbox-label input[type='checkbox'] {
   display: none;
 }
 
@@ -593,7 +595,7 @@ textarea {
 }
 
 .user-assessment-checkbox-label.checked .user-assessment-checkbox-custom:after {
-  content: "";
+  content: '';
   display: block;
   position: absolute;
   left: 5px;

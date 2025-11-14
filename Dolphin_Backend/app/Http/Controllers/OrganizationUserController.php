@@ -2,19 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\Organization;
 use App\Models\Group;
+use App\Models\Organization;
 use App\Models\Role;
-use Illuminate\Http\Request;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class OrganizationUserController extends Controller
 {
-    
     public function index(Request $request): JsonResponse
     {
         try {
@@ -26,7 +25,7 @@ class OrganizationUserController extends Controller
 
             $organization = Organization::findOrFail($orgId);
 
-            
+
             $members = $organization->members()
                 ->with(['roles', 'groups' => function ($query) use ($orgId) {
                     $query->where('organization_id', $orgId);
@@ -56,7 +55,7 @@ class OrganizationUserController extends Controller
         }
     }
 
-    
+
     public function availableUsers(Request $request): JsonResponse
     {
         try {
@@ -68,10 +67,10 @@ class OrganizationUserController extends Controller
 
             $organization = Organization::findOrFail($orgId);
 
-            
+
             $existingMemberIds = $organization->members()->pluck('users.id')->toArray();
 
-            
+
             $users = User::whereHas('roles', function ($query) {
                 $query->where('name', 'user');
             })
@@ -94,7 +93,7 @@ class OrganizationUserController extends Controller
         }
     }
 
-    
+
     public function getAvailableMembersForGroup(Request $request): JsonResponse
     {
         try {
@@ -106,7 +105,7 @@ class OrganizationUserController extends Controller
 
             $organization = Organization::findOrFail($orgId);
 
-            
+
             $members = $organization->members()
                 ->select('users.id', 'users.first_name', 'users.last_name', 'users.email')
                 ->get()
@@ -125,7 +124,7 @@ class OrganizationUserController extends Controller
         }
     }
 
-    
+
     public function addToGroup(Request $request): JsonResponse
     {
         try {
@@ -141,22 +140,22 @@ class OrganizationUserController extends Controller
             }
             $orgId = $this->getOrganizationIdForCurrentUser($user);
 
-            
+
             $group = Group::where('id', $validated['group_id'])
                 ->where('organization_id', $orgId)
                 ->firstOrFail();
 
-            
+
             $userToAdd = User::where('id', $validated['user_id'])
                 ->where('organization_id', $orgId)
                 ->firstOrFail();
 
-            
+
             if ($userToAdd->roles()->whereIn('name', ['superadmin', 'dolphin_admin', 'organizationadmin', 'salesperson'])->exists()) {
                 return response()->json(['error' => 'Cannot add admin users to groups as members.'], 400);
             }
 
-            
+
             $group->users()->syncWithoutDetaching([
                 $validated['user_id'] => ['role' => $validated['role'] ?? 'member']
             ]);
@@ -171,7 +170,7 @@ class OrganizationUserController extends Controller
         }
     }
 
-    
+
     public function removeFromGroup(Request $request): JsonResponse
     {
         try {
@@ -186,12 +185,12 @@ class OrganizationUserController extends Controller
             }
             $orgId = $this->getOrganizationIdForCurrentUser($user);
 
-            
+
             $group = Group::where('id', $validated['group_id'])
                 ->where('organization_id', $orgId)
                 ->firstOrFail();
 
-            
+
             $group->users()->detach($validated['user_id']);
 
             return response()->json([
@@ -203,7 +202,7 @@ class OrganizationUserController extends Controller
         }
     }
 
-    
+
     public function updateGroupRole(Request $request): JsonResponse
     {
         try {
@@ -219,12 +218,12 @@ class OrganizationUserController extends Controller
             }
             $orgId = $this->getOrganizationIdForCurrentUser($user);
 
-            
+
             $group = Group::where('id', $validated['group_id'])
                 ->where('organization_id', $orgId)
                 ->firstOrFail();
 
-            
+
             $group->users()->updateExistingPivot($validated['user_id'], [
                 'role' => $validated['role']
             ]);
@@ -239,10 +238,10 @@ class OrganizationUserController extends Controller
         }
     }
 
-    
-    
 
-    
+
+
+
     public function addOrganizationMember(Request $request): JsonResponse
     {
         try {
@@ -255,7 +254,7 @@ class OrganizationUserController extends Controller
 
             $organization = Organization::findOrFail($orgId);
 
-            
+
             $userToAdd = User::findOrFail($validated['user_id']);
             $hasValidRole = $userToAdd->roles()
                 ->where('name', 'user')
@@ -267,10 +266,10 @@ class OrganizationUserController extends Controller
                 ], 400);
             }
 
-            
+
             $organization->members()->syncWithoutDetaching($validated['user_id']);
 
-            
+
             $member = User::with(['roles'])
                 ->find($validated['user_id']);
 
@@ -291,7 +290,7 @@ class OrganizationUserController extends Controller
         }
     }
 
-    
+
     public function removeOrganizationMember(Request $request): JsonResponse
     {
         try {
@@ -304,7 +303,7 @@ class OrganizationUserController extends Controller
 
             $organization = Organization::findOrFail($orgId);
 
-            
+
             $organization->members()->detach($validated['user_id']);
 
             return response()->json([
@@ -316,19 +315,19 @@ class OrganizationUserController extends Controller
         }
     }
 
-    
-    
 
-    
-    
 
-    
+
+
+
+
+
     private function getOrganizationIdForCurrentUser(\App\Models\User $user): int
     {
-        
+
         $orgId = $user->organization_id ?? null;
 
-        
+
         if (! $orgId) {
             try {
                 $membership = $user->organizationMemberships()->first();
@@ -336,22 +335,22 @@ class OrganizationUserController extends Controller
                     $orgId = $membership->id;
                 }
             } catch (\Throwable $e) {
-                    // Log the failure to inspect memberships — fallback logic will continue
-                    try {
-                        Log::warning('[OrganizationUserController] failed to read organizationMemberships', ['error' => $e->getMessage()]);
-                    } catch (\Throwable $_) {
-                        // ignore logging failures
-                    }
+                // Log the failure to inspect memberships — fallback logic will continue
+                try {
+                    Log::warning('[OrganizationUserController] failed to read organizationMemberships', ['error' => $e->getMessage()]);
+                } catch (\Throwable $_) {
+                    // ignore logging failures
+                }
             }
         }
 
-        
+
         if (! $orgId) {
             $organization = Organization::where('user_id', $user->id)->first();
             $orgId = $organization ? $organization->id : null;
         }
 
-        
+
         if (! $orgId && request()->user() && request()->user()->roles()->where('name', 'superadmin')->exists()) {
             $orgId = (int) request()->query('organization_id', 0) ?: null;
         }

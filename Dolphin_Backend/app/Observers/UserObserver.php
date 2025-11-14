@@ -3,18 +3,17 @@
 namespace App\Observers;
 
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Carbon;
 
 class UserObserver
 {
-    
     public function deleted(User $user): void
     {
         $now = Carbon::now();
         try {
-            
+
             $softDeleteTables = [
                 'organizations',
                 'groups',
@@ -29,7 +28,7 @@ class UserObserver
                 }
             }
 
-            
+
             $nullifyTables = [
                 'answers',
                 'assessments',
@@ -46,15 +45,15 @@ class UserObserver
                 }
             }
         } catch (\Exception $e) {
-            
+
             Log::error('UserObserver deleted error: ' . $e->getMessage());
         }
     }
 
-    
+
     public function restored(User $user): void
     {
-        
+
         Log::info('User restored', ['user_id' => $user->getKey()]);
     }
 }

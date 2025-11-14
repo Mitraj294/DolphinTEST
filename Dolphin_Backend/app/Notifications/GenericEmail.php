@@ -15,7 +15,7 @@ class GenericEmail extends Notification implements ShouldQueue
     protected string $body;
     protected ?string $actionUrl = null;
 
-    
+
     public function __construct(string $subject, string $body, ?string $actionUrl = null)
     {
         $this->subject = $subject;

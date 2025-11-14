@@ -11,7 +11,7 @@ class LoginRequest extends FormRequest
         return true;
     }
 
-    
+
     public function rules(): array
     {
         return [

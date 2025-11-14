@@ -2,64 +2,63 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Announcement;
-use App\Models\User;
+use App\Models\AnnouncementRead;
 use App\Models\Group;
 use App\Models\Organization;
+use App\Models\User;
 use App\Notifications\GeneralNotification;
 use App\Notifications\NewAnnouncement;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\AnnouncementRead;
+use Illuminate\Support\Facades\Notification;
 
 class NotificationController extends Controller
 {
-    
     public function unreadAnnouncements(Request $request)
     {
         $user = $request->user();
         if (!$user) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
+
+
+
+
+
+
+
+
+
 
         $userId = $user->id;
         $orgId = $user->organization_id;
         $groupIds = $user->groups()->pluck('groups.id')->toArray();
 
         $announcements = Announcement::where(function ($q) use ($userId, $orgId, $groupIds) {
-            
+
             $q->whereHas('admins', function ($q2) use ($userId) {
                 $q2->where('users.id', $userId);
             });
 
-            
+
             if (!empty($orgId)) {
                 $q->orWhereHas('organizations', function ($q2) use ($orgId) {
                     $q2->where('organizations.id', $orgId);
                 });
             }
 
-            
+
             if (!empty($groupIds)) {
                 $q->orWhereHas('groups', function ($q2) use ($groupIds) {
                     $q2->whereIn('groups.id', $groupIds);
                 });
             }
 
-            
+
             $q->orWhereExists(function ($sub) use ($userId) {
                 $sub->select(DB::raw(1))
                     ->from('announcement_groups')
@@ -68,13 +67,13 @@ class NotificationController extends Controller
             });
         })->with(['organizations', 'groups', 'admins'])->orderByDesc('created_at')->get();
 
-        
+
         $announcements = $announcements->filter(function ($a) use ($userId) {
             $exists = AnnouncementRead::where('announcement_id', $a->id)->where('user_id', $userId)->exists();
             return !$exists;
         })->values();
 
-        
+
         $announcements->transform(function ($a) {
             $a->body = $a->message ?? $a->body ?? null;
             return $a;
@@ -83,12 +82,12 @@ class NotificationController extends Controller
         return response()->json(['unread' => $announcements]);
     }
 
-    
+
     public function allNotifications(Request $request)
     {
         try {
-            
-            
+
+
             $notifiableType = $request->input('notifiable_type');
             $notifiableId = $request->input('notifiable_id');
 
@@ -98,25 +97,25 @@ class NotificationController extends Controller
                     $notifiableType = 'App\\Models\\User';
                     $notifiableId = $user->id;
                 } else {
-                    
-                    
+
+
                     return response()->json(['error' => 'notifiable_type and notifiable_id required'], 400);
                 }
             }
 
-            
-            
-            
-            
-            
-            
+
+
+
+
+
+
 
             if ($notifiableType === 'App\\Models\\User') {
                 $user = User::find($notifiableId);
                 if (!$user) {
                     return response()->json(['notifications' => []]);
                 }
-                
+
                 $groupIds = $user->groups()->pluck('groups.id')->toArray();
                 $orgId = $user->organization_id;
 
@@ -163,7 +162,7 @@ class NotificationController extends Controller
         }
     }
 
-    
+
     public function userNotifications(Request $request)
     {
         $user = $request->user();
@@ -171,7 +170,7 @@ class NotificationController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
         try {
-            
+
             $userId = $user->id;
             $orgId = $user->organization_id;
             $groupIds = $user->groups()->pluck('groups.id')->toArray();
@@ -207,15 +206,15 @@ class NotificationController extends Controller
             return response()->json(['error' => 'Failed to fetch user notifications'], 500);
         }
     }
-    
-    
+
+
     public function allAnnouncements()
     {
         $announcements = Announcement::orderByDesc('created_at')->get();
         return response()->json($announcements);
     }
 
-    
+
 
     public function showAnnouncement($id)
     {
@@ -225,38 +224,38 @@ class NotificationController extends Controller
             $data = [
                 'id' => $announcement->id,
                 'body' => $announcement->body,
-                
-                
-                
+
+
+
                 'sender_id' => $announcement->sender_id ?? null,
                 'scheduled_at' => $announcement->scheduled_at,
                 'sent_at' => $announcement->sent_at ?? null,
                 'created_at' => $announcement->created_at,
                 'updated_at' => $announcement->updated_at,
-                'organizations' => $announcement->organizations->map(fn($org) => [
+                'organizations' => $announcement->organizations->map(fn ($org) => [
                     'id' => $org->id,
-                    
+
                     'name' => $org->name,
                     'contact_email' => $org->user?->email ?? null,
                     'user_id' => $org->user_id,
                     'user_first_name' => $org->user?->first_name ?? null,
                     'user_last_name' => $org->user?->last_name ?? null,
                 ]),
-                'groups' => $announcement->groups->map(fn($g) => [
+                'groups' => $announcement->groups->map(fn ($g) => [
                     'id' => $g->id,
                     'name' => $g->name,
                     'organization_id' => $g->organization_id,
                     'organization_name' => $g->organization?->name ?? null,
                     'org_contact_email' => $g->organization?->user?->email ?? null,
                 ]),
-                'admins' => $announcement->admins->map(fn($a) => [
+                'admins' => $announcement->admins->map(fn ($a) => [
                     'id' => $a->id,
                     'name' => $a->first_name . ' ' . $a->last_name,
                     'email' => $a->email,
                 ]),
             ];
 
-            
+
             $notifRowsQuery = DB::table('notifications')
                 ->where('notifiable_type', 'App\\Models\\User')
                 ->whereRaw("JSON_EXTRACT(data, '$.announcement_id') = ?", [$announcement->id]);
@@ -268,9 +267,9 @@ class NotificationController extends Controller
                 $notifRows = collect();
             }
 
-            
-            
-            
+
+
+
             try {
                 $announcementReads = AnnouncementRead::where('announcement_id', $announcement->id)->get();
             } catch (\Throwable $e) {
@@ -278,7 +277,7 @@ class NotificationController extends Controller
                 $announcementReads = collect();
             }
 
-            
+
             $readRows = $announcementReads->map(function ($r) {
                 return (object) [
                     'notifiable_id' => $r->user_id,
@@ -287,7 +286,7 @@ class NotificationController extends Controller
                 ];
             });
 
-            
+
             $notifRows = collect($notifRows)->merge($readRows);
 
             $readUserMap = [];
@@ -326,13 +325,13 @@ class NotificationController extends Controller
         }
     }
 
-    
 
-    
 
-    
-    
-    
+
+
+
+
+
     public function markAsRead(Request $request, $id)
     {
         $user = $request->user();
@@ -342,8 +341,8 @@ class NotificationController extends Controller
         try {
             $announcement = Announcement::findOrFail($id);
 
-            
-            
+
+
 
             AnnouncementRead::updateOrCreate(
                 ['announcement_id' => $announcement->id, 'user_id' => $user->id],
@@ -361,7 +360,7 @@ class NotificationController extends Controller
         }
     }
 
-    
+
     public function markAllAsRead(Request $request)
     {
         $user = $request->user();
@@ -369,7 +368,7 @@ class NotificationController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
         try {
-            
+
             $userId = $user->id;
             $orgId = $user->organization_id;
             $groupIds = $user->groups()->pluck('groups.id')->toArray();
@@ -412,18 +411,18 @@ class NotificationController extends Controller
         }
     }
 
-    
+
     public function createNotification(Request $request)
     {
-        
-        
-        
+
+
+
 
         try {
-            
-            
-            
-            
+
+
+
+
             return response()->json(['error' => 'Creating ad-hoc notification records is not supported; use announcements API'], 501);
         } catch (\Exception $e) {
             Log::error('[createNotification] failed', ['error' => $e->getMessage()]);

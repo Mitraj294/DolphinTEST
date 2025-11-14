@@ -3,6 +3,7 @@
 This folder contains the server-side Laravel application for Dolphin: API endpoints, scheduled jobs, mail templates, background jobs, observers, and the database layer.
 
 ## What it contains
+
 - `artisan` — Laravel CLI entrypoint.
 - `app/` — application code (Controllers, Models, Jobs, Mail, Services, Observers).
 - `bootstrap/`, `config/`, `database/` — framework and DB configuration, migrations, factories, seeders.
@@ -11,6 +12,7 @@ This folder contains the server-side Laravel application for Dolphin: API endpoi
 - `tests/` — PHPUnit tests (Unit and Feature).
 
 ## Requirements
+
 - PHP 8.0+ (check `composer.json` for exact requirement)
 - Composer
 - MySQL or MariaDB
@@ -69,6 +71,7 @@ composer install --dev
 ```
 
 ## Common tasks and troubleshooting
+
 - If migrations fail, verify DB credentials in `.env` and that the DB server is reachable.
 - If email isn't sending, check `config/mail.php` and credentials in `.env`.
 - OAuth: Storage contains `oauth-private.key` and `oauth-public.key`. If missing, run `php artisan passport:install`.
@@ -91,6 +94,7 @@ php artisan assessments:recompute --user=42 --attempt=1 --rebuild
 ```
 
 Safely removing the old external folder:
+
 1. Delete or archive `dolphin-project-main`.
 2. Remove any related ENV vars (e.g., `PYTHON_PATH`).
 3. Optionally drop legacy external tables if they existed (`input`, `results`) after confirming nothing references them.
@@ -98,17 +102,19 @@ Safely removing the old external folder:
 The methods `isDolphinExecutableAvailable()` and `buildDolphinExecutable()` now always return success for backward compatibility with existing controllers.
 
 ## Local-only notes
+
 - This project is locked to localhost for development:
-	- Backend: http://127.0.0.1:8000
-	- Frontend: http://127.0.0.1:8080
+    - Backend: http://127.0.0.1:8000
+    - Frontend: http://127.0.0.1:8080
 - CORS is restricted to the local frontend in `config/cors.php`.
 - Default DB credentials in `.env.example` are:
-	- DB: dolphin_clean
-	- User: dolphin123
-	- Pass: dolphin123
+    - DB: dolphin_clean
+    - User: dolphin123
+    - Pass: dolphin123
 
 See `build.sh`, `start.sh` at repo root for build and startup steps used by this project.
 `supervisor-dolphin-queue-worker.conf` is an example Supervisor unit for background workers.
 
 ---
+
 Generated on: October 31, 2025

@@ -6,7 +6,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class AnnouncementResource extends JsonResource
 {
-    
     public function toArray($request): array
     {
         return [
@@ -19,7 +18,7 @@ class AnnouncementResource extends JsonResource
             'sent_at' => $this->sent_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            
+
             'organizations' => $this->whenLoaded('organizations', $this->organizations->map->only(['id', 'name'])->toArray()),
             'groups' => $this->whenLoaded('groups', $this->groups->map->only(['id', 'name'])->toArray()),
             'admins' => $this->whenLoaded('admins', $this->admins->map->only(['id', 'first_name', 'last_name', 'email'])->toArray()),

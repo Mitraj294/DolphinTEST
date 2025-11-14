@@ -14,12 +14,11 @@ use Illuminate\Support\Facades\Log;
 
 class GroupController extends Controller
 {
-    
     private const ORG_RESOLVE_ERROR = 'Could not resolve organization for the current user.';
 
-    
-    
-    
+
+
+
 
     public function index(Request $request): JsonResponse
     {
@@ -57,9 +56,9 @@ class GroupController extends Controller
         return response()->json($response_data, $status_code);
     }
 
-    
-    
-    
+
+
+
 
     public function store(StoreGroupRequest $request): JsonResponse
     {
@@ -81,7 +80,7 @@ class GroupController extends Controller
                 'user_id' => $user->id,
             ]);
 
-            
+
             $userIds = $validated['user_ids'] ?? $validated['member_ids'] ?? [];
             if (!empty($userIds)) {
                 $group->users()->sync($userIds);
@@ -94,10 +93,10 @@ class GroupController extends Controller
         }
     }
 
-    
-    
-    
-    
+
+
+
+
 
     public function show(Request $request, int $id): JsonResponse
     {
@@ -123,7 +122,7 @@ class GroupController extends Controller
                 $group = $query->findOrFail($id);
                 $response_data = [
                     'group' => $group,
-                    'members' => $group->users, 
+                    'members' => $group->users,
                     'users' => $group->users
                 ];
             }
@@ -139,10 +138,10 @@ class GroupController extends Controller
         return response()->json($response_data, $status_code);
     }
 
-    
 
-    
-    
+
+
+
 
     private function resolveOrganizationId(User $user): ?int
     {
@@ -155,7 +154,7 @@ class GroupController extends Controller
         return $organization?->id;
     }
 
-    
+
     public function update(UpdateGroupRequest $request, int $id): JsonResponse
     {
         $response_data = [];
@@ -179,7 +178,7 @@ class GroupController extends Controller
                 'name' => $validated['name'],
             ]);
 
-            
+
             $userIds = $validated['user_ids'] ?? $validated['member_ids'] ?? null;
             if ($userIds !== null) {
                 $group->users()->sync($userIds);
@@ -199,7 +198,7 @@ class GroupController extends Controller
         return response()->json($response_data, $status_code);
     }
 
-    
+
     public function destroy(Request $request, int $id): JsonResponse
     {
         $response_data = [];

@@ -12,7 +12,7 @@ class UpdateMemberRequest extends FormRequest
         return $this->user()->hasRole('organizationadmin');
     }
 
-    
+
     public function rules(): array
     {
         return [

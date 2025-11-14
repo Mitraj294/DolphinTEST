@@ -259,4 +259,3 @@ class AssessmentCalculationService
         return new \App\Services\AssessmentEngine\WeightRepository();
     }
 }
-

@@ -9,17 +9,22 @@
 
       <div class="user-graphs-content">
         <!-- Self Wiring -->
-        <GraphSection title="Self Wiring" :count="selfCount" :chartOption="originalOption" :isReady="isReady" />
+        <GraphSection
+          title="Self Wiring"
+          :count="selfCount"
+          :chartOption="originalOption"
+          :isReady="isReady"
+        />
 
         <!-- Adapted Self Wiring -->
-          <GraphSection
-            title="Adapted Self Wiring"
-            :count="conceptCount"
-            :chartOption="adjustedOption"
-            :isReady="isReady"
-            :header-extra-text="energizeText"
-            :header-extra-class="energizeClass"
-          />
+        <GraphSection
+          title="Adapted Self Wiring"
+          :count="conceptCount"
+          :chartOption="adjustedOption"
+          :isReady="isReady"
+          :header-extra-text="energizeText"
+          :header-extra-class="energizeClass"
+        />
       </div>
     </div>
   </div>
@@ -32,16 +37,16 @@ import VueECharts from 'vue-echarts';
 import axios from 'axios';
 import storage from '@/services/storage';
 import { getApiBase } from '@/env';
-import * as echarts from 'echarts/core'
-import { ScatterChart, LineChart } from 'echarts/charts'
+import * as echarts from 'echarts/core';
+import { ScatterChart, LineChart } from 'echarts/charts';
 import {
   GridComponent,
   TooltipComponent,
   TitleComponent,
   LegendComponent,
   GraphicComponent,
-} from 'echarts/components'
-import { CanvasRenderer, SVGRenderer } from 'echarts/renderers'
+} from 'echarts/components';
+import { CanvasRenderer, SVGRenderer } from 'echarts/renderers';
 
 echarts.use([
   ScatterChart,
@@ -52,8 +57,8 @@ echarts.use([
   LegendComponent,
   GraphicComponent,
   CanvasRenderer,
-  SVGRenderer
-])
+  SVGRenderer,
+]);
 
 /* ------------------------
    Reusable Child Component (render-function to avoid runtime template compilation)
@@ -67,46 +72,52 @@ const GraphSection = defineComponent({
     isReady: { type: Boolean, required: false },
     // optional header extra text and class (used for the Energize badge)
     headerExtraText: { type: String, required: false },
-    headerExtraClass: { type: String, required: false }
+    headerExtraClass: { type: String, required: false },
   },
   setup(props) {
-    return () => h('div', { class: 'user-graph-section' }, [
-      h('div', { class: 'user-graph-header' }, [
-        props.title,
-        props.headerExtraText ? h('div', {
-          class: ['energize-badge', props.headerExtraClass],
-          style: {
-            marginLeft: '10px',
-            display: 'inline-flex',
-            alignItems: 'center',
-            padding: '6px 10px',
-            borderRadius: '12px',
-            backgroundColor: (function () {
-              if (props.headerExtraClass === 'energize-yes') return '#2a9d8f';
-              if (props.headerExtraClass === 'energize-no') return '#e63946';
-              return 'transparent';
-            })(),
-            color: '#ffffff',
-            fontWeight: 700,
-            fontSize: '13px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-          }
-        }, props.headerExtraText) : null
-      ]),
-      h('div', { class: 'user-graph-inner' }, [
-       
-        (props.chartOption && props.chartOption.series && props.chartOption.series.length)
-          ? h(VueECharts, {
-              class: 'echart',
-              option: props.chartOption,
-              initOptions: { renderer: 'svg' },
-              autoresize: true,
-              style: { height: '300px', width: '100%', minHeight: '220px' }
-            })
-          : h('div', { class: 'chart-loading' }, 'No chart data available.')
-      ])
-    ]);
-  }
+    return () =>
+      h('div', { class: 'user-graph-section' }, [
+        h('div', { class: 'user-graph-header' }, [
+          props.title,
+          props.headerExtraText
+            ? h(
+                'div',
+                {
+                  class: ['energize-badge', props.headerExtraClass],
+                  style: {
+                    marginLeft: '10px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    padding: '6px 10px',
+                    borderRadius: '12px',
+                    backgroundColor: (function () {
+                      if (props.headerExtraClass === 'energize-yes') return '#2a9d8f';
+                      if (props.headerExtraClass === 'energize-no') return '#e63946';
+                      return 'transparent';
+                    })(),
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  },
+                },
+                props.headerExtraText
+              )
+            : null,
+        ]),
+        h('div', { class: 'user-graph-inner' }, [
+          props.chartOption && props.chartOption.series && props.chartOption.series.length
+            ? h(VueECharts, {
+                class: 'echart',
+                option: props.chartOption,
+                initOptions: { renderer: 'svg' },
+                autoresize: true,
+                style: { height: '300px', width: '100%', minHeight: '220px' },
+              })
+            : h('div', { class: 'chart-loading' }, 'No chart data available.'),
+        ]),
+      ]);
+  },
 });
 
 /* ------------------------
@@ -137,8 +148,10 @@ async function loadResults() {
   rawResults.value = results;
 
   // collect unique attempt ids and sort numerically ascending so dropdown shows 1,2,3
-  const attemptIds = Array.from(new Set(results.map(r => r.attempt_id))).sort((a, b) => Number(a) - Number(b));
-  attemptOptions.value = attemptIds.map(id => ({ label: `Attempt ${id}`, value: id }));
+  const attemptIds = Array.from(new Set(results.map((r) => r.attempt_id))).sort(
+    (a, b) => Number(a) - Number(b)
+  );
+  attemptOptions.value = attemptIds.map((id) => ({ label: `Attempt ${id}`, value: id }));
 
   // default to latest attempt (highest id) which is the last after sorting asc
   selectedAttempt.value = attemptIds.length ? attemptIds[attemptIds.length - 1] : null;
@@ -146,7 +159,8 @@ async function loadResults() {
 }
 
 function updateSelectedResult() {
-  selectedResult.value = rawResults.value.find(r => String(r.attempt_id) === String(selectedAttempt.value)) || null;
+  selectedResult.value =
+    rawResults.value.find((r) => String(r.attempt_id) === String(selectedAttempt.value)) || null;
 }
 
 watch(selectedAttempt, updateSelectedResult);
@@ -163,7 +177,7 @@ onMounted(async () => {
 function buildProjectionData(r, type = 'original') {
   if (!r) return null;
   const prefix = type === 'concept' ? 'conc_' : 'self_';
-  const toPct = v => (typeof v === 'number' ? Math.round(v * 100) : 0);
+  const toPct = (v) => (typeof v === 'number' ? Math.round(v * 100) : 0);
   // Helper to read a possibly-prefixed numeric field reliably
   const readPrefNumber = (obj, key) => {
     const v = obj[key];
@@ -193,7 +207,7 @@ function buildProjectionData(r, type = 'original') {
     urgency: toPct(r[`${prefix}c`]),
     unstructured: toPct(r[`${prefix}d`]),
     decision: decisionPct,
-    avg: toPct(r[`${prefix}avg`])
+    avg: toPct(r[`${prefix}avg`]),
   };
 }
 
@@ -213,12 +227,13 @@ function buildChartOption(r, title, type) {
     { value: [d.collaborative, 0], name: 'A' },
     { value: [d.internalProcessor, 1], name: 'B' },
     { value: [d.urgency, 2], name: 'C' },
-    { value: [d.unstructured, 3], name: 'D' }
+    { value: [d.unstructured, 3], name: 'D' },
   ];
   // Decision point only on self/original
   const decisionPoint = isOriginal ? { value: [d.decision, 4], name: 'DA' } : null;
 
-  const avg = d.avg || Math.round((d.collaborative + d.internalProcessor + d.urgency + d.unstructured) / 4);
+  const avg =
+    d.avg || Math.round((d.collaborative + d.internalProcessor + d.urgency + d.unstructured) / 4);
 
   return {
     // Title is rendered by the component header already; avoid duplicating it inside the chart
@@ -228,11 +243,11 @@ function buildChartOption(r, title, type) {
     xAxis: { type: 'value', min: 0, max: 100, splitLine: { show: true } },
     yAxis: [
       { type: 'category', data: categories, inverse: true },
-      { type: 'category', data: right, position: 'right', inverse: true }
+      { type: 'category', data: right, position: 'right', inverse: true },
     ],
     tooltip: {
       trigger: 'item',
-      formatter: p => `${categories[p.value[1]]} ⇄ ${right[p.value[1]]}: ${p.value[0]}%`
+      formatter: (p) => `${categories[p.value[1]]} ⇄ ${right[p.value[1]]}: ${p.value[0]}%`,
     },
     series: [
       {
@@ -248,7 +263,7 @@ function buildChartOption(r, title, type) {
           position: 'right',
           distance: 6,
           color: '#0a74c5',
-          fontWeight: '700'
+          fontWeight: '700',
         },
 
         markLine: {
@@ -256,70 +271,86 @@ function buildChartOption(r, title, type) {
           symbol: 'none',
           lineStyle: { type: 'dotted', color: '#d14a61', width: 2 },
           label: { show: true, formatter: `Avg: ${avg}%`, position: 'end', color: '#d14a61' },
-          data: [{ xAxis: avg }]
-        }
+          data: [{ xAxis: avg }],
+        },
       },
       {
         name: 'Trend',
         type: 'line',
-        data: basePoints.map(p => p.value),
+        data: basePoints.map((p) => p.value),
         showSymbol: true,
         symbol: 'circle',
         symbolSize: 10,
         lineStyle: { color: '#0a74c5', width: 2 },
         itemStyle: { color: '#0a74c5' },
-        connectNulls: false
+        connectNulls: false,
       },
       // Decision approach styled distinctly and not connected by the trend line
-      ...(isOriginal ? [{
-        name: 'Decision',
-        type: 'scatter',
-        data: [decisionPoint],
-        symbol: 'circle',
-        symbolSize: 22,
-        itemStyle: {
-          color: '#e76f51',
-          borderColor: 'transparent',
-          borderWidth: 0,
-          shadowBlur: 10,
-          shadowColor: 'rgba(0,0,0,0.18)'
-        },
-        label: {
-          show: true,
-          formatter: '{b}',
-          position: 'inside',
-          color: '#000000',
-          fontWeight: '800',
-          fontSize: 12,
-          // optional rounded badge if label position changes later
-          backgroundColor: 'transparent',
-          borderRadius: 6,
-          padding: [2, 6]
-        },
-        z: 5
-      }] : []),
+      ...(isOriginal
+        ? [
+            {
+              name: 'Decision',
+              type: 'scatter',
+              data: [decisionPoint],
+              symbol: 'circle',
+              symbolSize: 22,
+              itemStyle: {
+                color: '#e76f51',
+                borderColor: 'transparent',
+                borderWidth: 0,
+                shadowBlur: 10,
+                shadowColor: 'rgba(0,0,0,0.18)',
+              },
+              label: {
+                show: true,
+                formatter: '{b}',
+                position: 'inside',
+                color: '#000000',
+                fontWeight: '800',
+                fontSize: 12,
+                // optional rounded badge if label position changes later
+                backgroundColor: 'transparent',
+                borderRadius: 6,
+                padding: [2, 6],
+              },
+              z: 5,
+            },
+          ]
+        : []),
       // Fallback explicit vertical avg line: a dotted line that connects the top and bottom category indices
       {
         name: 'AvgLineExplicit',
         type: 'line',
-        data: [[avg, 0], [avg, categories.length - 1]],
+        data: [
+          [avg, 0],
+          [avg, categories.length - 1],
+        ],
         showSymbol: false,
         lineStyle: { type: 'dotted', color: '#222', width: 2 },
         silent: true,
-        z: 10
-      }
-    ]
-    
+        z: 10,
+      },
+    ],
   };
 }
 
 /* ------------------------
    Computed Properties
 ------------------------ */
-const originalOption = computed(() => buildChartOption(selectedResult.value, 'Original Self', 'original'));
-const adjustedOption = computed(() => buildChartOption(selectedResult.value, 'Adapted Self', 'concept'));
-const selfCount = computed(() => selectedResult.value?.self_total_count || selectedResult.value?.self_total_words?.length || null);
-const conceptCount = computed(() => selectedResult.value?.conc_total_count || selectedResult.value?.conc_total_words?.length || null);
+const originalOption = computed(() =>
+  buildChartOption(selectedResult.value, 'Original Self', 'original')
+);
+const adjustedOption = computed(() =>
+  buildChartOption(selectedResult.value, 'Adapted Self', 'concept')
+);
+const selfCount = computed(
+  () =>
+    selectedResult.value?.self_total_count || selectedResult.value?.self_total_words?.length || null
+);
+const conceptCount = computed(
+  () =>
+    selectedResult.value?.conc_total_count || selectedResult.value?.conc_total_words?.length || null
+);
 
 // Energize comparison: if concept average > self average => Energized (green), if less => De-energized (red)
 const concAvg = computed(() => {
@@ -343,9 +374,6 @@ const energizeClass = computed(() => {
   return concAvg.value > selfAvg.value ? 'energize-yes' : 'energize-no';
 });
 </script>
-
-
-
 
 <style scoped>
 .user-graphs-outer {
@@ -424,8 +452,6 @@ const energizeClass = computed(() => {
   flex-direction: column;
 }
 
-
-
 .echart {
   width: 100%;
   height: 260px;
@@ -450,8 +476,6 @@ const energizeClass = computed(() => {
   font-size: 14px;
 }
 
-
-
 @media (max-width: 1100px) {
   .user-graphs-content {
     flex-direction: column;
@@ -472,8 +496,12 @@ const energizeClass = computed(() => {
   font-weight: 700;
   font-size: 14px;
   color: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
-.energize-yes { background-color: #2a9d8f; }
-.energize-no { background-color: #e63946; }
+.energize-yes {
+  background-color: #2a9d8f;
+}
+.energize-no {
+  background-color: #e63946;
+}
 </style>

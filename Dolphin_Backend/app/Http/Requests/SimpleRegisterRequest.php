@@ -11,7 +11,7 @@ class SimpleRegisterRequest extends FormRequest
         return true;
     }
 
-    
+
     public function rules(): array
     {
         return [
@@ -20,7 +20,7 @@ class SimpleRegisterRequest extends FormRequest
             'email' => 'required|email|unique:users,email,NULL,id,deleted_at,NULL',
             'password' => 'required|string|min:6',
             'confirm_password' => 'required|string|min:6|same:password',
-            
+
             'phone_number' => 'required|regex:/^[6-9]\d{9}$/',
             'phone' => 'nullable|regex:/^[6-9]\d{9}$/',
         ];

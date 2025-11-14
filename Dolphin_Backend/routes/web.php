@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TestNotificationController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     $frontend = env('FRONTEND_URL', 'http://127.0.0.1:8080');

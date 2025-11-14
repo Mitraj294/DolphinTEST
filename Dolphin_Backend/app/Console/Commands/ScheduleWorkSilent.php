@@ -7,13 +7,12 @@ use Illuminate\Console\Scheduling\Schedule;
 
 class ScheduleWorkSilent extends Command
 {
-    
     protected $signature = 'schedule:work-silent {--sleep=60 : Number of seconds to sleep when no job is available}';
 
-    
+
     protected $description = 'Start the schedule worker (silent mode - only shows when tasks actually run)';
 
-    
+
     public function handle()
     {
         $this->info('Starting silent schedule worker...');

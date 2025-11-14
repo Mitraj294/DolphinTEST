@@ -66,7 +66,10 @@
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s, border 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border 0.2s;
   background: #f5f5f5;
   color: #222;
   min-height: 44px;
@@ -191,7 +194,7 @@
   position: relative;
   display: inline-block;
   width: 220px;
-  font-family: "Helvetica Neue LT Std", Arial, sans-serif;
+  font-family: 'Helvetica Neue LT Std', Arial, sans-serif;
 }
 
 .dropdown-radio-btn {
@@ -208,7 +211,9 @@
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
-  transition: border 0.15s, box-shadow 0.15s;
+  transition:
+    border 0.15s,
+    box-shadow 0.15s;
   outline: none;
 }
 
@@ -280,7 +285,7 @@
 }
 
 .dropdown-radio-circle.selected::after {
-  content: "";
+  content: '';
   display: block;
   width: 8px;
   height: 8px;
@@ -416,14 +421,14 @@
   font-weight: 600;
   color: #234056;
   margin-bottom: 8px;
-  font-family: "Helvetica Neue LT Std", Arial, sans-serif;
+  font-family: 'Helvetica Neue LT Std', Arial, sans-serif;
 }
 
 .login-subtitle {
   font-size: 1rem;
   color: #787878;
   margin-bottom: 32px;
-  font-family: "Inter", Arial, sans-serif;
+  font-family: 'Inter', Arial, sans-serif;
 }
 
 .input-group {
@@ -469,7 +474,7 @@
   margin-bottom: 32px;
   font-size: 0.9rem;
   color: #787878;
-  font-family: "Inter", Arial, sans-serif;
+  font-family: 'Inter', Arial, sans-serif;
 }
 
 .remember-label {
@@ -479,7 +484,7 @@
   cursor: pointer;
 }
 
-.remember-label input[type="checkbox"] {
+.remember-label input[type='checkbox'] {
   margin: 0;
   accent-color: #0074c2;
 }
@@ -522,7 +527,7 @@
   margin-bottom: 16px;
   font-size: 1rem;
   color: #787878;
-  font-family: "Helvetica Neue LT Std", Arial, sans-serif;
+  font-family: 'Helvetica Neue LT Std', Arial, sans-serif;
 }
 
 .switch-link {
@@ -555,7 +560,7 @@
 .copyright {
   color: #787878;
   font-size: 14px;
-  font-family: "Inter", Arial, sans-serif;
+  font-family: 'Inter', Arial, sans-serif;
   text-align: center;
   margin-top: 4px;
 }

@@ -1,5 +1,3 @@
-
-
 function normalizeSize(value) {
   if (value == null) return null;
   if (typeof value === 'number') return `${value}px`;
@@ -33,7 +31,7 @@ export function parseColumnStyle(col = {}) {
     for (const rule of cssRules) {
       const [property, value] = rule.split(':').map((s) => s?.trim());
       if (!property || !value) continue;
-      
+
       const camel = property.replaceAll(/-([a-z])/g, (_, ch) => ch.toUpperCase());
       style[camel] = value;
     }

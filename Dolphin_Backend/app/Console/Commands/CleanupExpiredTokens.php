@@ -2,24 +2,23 @@
 
 namespace App\Console\Commands;
 
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class CleanupExpiredTokens extends Command
 {
-    
     protected $signature = 'tokens:cleanup {--force : Force cleanup without confirmation}';
 
-    
+
     protected $description = 'Clean up expired OAuth access tokens from the database';
 
-    
+
     public function handle()
     {
         $this->info('Starting expired token cleanup...');
 
-        
+
         $expiredCount = DB::table('oauth_access_tokens')
             ->where('expires_at', '<', Carbon::now())
             ->count();
@@ -31,20 +30,20 @@ class CleanupExpiredTokens extends Command
 
         $this->info("Found {$expiredCount} expired tokens.");
 
-        
+
         if ((!$this->option('force')) && (!$this->confirm("Do you want to delete {$expiredCount} expired tokens?"))) {
             $this->info('Cleanup cancelled.');
             return 0;
         }
 
-        
+
         $deletedCount = DB::table('oauth_access_tokens')
             ->where('expires_at', '<', Carbon::now())
             ->delete();
 
         $this->info("Successfully deleted {$deletedCount} expired tokens.");
 
-        
+
         $revokedCount = DB::table('oauth_access_tokens')
             ->where('revoked', 1)
             ->where('created_at', '<', Carbon::now()->subDays(7))
@@ -63,7 +62,7 @@ class CleanupExpiredTokens extends Command
             }
         }
 
-        
+
         $refreshTokensCount = DB::table('oauth_refresh_tokens')
             ->whereNotExists(function ($query) {
                 $query->select(DB::raw(1))

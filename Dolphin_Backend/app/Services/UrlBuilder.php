@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Services;
+
 class UrlBuilder
 {
     public static function base(): string
@@ -36,4 +38,4 @@ class UrlBuilder
         return self::join('/register');
     }
 }
-        return self::join(self::assessmentsPath($id));
+return self::join(self::assessmentsPath($id));

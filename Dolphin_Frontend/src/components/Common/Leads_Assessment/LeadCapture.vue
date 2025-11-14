@@ -378,7 +378,6 @@ export default {
         this.form.city_id = null;
         this.states = [];
         this.cities = [];
-       
       }
     },
     onStateChange() {
@@ -397,7 +396,6 @@ export default {
       } else {
         this.form.city_id = null;
         this.cities = [];
-    
       }
     },
     async handleSaveLead() {

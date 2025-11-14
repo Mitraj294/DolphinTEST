@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Carbon\Carbon;
 
 class Announcement extends Model
 {
@@ -16,16 +16,16 @@ class Announcement extends Model
         'sent_at',
     ];
 
-    
+
     protected $casts = [
         'schedule_date' => 'date',
-        
-        
+
+
         'schedule_time' => 'string',
         'sent_at' => 'datetime',
     ];
 
-    
+
     public function groups(): BelongsToMany
     {
         return $this->belongsToMany(Group::class, 'announcement_groups')
@@ -33,33 +33,33 @@ class Announcement extends Model
             ->withTimestamps();
     }
 
-    
+
     public function organizations(): BelongsToMany
     {
         return $this->belongsToMany(Organization::class, 'announcement_organizations')
             ->withTimestamps();
     }
 
-    
+
     public function admins(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'announcement_dolphin_admins', 'announcement_id', 'admin_id')
             ->withTimestamps();
     }
 
-    
+
     public function getBodyAttribute(): ?string
     {
         return $this->attributes['message'] ?? null;
     }
 
-    
+
     public function setBodyAttribute(?string $body): void
     {
         $this->attributes['message'] = $body;
     }
 
-    
+
     public function getScheduledAtAttribute(): ?\Carbon\Carbon
     {
         $date = $this->attributes['schedule_date'] ?? null;
@@ -74,7 +74,7 @@ class Announcement extends Model
         return null;
     }
 
-    
+
     public function setScheduledAtAttribute($scheduledAt): void
     {
         if (!$scheduledAt) {
@@ -83,7 +83,7 @@ class Announcement extends Model
         try {
             $dt = Carbon::parse($scheduledAt);
             $this->attributes['schedule_date'] = $dt->toDateString();
-            
+
             $this->attributes['schedule_time'] = $dt->format('H:i:s');
         } catch (\Exception $e) {
             // Log parse failures so malformed scheduled_at values are traceable

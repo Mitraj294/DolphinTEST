@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
 {
-    
     public function index(Request $request)
     {
         $user = $request->user();
@@ -26,7 +25,7 @@ class InvoiceController extends Controller
         return response()->json($query->orderBy('created_at', 'desc')->paginate($perPage));
     }
 
-    
+
     public function store(Request $request)
     {
         $user = $request->user();
@@ -49,7 +48,7 @@ class InvoiceController extends Controller
         $invoice = SubscriptionInvoice::create([
             'subscription_id' => $validated['subscription_id'],
             'stripe_invoice_id' => $validated['stripe_invoice_id'],
-            
+
             'amount_due' => (string) $validated['amount_due'],
             'amount_paid' => (string) $validated['amount_paid'],
             'currency' => strtoupper($validated['currency']),
@@ -62,7 +61,7 @@ class InvoiceController extends Controller
         return response()->json(['invoice' => $invoice], 201);
     }
 
-    
+
     public function show(string $id)
     {
         $user = request()->user();
@@ -74,7 +73,7 @@ class InvoiceController extends Controller
         return response()->json(['invoice' => $invoice]);
     }
 
-    
+
     public function update(Request $request, string $id)
     {
         $user = $request->user();
@@ -109,7 +108,7 @@ class InvoiceController extends Controller
         return response()->json(['invoice' => $invoice]);
     }
 
-    
+
     public function destroy(string $id)
     {
         $user = request()->user();

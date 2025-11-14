@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use App\Models\Lead;
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB; // Make sure DB facade is imported
 use App\Models\Role;
+use App\Models\User;
+use Illuminate\Database\Seeder; // Make sure DB facade is imported
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
                 'status' => 'active',
             ]);
-            
+
             $superadminRole = Role::where('name', 'superadmin')->first();
             if ($superadminRole) {
                 $user->roles()->attach($superadminRole->id);
@@ -74,7 +74,7 @@ class DatabaseSeeder extends Seeder
                 'Docile',
                 'Restless',
             ];
-            
+
             if (DB::table('questions')->count() === 0) {
                 DB::table('questions')->insert([
                     [

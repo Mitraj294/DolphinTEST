@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreAssessmentScheduleRequest;
-use App\Models\OrganizationAssessment;
+use App\Jobs\SendAssessmentInvitationsJob;
 use App\Models\Group;
+use App\Models\OrganizationAssessment;
 use App\Models\User;
 use App\Notifications\AssessmentInvitation;
-use App\Jobs\SendAssessmentInvitationsJob;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\Schema;
 
 class AssessmentScheduleController extends Controller
 {
-    
     public function store(StoreAssessmentScheduleRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -25,20 +24,20 @@ class AssessmentScheduleController extends Controller
         try {
             $assessment = OrganizationAssessment::findOrFail($validated['assessment_id']);
 
-            
-            
+
+
             $tz = $validated['timezone'] ?? config('app.timezone');
             $sendAt = null;
             if (!empty($validated['send_at'])) {
                 try {
-                    
+
                     $sendAt = Carbon::parse($validated['send_at'])->setTimezone($tz);
                 } catch (\Throwable $e) {
                     $sendAt = null;
                 }
             }
 
-            
+
             if (empty($sendAt) && !empty($validated['date'])) {
                 $timePart = !empty($validated['time']) ? $validated['time'] : '00:00:00';
                 try {
@@ -48,16 +47,16 @@ class AssessmentScheduleController extends Controller
                 }
             }
 
-            
 
-            
+
+
             if ($sendAt) {
                 $assessment->date = $sendAt->toDateString();
                 $assessment->time = $sendAt->format('H:i:s');
                 if (Schema::hasColumn('organization_assessments', 'send_at')) {
-                    
-                    
-                    
+
+
+
                     $assessment->send_at = $sendAt->clone()->setTimezone('UTC');
                 }
             } else {
@@ -72,15 +71,15 @@ class AssessmentScheduleController extends Controller
             DB::transaction(function () use ($assessment, $validated, $sendAt) {
                 $assessment->save();
 
-                
+
                 if (!empty($validated['group_ids']) && is_array($validated['group_ids'])) {
                     $assessment->groups()->syncWithoutDetaching($validated['group_ids']);
                 }
 
-                
+
                 $memberIds = collect($validated['member_ids'] ?? []);
 
-                
+
                 if (!empty($validated['group_ids']) && is_array($validated['group_ids'])) {
                     $groupUsers = Group::whereIn('id', $validated['group_ids'])
                         ->with('users:id')
@@ -92,28 +91,28 @@ class AssessmentScheduleController extends Controller
                 $memberIds = $memberIds->unique()->filter()->values();
 
                 if ($memberIds->isNotEmpty()) {
-                    
+
                     $attachData = [];
                     foreach ($memberIds as $uid) {
                         $attachData[$uid] = ['status' => 'Pending'];
                     }
                     $assessment->members()->syncWithoutDetaching($attachData);
-                    
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        Log::info('[AssessmentScheduleController] schedule persisted; will be processed by scheduler', [
-                            'assessment_id' => $assessment->id,
-                            'sendAt' => $sendAt ? $sendAt->toISOString() : null,
-                        ]);
+
+
+
+
+
+
+
+
+                    Log::info('[AssessmentScheduleController] schedule persisted; will be processed by scheduler', [
+                        'assessment_id' => $assessment->id,
+                        'sendAt' => $sendAt ? $sendAt->toISOString() : null,
+                    ]);
                 }
             });
 
-            
+
             $notifiedIds = [];
             if (Schema::hasColumn('organization_assessment_member', 'notified_at')) {
                 $notifiedIds = DB::table('organization_assessment_member')
@@ -123,10 +122,10 @@ class AssessmentScheduleController extends Controller
                     ->toArray();
             }
 
-            
+
             $assessment->loadMissing('groups', 'members');
 
-            
+
             $schedulePayload = [
                 'date' => (string) $assessment->date,
                 'time' => (string) $assessment->time,
@@ -136,7 +135,7 @@ class AssessmentScheduleController extends Controller
                 'notified_member_ids' => $notifiedIds,
             ];
 
-            
+
             if (Schema::hasColumn('organization_assessments', 'send_at') && $assessment->send_at) {
                 try {
                     $schedulePayload['send_at'] = Carbon::parse($assessment->send_at)->toISOString();
@@ -162,7 +161,7 @@ class AssessmentScheduleController extends Controller
         }
     }
 
-    
+
     public function show(Request $request): JsonResponse
     {
         $request->validate([
@@ -170,11 +169,11 @@ class AssessmentScheduleController extends Controller
         ]);
 
         try {
-            
+
             $assessment = OrganizationAssessment::with(['groups.users', 'members'])
                 ->findOrFail($request->query('assessment_id'));
 
-            
+
             $notifiedIds = [];
             if (Schema::hasColumn('organization_assessment_member', 'notified_at')) {
                 $notifiedIds = DB::table('organization_assessment_member')
@@ -184,7 +183,7 @@ class AssessmentScheduleController extends Controller
                     ->toArray();
             }
 
-            
+
             $groupsWithMembers = [];
             foreach ($assessment->groups as $g) {
                 $members = [];
@@ -195,7 +194,7 @@ class AssessmentScheduleController extends Controller
                             'email' => $u->email ?? null,
                             'first_name' => $u->first_name ?? null,
                             'last_name' => $u->last_name ?? null,
-                            
+
                             'member_role' => $u->pivot && isset($u->pivot->role) ? $u->pivot->role : null,
                         ];
                     }
@@ -208,7 +207,7 @@ class AssessmentScheduleController extends Controller
                 ];
             }
 
-            
+
             $membersWithDetails = [];
             foreach ($assessment->members as $m) {
                 $membersWithDetails[] = [
@@ -216,7 +215,7 @@ class AssessmentScheduleController extends Controller
                     'email' => $m->email ?? null,
                     'first_name' => $m->first_name ?? null,
                     'last_name' => $m->last_name ?? null,
-                    
+
                     'member_roles' => [],
                 ];
             }
@@ -229,10 +228,10 @@ class AssessmentScheduleController extends Controller
                 'group_ids' => $assessment->groups->pluck('id')->toArray(),
                 'member_ids' => $assessment->members->pluck('id')->toArray(),
                 'notified_member_ids' => $notifiedIds,
-                
+
                 'groups_with_members' => $groupsWithMembers,
                 'members_with_details' => $membersWithDetails,
-                
+
                 'emails' => [],
                 'notifications' => [],
             ];

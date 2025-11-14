@@ -388,7 +388,8 @@ export default {
         const emailPromises = safeSelected.map((member) => {
           try {
             // member may be an object or an id; require an object with email to proceed
-            if (!member || typeof member !== 'object' || !member.email) return Promise.resolve({ skipped: true });
+            if (!member || typeof member !== 'object' || !member.email)
+              return Promise.resolve({ skipped: true });
 
             const group_id =
               member.group_id ||
@@ -420,7 +421,9 @@ export default {
           .map((r) => r.value && r.value.member?.email)
           .filter(Boolean);
 
-        const msg = failed.length ? `Assessment scheduled - ${failed.length} email(s) failed` : 'Assessment scheduled';
+        const msg = failed.length
+          ? `Assessment scheduled - ${failed.length} email(s) failed`
+          : 'Assessment scheduled';
         this._showToast('success', 'Scheduled', msg);
 
         // Update the assessments array using the returned schedule payload

@@ -290,7 +290,7 @@ export default {
           headers: { Authorization: `Bearer ${token}` },
         });
         // Map leads and resolve referral source name if possible
-  leads.value = response.data.map((lead) => {
+        leads.value = response.data.map((lead) => {
           // Figure out the referral source name
           let sourceName = lead.find_us || '';
 
@@ -427,7 +427,10 @@ export default {
         toast.add({
           severity: 'success',
           summary: 'Success',
-          detail: notesModalMode.value === 'add' ? 'Note added successfully.' : 'Note saved successfully.',
+          detail:
+            notesModalMode.value === 'add'
+              ? 'Note added successfully.'
+              : 'Note saved successfully.',
           life: 3000,
         });
 
@@ -901,7 +904,7 @@ export default {
   padding: 0 10px;
   box-sizing: border-box;
   /* Make it visually distinct from table background */
-  border: 1px solid rgba(0,0,0,0.06);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   /* Ensure it remains on top of other table content */
   z-index: 2;
 }

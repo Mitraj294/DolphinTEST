@@ -1,14 +1,13 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AssessmentController;
-use App\Http\Controllers\AssessmentScheduleController;
 use App\Http\Controllers\AssessmentResponseController;
 use App\Http\Controllers\AssessmentResultController;
+use App\Http\Controllers\AssessmentScheduleController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Billing\BillingController as BillingController;
 use App\Http\Controllers\GroupController;
-use App\Http\Controllers\ScheduledEmailController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LeadNoteController;
 use App\Http\Controllers\LocationController;
@@ -16,13 +15,14 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationUserController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\ScheduledEmailController;
 use App\Http\Controllers\SendAgreementController;
 use App\Http\Controllers\SendAssessmentController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SubscriptionController;
-use App\Http\Controllers\Billing\BillingController as BillingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WebhookLogController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -178,9 +178,9 @@ Route::middleware('auth:api')->group(function () {
     Route::middleware('subscription.check')->group(function () {
 
         Route::apiResource('assessments', AssessmentController::class)->only(['index', 'store']);
-    // Assessment scheduling endpoints
-    Route::get('/assessment-schedules', [AssessmentScheduleController::class, 'show']);
-    Route::post('/assessment-schedules', [AssessmentScheduleController::class, 'store']);
+        // Assessment scheduling endpoints
+        Route::get('/assessment-schedules', [AssessmentScheduleController::class, 'show']);
+        Route::post('/assessment-schedules', [AssessmentScheduleController::class, 'store']);
         // Best-effort endpoint for scheduling individual emails from the frontend
         Route::post('/schedule-email', [ScheduledEmailController::class, 'store']);
         Route::get('/assessments-list', [AssessmentResponseController::class, 'getAssessments']);

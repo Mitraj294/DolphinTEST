@@ -60,7 +60,7 @@ export async function createCheckoutSession(priceId, opts = {}) {
     return res.data;
   } catch (err) {
     console.debug?.('createCheckoutSession failed:', err?.message || err);
-   throw err;
+    throw err;
   }
 }
 

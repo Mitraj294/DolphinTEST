@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\Traits\HasRoles;
 
 class User extends Authenticatable
 {
@@ -18,7 +18,7 @@ class User extends Authenticatable
     use HasApiTokens;
     use HasRoles;
 
-    
+
     protected $fillable = [
         'first_name',
         'last_name',
@@ -36,13 +36,13 @@ class User extends Authenticatable
         'trial_ends_at',
     ];
 
-    
+
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    
+
     protected $casts = [
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
@@ -53,22 +53,22 @@ class User extends Authenticatable
         'deleted_at' => 'datetime',
     ];
 
-    
-    
-    
+
+
+
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'role_users');
     }
 
-    
-    
 
-    
-    
 
-    
-    
+
+
+
+
+
+
     public function organizations(): BelongsToMany
     {
         return $this->belongsToMany(Organization::class, 'organization_users')
@@ -76,18 +76,18 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
-    
-    
 
-    
+
+
+
     public function organizationMemberships(): BelongsToMany
     {
         return $this->belongsToMany(Organization::class, 'organization_member')
             ->withTimestamps();
     }
 
-    
-    
+
+
 
     public function groups(): BelongsToMany
     {
@@ -96,82 +96,82 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
-    
-    
+
+
 
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);
     }
 
-    
-    
 
-    
-    
+
+
+
+
     public function state(): BelongsTo
     {
         return $this->belongsTo(State::class);
     }
 
-    
-    
+
+
 
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);
     }
 
-    
-    
+
+
 
     public function organizationAssessments(): HasMany
     {
         return $this->hasMany(OrganizationAssessment::class);
     }
 
-    
-    
+
+
 
     public function assessmentResponses(): HasMany
     {
         return $this->hasMany(AssessmentResponse::class);
     }
 
-    
-    
+
+
 
     public function assessmentResults(): HasMany
     {
         return $this->hasMany(AssessmentResult::class);
     }
 
-    
-    
+
+
 
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
     }
 
-    
-    
+
+
 
     public function leadNotes(): HasMany
     {
         return $this->hasMany(LeadNote::class, 'created_by');
     }
 
-    
-    
+
+
 
     public function managedOrganizations(): HasMany
     {
         return $this->hasMany(Organization::class, 'sales_person_id');
     }
 
-    
-    
+
+
 
     public function announcementsAsAdmin(): BelongsToMany
     {
@@ -179,6 +179,6 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
-    
-    
+
+
 }

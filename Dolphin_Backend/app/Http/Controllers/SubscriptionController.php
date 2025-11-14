@@ -1,8 +1,11 @@
 <?php
+
 namespace App\Http\Controllers;
+
+use App\Models\Lead;
 use App\Models\Plan;
 use App\Models\User;
-use App\Models\Lead;
+use App\Services\UrlBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -10,7 +13,6 @@ use Stripe\Checkout\Session as StripeSession;
 use Stripe\Customer;
 use Stripe\Exception\ApiErrorException;
 use Stripe\Stripe;
-use App\Services\UrlBuilder;
 
 class SubscriptionController extends Controller
 {
@@ -27,7 +29,7 @@ class SubscriptionController extends Controller
             'cancel_url' => ['nullable', 'url'],
         ]);
 
-    $plan = Plan::where('stripe_price_id', $validated['price_id'])->firstOrFail();
+        $plan = Plan::where('stripe_price_id', $validated['price_id'])->firstOrFail();
 
         $secret = config('services.stripe.secret');
         if (! $secret) {
@@ -39,8 +41,8 @@ class SubscriptionController extends Controller
         Stripe::setApiKey($secret);
 
         $stripeCustomerId = $this->resolveStripeCustomerId($user);
-    $successUrl = $validated['success_url'] ?? UrlBuilder::subscriptionsSuccessUrl();
-    $cancelUrl = $validated['cancel_url'] ?? UrlBuilder::subscriptionsCancelledUrl();
+        $successUrl = $validated['success_url'] ?? UrlBuilder::subscriptionsSuccessUrl();
+        $cancelUrl = $validated['cancel_url'] ?? UrlBuilder::subscriptionsCancelledUrl();
 
         try {
             $session = StripeSession::create([
@@ -94,7 +96,7 @@ class SubscriptionController extends Controller
             'cancel_url' => ['nullable', 'url'],
         ]);
 
-    
+
 
         $secret = config('services.stripe.secret');
         if (! $secret) {

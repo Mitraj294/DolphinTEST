@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Country;
-use App\Models\State;
 use App\Models\City;
+use App\Models\Country;
 use App\Models\ReferralSource;
+use App\Models\State;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class LocationController extends Controller
@@ -37,7 +37,7 @@ class LocationController extends Controller
             if ($countryId !== null) {
                 $states = State::where('country_id', (int) $countryId)->orderBy('name')->get(['id', 'name']);
             } else {
-                
+
                 $states = State::orderBy('name')->get(['id', 'name']);
             }
 
@@ -122,7 +122,7 @@ class LocationController extends Controller
     {
         try {
             Log::info('[LocationController] Fetching referral sources');
-            
+
             $sources = ReferralSource::orderBy('id')->get(['id', 'name']);
             Log::info('[LocationController] Referral sources fetched', ['count' => count($sources)]);
             return response()->json($sources);

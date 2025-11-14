@@ -92,18 +92,12 @@ export default {
         (item[this.optionLabel] || '').toLowerCase().includes(this.search.toLowerCase())
       );
     },
-    
-    
+
     displayItems() {
       if (this.filteredItems && this.filteredItems.length) return this.filteredItems;
-      
-      
+
       if (Array.isArray(this.selectedItems) && this.selectedItems.length) {
         return this.selectedItems.map((s) => {
-          
-          
-          
-          
           if (typeof s === 'string' || typeof s === 'number') {
             return { [this.optionValue]: s };
           }
@@ -118,8 +112,7 @@ export default {
         this.selectedItems.some((i) => i[this.optionValue] === item[this.optionValue])
       );
     },
-    
-    
+
     selectedLabelString() {
       if (!Array.isArray(this.selectedItems) || this.selectedItems.length === 0) return '';
 
@@ -150,7 +143,6 @@ export default {
       }
     },
     search() {
-      
       this.focusedIndex = -1;
     },
   },
@@ -205,7 +197,7 @@ export default {
         return String(lbl);
       }
     },
-    
+
     safeStringify(obj) {
       try {
         const seen = new WeakSet();
@@ -259,7 +251,6 @@ export default {
     },
 
     extractNestedLabel(item) {
-      
       const nestedKeys = ['role', 'user', 'data'];
       for (const key of nestedKeys) {
         const nested = item && item[key];
@@ -309,7 +300,6 @@ export default {
 
       if (s === null || s === undefined) return '';
 
-      
       if (typeof s === 'string' || typeof s === 'number') {
         const optLabel = this.getOptionLabelByValue(s);
         return optLabel ?? String(s);
@@ -347,7 +337,7 @@ export default {
         this.focusedIndex = -1;
         this.$nextTick(() => {
           this.updateDropdownPosition();
-          
+
           if (this.$refs.searchInput) {
             this.$refs.searchInput.focus();
           }
@@ -355,7 +345,6 @@ export default {
       }
     },
     toggleItem(item) {
-      
       const idx = this.selectedItems.findIndex(
         (i) => i[this.optionValue] === item[this.optionValue]
       );
@@ -385,12 +374,9 @@ export default {
           const dropdownRect = dropdownEl.getBoundingClientRect();
           const itemRect = item.getBoundingClientRect();
 
-          
           if (itemRect.top < dropdownRect.top) {
             dropdownEl.scrollTop = item.offsetTop;
-          }
-          
-          else if (itemRect.bottom > dropdownRect.bottom) {
+          } else if (itemRect.bottom > dropdownRect.bottom) {
             dropdownEl.scrollTop = item.offsetTop - dropdownEl.clientHeight + item.clientHeight;
           }
         }
@@ -432,7 +418,6 @@ export default {
         case ' ':
         case 'Spacebar':
           if (this.showDropdown) {
-            
             break;
           }
           event.preventDefault();
@@ -467,13 +452,10 @@ export default {
     },
     toggleSelectAll() {
       if (this.isAllSelected) {
-        
         const filteredIds = new Set(this.filteredItems.map((i) => i[this.optionValue]));
         const newSelected = this.selectedItems.filter((i) => !filteredIds.has(i[this.optionValue]));
         this.$emit('update:selectedItems', newSelected);
       } else {
-        
-        
         const merged = [...this.selectedItems];
         for (const item of this.filteredItems) {
           if (!merged.some((i) => i[this.optionValue] === item[this.optionValue])) {

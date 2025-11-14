@@ -16,7 +16,15 @@
                 <div
                   v-for="plan in plans"
                   :key="plan.id"
-                  :class="['plan-card', { 'plan-card--current': subscription && subscription.plan_id && Number(subscription.plan_id) === Number(plan.id) }]"
+                  :class="[
+                    'plan-card',
+                    {
+                      'plan-card--current':
+                        subscription &&
+                        subscription.plan_id &&
+                        Number(subscription.plan_id) === Number(plan.id),
+                    },
+                  ]"
                 >
                   <div v-if="plan.interval === 'yearly'" class="plan-card-badge">Save 2 Months</div>
                   <div class="plan-card-header">
@@ -30,7 +38,15 @@
                     >
                   </div>
                   <button
-                    :class="['plan-card-btn', { 'plan-card-btn--current': subscription && subscription.plan_id && Number(subscription.plan_id) === Number(plan.id) }]"
+                    :class="[
+                      'plan-card-btn',
+                      {
+                        'plan-card-btn--current':
+                          subscription &&
+                          subscription.plan_id &&
+                          Number(subscription.plan_id) === Number(plan.id),
+                      },
+                    ]"
                     :disabled="isLoading"
                     @click="planButtonAction(plan)()"
                   >
@@ -63,7 +79,15 @@
               <div
                 v-for="plan in plans"
                 :key="plan.id"
-                :class="['plan-card', { 'plan-card--current': subscription && subscription.plan_id && Number(subscription.plan_id) === Number(plan.id) }]"
+                :class="[
+                  'plan-card',
+                  {
+                    'plan-card--current':
+                      subscription &&
+                      subscription.plan_id &&
+                      Number(subscription.plan_id) === Number(plan.id),
+                  },
+                ]"
               >
                 <div v-if="plan.interval === 'yearly'" class="plan-card-badge">Save 2 Months</div>
                 <div class="plan-card-header">
@@ -77,7 +101,15 @@
                   >
                 </div>
                 <button
-                  :class="['plan-card-btn', { 'plan-card-btn--current': subscription && subscription.plan_id && Number(subscription.plan_id) === Number(plan.id) }]"
+                  :class="[
+                    'plan-card-btn',
+                    {
+                      'plan-card-btn--current':
+                        subscription &&
+                        subscription.plan_id &&
+                        Number(subscription.plan_id) === Number(plan.id),
+                    },
+                  ]"
                   :disabled="isLoading"
                   @click="planButtonAction(plan)()"
                 >

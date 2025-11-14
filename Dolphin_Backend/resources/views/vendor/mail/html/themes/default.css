@@ -1,6 +1,6 @@
 /* Base ------------------------------ */
 *:not(br):not(tr):not(html) {
-    font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
     box-sizing: border-box;
 }
 body {
@@ -8,19 +8,19 @@ body {
     height: 100%;
     margin: 0;
     line-height: 1.4;
-    background-color: #F2F4F6;
-    color: #74787E;
+    background-color: #f2f4f6;
+    color: #74787e;
     -webkit-text-size-adjust: none;
 }
 a {
-    color: #3869D4;
+    color: #3869d4;
 }
 /* Layout ------------------------------ */
 .email-wrapper {
     width: 100%;
     margin: 0;
     padding: 0;
-    background-color: #F2F4F6;
+    background-color: #f2f4f6;
 }
 .email-content {
     width: 100%;
@@ -39,7 +39,7 @@ a {
 .email-masthead_name {
     font-size: 24px;
     font-weight: bold;
-    color: #2F3133;
+    color: #2f3133;
     text-decoration: none;
     text-shadow: 0 1px 0 white;
 }
@@ -48,9 +48,9 @@ a {
     width: 100%;
     margin: 0;
     padding: 0;
-    border-top: 1px solid #EDEFF2;
-    border-bottom: 1px solid #EDEFF2;
-    background-color: #FFF;
+    border-top: 1px solid #edeff2;
+    border-bottom: 1px solid #edeff2;
+    background-color: #fff;
 }
 .email-body_inner {
     width: 570px;
@@ -64,7 +64,7 @@ a {
     text-align: center;
 }
 .email-footer p {
-    color: #AEAEAE;
+    color: #aeaeae;
     font-size: 12px;
     text-align: center;
 }
@@ -73,20 +73,20 @@ a {
 }
 .content-cell h1 {
     margin-top: 0;
-    color: #2F3133;
+    color: #2f3133;
     font-size: 19px;
     font-weight: bold;
 }
 .content-cell p {
     margin-top: 0;
-    color: #74787E;
+    color: #74787e;
     font-size: 16px;
     line-height: 1.5em;
 }
 .button {
     display: inline-block;
-    background-color: #3869D4;
-    color: #FFF !important;
+    background-color: #3869d4;
+    color: #fff !important;
     text-decoration: none;
     border-radius: 3px;
     box-shadow: 0 2px 3px rgba(0, 0, 0, 0.16);
@@ -96,8 +96,8 @@ a {
 }
 
 .button-primary {
-    background-color: #3869D4;
-    color: #FFF !important;
+    background-color: #3869d4;
+    color: #fff !important;
 }
 
 @media only screen and (max-width: 600px) {

@@ -6,17 +6,14 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreLeadRequest extends FormRequest
 {
-    
-    
-
     public function authorize(): bool
     {
         return true;
     }
 
-    
 
-    
+
+
     public function rules(): array
     {
         return [
@@ -25,7 +22,7 @@ class StoreLeadRequest extends FormRequest
             'email'             => 'required|string|email|max:255|unique:users,email,NULL,id,deleted_at,NULL',
             'phone'             => 'required|regex:/^[6-9]\d{9}$/',
             'referral_source_id' => 'required|integer|exists:referral_sources,id',
-            'find_us'           => 'nullable|integer|exists:referral_sources,id', 
+            'find_us'           => 'nullable|integer|exists:referral_sources,id',
             'organization_name' => 'required|string|max:500',
             'organization_size' => 'required|string',
             'notes'             => 'nullable|string',

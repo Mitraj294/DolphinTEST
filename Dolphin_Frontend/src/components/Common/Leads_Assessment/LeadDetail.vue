@@ -33,9 +33,18 @@
                     <b>
                       <span
                         class="status-badge"
-                        :class="(leadData.status || (leadData.registered_at ? 'Registered' : 'Lead Stage')).toLowerCase().replace(/\s+/g, '-')"
+                        :class="
+                          (
+                            leadData.status ||
+                            (leadData.registered_at ? 'Registered' : 'Lead Stage')
+                          )
+                            .toLowerCase()
+                            .replace(/\s+/g, '-')
+                        "
                       >
-                        {{ leadData.status || (leadData.registered_at ? 'Registered' : 'Lead Stage') }}
+                        {{
+                          leadData.status || (leadData.registered_at ? 'Registered' : 'Lead Stage')
+                        }}
                       </span>
                     </b>
                   </div>
@@ -709,11 +718,17 @@ export default {
   white-space: nowrap;
   padding: 0 10px;
   box-sizing: border-box;
-  border: 1px solid rgba(0,0,0,0.06);
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
-.status-badge.lead-stage { background: #6c757d; }
-.status-badge.assessment-sent { background: #007bff; }
-.status-badge.registered { background: #28a745; }
+.status-badge.lead-stage {
+  background: #6c757d;
+}
+.status-badge.assessment-sent {
+  background: #007bff;
+}
+.status-badge.registered {
+  background: #28a745;
+}
 
 @media (max-width: 800px) {
   .status-badge {

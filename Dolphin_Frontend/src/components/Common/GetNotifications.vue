@@ -4,8 +4,14 @@
       <div class="notifications-table-outer">
         <div class="notifications-table-card">
           <div class="notifications-controls">
-            <div class="notifications-left" style="display:flex; align-items:center; gap:18px; flex:1; min-width:0;">
-              <div class="notifications-date-wrapper" style="display:flex; align-items:center; gap:8px;">
+            <div
+              class="notifications-left"
+              style="display: flex; align-items: center; gap: 18px; flex: 1; min-width: 0"
+            >
+              <div
+                class="notifications-date-wrapper"
+                style="display: flex; align-items: center; gap: 8px"
+              >
                 <input
                   type="date"
                   placeholder="Select Date"
@@ -16,13 +22,13 @@
                 <button
                   v-if="selectedDate"
                   class="mark-all"
-                  style="height:36px"
+                  style="height: 36px"
                   @click="clearDate"
                 >
                   Clear
                 </button>
               </div>
-                <div class="notifications-tabs" style="width: 240px; min-width: 240px; display:flex;">
+              <div class="notifications-tabs" style="width: 240px; min-width: 240px; display: flex">
                 <button
                   :class="['notifications-tab-btn-left', { active: tab === 'unread' }]"
                   @click="switchTab('unread')"
@@ -35,10 +41,13 @@
                 >
                   All
                 </button>
-                </div>
+              </div>
             </div>
 
-            <div class="notifications-right" style="display:flex; align-items:center; justify-content:flex-end; min-width:0;">
+            <div
+              class="notifications-right"
+              style="display: flex; align-items: center; justify-content: flex-end; min-width: 0"
+            >
               <button
                 v-if="tab === 'unread' && notifications.length > 0 && !isImpersonating"
                 :disabled="markAllLoading"
@@ -169,7 +178,6 @@ export default {
     };
   },
   computed: {
-    
     isImpersonating() {
       return !!storage.get('superAuthToken');
     },
@@ -181,7 +189,6 @@ export default {
       return this.filteredNotifications.slice(start, start + this.pageSize);
     },
     filteredNotifications() {
-      
       let list = [];
       if (this.tab === 'unread') {
         list = this.notifications.slice();
@@ -191,16 +198,14 @@ export default {
         list = this.notifications.slice();
       }
 
-      
       if (this.selectedDate) {
-        
         const sel = parseISO(this.selectedDate);
         if (isValid(sel)) {
           list = list.filter((n) => {
             const createdAt =
               n.created_at || (n._rawData && (n._rawData.created_at || n._rawData.createdAt)) || '';
             if (!createdAt) return false;
-            
+
             let d = typeof createdAt === 'string' ? parseISO(createdAt) : new Date(createdAt);
             if (!isValid(d)) {
               d = new Date(createdAt);
@@ -216,34 +221,24 @@ export default {
   },
   methods: {
     async switchTab(newTab) {
-      
       if (this.tab === newTab) return;
 
       this.tab = newTab;
-      this.page = 1; 
+      this.page = 1;
       await this.fetchNotifications();
     },
     async fetchNotifications() {
       try {
-        
-        
-        
         const role = authMiddleware.getRole();
-        
-        
+
         if (role === 'superadmin' && this.tab === 'unread' && !this.isImpersonating) {
           this.notificationsReady = true;
           this.notifications = [];
           this.readNotifications = [];
-          
+
           try {
             this.updateNotificationCount();
           } catch (err) {
-            
-            
-            
-            
-            
             console.debug('GetNotifications: updateNotificationCount failed', err);
           }
           return;
@@ -259,11 +254,6 @@ export default {
         const storedUserId = storage.get('userId') || storage.get('user_id');
         const currentUserId = storedUserId ? Number.parseInt(storedUserId, 10) : 0;
 
-        
-        
-        
-        
-        
         let mapped = [];
         if (this.isImpersonating) {
           mapped = notificationsArr.map((n) => this._normalizeNotification(n));
@@ -274,8 +264,7 @@ export default {
         }
 
         this.notificationsReady = true;
-        
-        
+
         this.notifications = mapped.filter((m) => !m.read_at);
         this.readNotifications = mapped.filter((m) => !!m.read_at);
       } catch (error) {
@@ -408,17 +397,13 @@ export default {
       });
     },
     onDateChange() {
-      
       this.page = 1;
-      
-      
     },
     clearDate() {
       this.selectedDate = '';
       this.page = 1;
     },
     formatDate(dateStr) {
-      
       const d = new Date(dateStr);
       if (Number.isNaN(d)) return dateStr;
       const options = {
@@ -445,15 +430,15 @@ export default {
         }
         const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
         await axios.post('/api/notifications/mark-all-read', {}, config);
-        
+
         await this.fetchNotifications();
-        
+
         try {
           this.updateNotificationCount();
         } catch (e) {
           console.debug && console.debug('Error updating notification count:', e);
         }
-        
+
         globalThis.dispatchEvent(new Event('notification-updated'));
         globalThis.dispatchEvent(new Event('storage'));
       } catch (error) {
@@ -480,7 +465,7 @@ export default {
         try {
           await axios.post(`/api/announcements/${notif.id}/read`, {}, config);
           await this.fetchNotifications();
-          
+
           try {
             this.updateNotificationCount();
           } catch (e) {
@@ -516,18 +501,18 @@ export default {
     togglePageDropdown() {
       this.showPageDropdown = !this.showPageDropdown;
     },
-    
+
     updateNotificationCount() {
       if (!this.notificationsReady) {
         return;
       }
       const unreadCount = Array.isArray(this.notifications) ? this.notifications.length : 0;
       storage.set('notificationCount', String(unreadCount));
-      
+
       globalThis.dispatchEvent(new Event('storage'));
-      
+
       globalThis.dispatchEvent(new Event('notification-updated'));
-      
+
       globalThis.dispatchEvent(
         new CustomEvent('notification-count-sync', {
           detail: { count: unreadCount },
@@ -555,7 +540,6 @@ export default {
     },
   },
   mounted() {
-    
     if (
       storage.get('showDashboardWelcome') ||
       this.$route.name === 'GetNotification' ||

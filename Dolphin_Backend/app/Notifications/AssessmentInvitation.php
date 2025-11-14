@@ -24,13 +24,13 @@ class AssessmentInvitation extends Notification implements ShouldQueue
 
     public function via($notifiable)
     {
-        
+
         return ['mail', 'database'];
     }
 
     public function toMail($notifiable)
     {
-        
+
         $link = $this->assessmentLink;
         $subject = 'You have been invited to an assessment: ' . ($this->assessmentName ?? '');
 
@@ -47,13 +47,13 @@ class AssessmentInvitation extends Notification implements ShouldQueue
 
     public function toDatabase($notifiable)
     {
-        
+
         $linkPath = '/assessments/' . $this->assessmentId;
         return [
             'message' => 'You have a new assessment to complete: ' . $this->assessmentName,
             'link' => $linkPath,
             'assessment_id' => $this->assessmentId,
-            
+
             'assessment_name' => $this->assessmentName,
         ];
     }

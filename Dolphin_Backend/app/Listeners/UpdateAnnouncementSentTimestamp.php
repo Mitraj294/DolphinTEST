@@ -4,25 +4,24 @@ namespace App\Listeners;
 
 use App\Notifications\GeneralNotification;
 use Illuminate\Notifications\Events\NotificationSent;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class UpdateAnnouncementSentTimestamp
 {
-    
     public function __construct()
     {
         // No construction-time initialization required for this listener.
         // The listener operates statelessly in response to events.
     }
 
-    
+
     public function handle(NotificationSent $event): void
     {
         if ($event->notification instanceof GeneralNotification) {
             try {
-                
-                
+
+
                 $announcement = $event->notification->getAnnouncement();
                 $announcementId = $announcement->id ?? null;
 
@@ -47,7 +46,7 @@ class UpdateAnnouncementSentTimestamp
                     Log::warning('[UpdateAnnouncementSentTimestamp] no announcement id on notification', []);
                 }
             } catch (\Exception $e) {
-                
+
                 Log::error('[UpdateAnnouncementSentTimestamp] failed', ['error' => $e->getMessage()]);
             }
         }

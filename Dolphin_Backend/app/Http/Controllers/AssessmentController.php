@@ -2,30 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\IndexAssessmentRequest;
+use App\Http\Requests\StoreAssessmentRequest;
+use App\Models\Organization;
 use App\Models\OrganizationAssessment;
 use App\Models\User;
-use App\Models\Organization;
-use App\Http\Requests\StoreAssessmentRequest;
-use App\Http\Requests\IndexAssessmentRequest;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class AssessmentController extends Controller
 {
-    
-    
-    
-
     public function index(IndexAssessmentRequest $request): JsonResponse
     {
         return $this->show($request);
     }
 
-    
-    
-    
+
+
+
 
     public function show(IndexAssessmentRequest $request): JsonResponse
     {
@@ -53,19 +49,19 @@ class AssessmentController extends Controller
         }
     }
 
-    
-    
-    
+
+
+
 
     public function store(StoreAssessmentRequest $request): JsonResponse
     {
         try {
             $validated = $request->validated();
 
-            
+
             Log::info('[AssessmentController@store] payload', ['validated' => $validated]);
 
-            
+
             $user = $request->user();
             if (!$user) {
                 Log::warning('[AssessmentController@store] unauthenticated request');
@@ -78,12 +74,12 @@ class AssessmentController extends Controller
                 'name' => $validated['name'],
                 'user_id' => $user->id,
                 'organization_id' => $orgId,
-                
+
                 'date' => $validated['date'] ?? null,
                 'time' => $validated['time'] ?? null,
             ]);
 
-            
+
             return response()->json(['assessment' => $assessment], 201);
         } catch (\Exception $e) {
             Log::error('Failed to create assessment.', ['error' => $e->getMessage()]);
@@ -91,15 +87,15 @@ class AssessmentController extends Controller
         }
     }
 
-    
-    
+
+
 
     public function summary($id): JsonResponse
     {
         try {
             $assessment = OrganizationAssessment::findOrFail($id);
 
-            
+
             try {
                 $memberIds = DB::table('organization_assessment_member')
                     ->where('organization_assessment_id', $assessment->id)
@@ -111,12 +107,12 @@ class AssessmentController extends Controller
                 $memberIds = collect();
             }
 
-            
-            
-            
-            
-            
-            
+
+
+
+
+
+
             if ($memberIds->isEmpty()) {
                 $responses = collect();
             } else {
@@ -129,24 +125,24 @@ class AssessmentController extends Controller
                 } catch (\Throwable $e) {
                     Log::warning('[AssessmentController@summary] assessment_responses join query failed', ['assessment_id' => $assessment->id, 'error' => $e->getMessage()]);
                     $responses = collect();
-                    
+
                 }
 
-                
+
                 if (!isset($responses)) {
-                    
+
                     $responsesQuery->whereColumn('ar.created_at', '>=', 'oam.created_at');
 
-                    
+
                     if (!empty($assessment->date)) {
                         try {
-                            
+
                             $scheduledAt = $assessment->time instanceof Carbon
                                 ? Carbon::parse($assessment->date->toDateString() . ' ' . $assessment->time->format('H:i:s'))
                                 : Carbon::parse($assessment->date->toDateString() . ' 00:00:00');
                             $responsesQuery->where('ar.created_at', '>=', $scheduledAt);
                         } catch (\Exception $e) {
-                            
+                            Log::warning('[AssessmentController@summary] failed to parse scheduled date/time', ['assessment_id' => $assessment->id, 'error' => $e->getMessage()]);
                         }
                     }
 
@@ -154,11 +150,11 @@ class AssessmentController extends Controller
                 }
             }
 
-            
+
             $userIds = $responses->pluck('user_id')->unique();
             $users = User::whereIn('id', $userIds)->get()->keyBy('id');
 
-            
+
             $members = [];
             foreach ($responses as $response) {
                 $user = $users->get($response->user_id);
@@ -207,10 +203,10 @@ class AssessmentController extends Controller
         }
     }
 
-    
-    
-    
-    
+
+
+
+
 
     private function resolveOrganizationId(StoreAssessmentRequest $request, array $validated): ?int
     {

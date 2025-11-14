@@ -6,17 +6,16 @@ use App\Models\Assessment;
 use App\Models\AssessmentResponse;
 use App\Models\AssessmentTime;
 use App\Services\AssessmentCalculationService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Carbon\Carbon;
 
 class AssessmentResponseController extends Controller
 {
-    
     public function getAssessments(): JsonResponse
     {
         try {
@@ -29,7 +28,7 @@ class AssessmentResponseController extends Controller
         }
     }
 
-    
+
     public function store(Request $request, AssessmentCalculationService $calculationService): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -118,7 +117,7 @@ class AssessmentResponseController extends Controller
         ], 201);
     }
 
-    
+
     public function getUserResponses(Request $request): JsonResponse
     {
         try {
@@ -158,7 +157,7 @@ class AssessmentResponseController extends Controller
         }
     }
 
-    
+
     public function getUserAttempts(): JsonResponse
     {
         try {
@@ -183,7 +182,7 @@ class AssessmentResponseController extends Controller
         }
     }
 
-    
+
     public function getAssessmentTiming(Request $request): JsonResponse
     {
         try {
@@ -201,7 +200,7 @@ class AssessmentResponseController extends Controller
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
-            
+
             $responses = AssessmentResponse::where('user_id', $userId)
                 ->where('attempt_id', $attemptId)
                 ->with(['assessment:id,title', 'assessmentTime'])
@@ -216,7 +215,7 @@ class AssessmentResponseController extends Controller
                     'end_time' => $timing->end_time ?? null,
                     'time_spent' => $timing->time_spent ?? null,
                     'time_spent_formatted' => $timing && $timing->time_spent
-                        ? gmdate("H:i:s", $timing->time_spent)
+                        ? gmdate('H:i:s', $timing->time_spent)
                         : null,
                 ];
             });

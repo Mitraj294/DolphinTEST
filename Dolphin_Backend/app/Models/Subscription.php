@@ -54,14 +54,14 @@ class Subscription extends Model
         return $this->hasMany(SubscriptionInvoice::class);
     }
 
-    
 
-    
+
+
     public function isActive(): bool
     {
         $statusActive = $this->status === 'active';
 
-        
+
         $periodEnded = $this->cancel_at_period_end && $this->current_period_end && $this->current_period_end->isPast();
 
         $hasEnded = $this->ends_at && $this->ends_at->isPast();
@@ -71,13 +71,13 @@ class Subscription extends Model
         return (bool) $isActive;
     }
 
-    
+
     public function isInTrial(): bool
     {
         return $this->trial_ends_at && $this->trial_ends_at->isFuture();
     }
 
-    
+
     public function remainingTrialDays(): ?int
     {
         if (! $this->isInTrial()) {
@@ -87,7 +87,7 @@ class Subscription extends Model
         return now()->diffInDays($this->trial_ends_at, false);
     }
 
-    
+
     public function remainingPeriodDays(): ?int
     {
         $end = $this->current_period_end ?? $this->ends_at;
@@ -101,7 +101,7 @@ class Subscription extends Model
         return now()->diffInDays($end, false);
     }
 
-    
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active')->where(function ($q) {

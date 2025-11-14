@@ -36,7 +36,9 @@
                   margin-right: 12px;
                 "
               >
-                {{ (scheduleDetails.assessment && scheduleDetails.assessment.name) || 'Assessment' }}
+                {{
+                  (scheduleDetails.assessment && scheduleDetails.assessment.name) || 'Assessment'
+                }}
               </div>
               -
               <div
@@ -60,7 +62,12 @@
               :class="['status-yellow', { active: scheduleStatus === 'scheduled' }]"
             >
               Scheduled
-              <span v-if="totalRecipients > 0" class="sent-count" :title="sendAtTooltip" style="margin-left:12px; font-size:13px; color:#444">
+              <span
+                v-if="totalRecipients > 0"
+                class="sent-count"
+                :title="sendAtTooltip"
+                style="margin-left: 12px; font-size: 13px; color: #444"
+              >
                 {{ sentSummary }}
               </span>
             </span>
@@ -163,7 +170,9 @@
                   margin-right: 12px;
                 "
               >
-                {{ (scheduleDetails.assessment && scheduleDetails.assessment.name) || 'Assessment' }}
+                {{
+                  (scheduleDetails.assessment && scheduleDetails.assessment.name) || 'Assessment'
+                }}
               </div>
               -
               <div
@@ -592,7 +601,8 @@ export default {
         const parsed = typeof v === 'string' ? JSON.parse(v) : v;
         if (Array.isArray(parsed)) return parsed.map(Number).filter(Boolean);
       } catch (err) {
-        if (console && typeof console.debug === 'function') console.debug('parseArrayFieldGeneric parse failed', err);
+        if (console && typeof console.debug === 'function')
+          console.debug('parseArrayFieldGeneric parse failed', err);
       }
       const cleaned = String(v).replaceAll('[', '').replaceAll(']', '').replaceAll(/\s+/g, '');
       return cleaned.split(',').filter(Boolean).map(Number);

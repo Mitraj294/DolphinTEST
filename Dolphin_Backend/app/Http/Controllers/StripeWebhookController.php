@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Lead;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Models\User;
 use App\Models\WebhookLog;
-use App\Models\Lead;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,7 +22,6 @@ use UnexpectedValueException;
 
 class StripeWebhookController extends Controller
 {
-    
     public function handleWebhook(Request $request): JsonResponse
     {
         $secret = config('services.stripe.webhook_secret');
@@ -96,16 +95,16 @@ class StripeWebhookController extends Controller
         $stripeSubscriptionId = $session->subscription ?? null;
         $stripeSubscription = null;
 
-        
-        
-        
+
+
+
         if (! $plan) {
             $priceId = null;
 
-            
+
             if ($stripeSubscriptionId) {
                 try {
-                    
+
                     $stripeSubscription = StripeSubscription::retrieve($stripeSubscriptionId, [
                         'expand' => ['items.data.price', 'default_payment_method'],
                     ]);
@@ -119,7 +118,7 @@ class StripeWebhookController extends Controller
                 }
             }
 
-            
+
             if (empty($priceId) && ! empty($session->id)) {
                 try {
                     $checkout = \Stripe\Checkout\Session::retrieve($session->id, [
@@ -147,7 +146,7 @@ class StripeWebhookController extends Controller
             $user->forceFill(['stripe_id' => $session->customer])->save();
         }
 
-        
+
         if (empty($stripeSubscription)) {
             $stripeSubscriptionId = $session->subscription ?? null;
             if (! $stripeSubscriptionId) {
@@ -174,7 +173,7 @@ class StripeWebhookController extends Controller
         $startedAt = $this->timestampToCarbon($stripeSubscription->current_period_start ?? $session->created ?? null);
         $currentPeriodEnd = $this->timestampToCarbon($stripeSubscription->current_period_end ?? null);
 
-        
+
         $endsAt = $currentPeriodEnd;
         if (! $endsAt && $plan) {
             if ($plan->type === 'monthly') {
@@ -205,7 +204,7 @@ class StripeWebhookController extends Controller
             ]
         );
 
-        
+
         try {
             if (! empty($user) && ! empty($user->email)) {
                 $lead = Lead::where('email', $user->email)->first();
@@ -225,9 +224,9 @@ class StripeWebhookController extends Controller
 
     private function handleInvoicePaid(object $invoice): void
     {
-        
-        
-        
+
+
+
         $stripeSubscriptionId = $invoice->subscription ?? null;
 
         if ($stripeSubscriptionId) {
@@ -237,7 +236,7 @@ class StripeWebhookController extends Controller
         }
 
         if (! $subscription) {
-            
+
             $customerId = $invoice->customer ?? null;
             if ($customerId) {
                 $subscription = Subscription::where('stripe_customer_id', $customerId)
@@ -247,7 +246,7 @@ class StripeWebhookController extends Controller
         }
 
         if (! $subscription) {
-            
+
             Log::warning('Invoice webhook arrived without resolvable subscription', [
                 'invoice_id' => $invoice->id ?? null,
                 'customer' => $invoice->customer ?? null,
@@ -262,7 +261,7 @@ class StripeWebhookController extends Controller
             return;
         }
 
-        
+
         $dueTs = $invoice->due_date ?? $invoice->created ?? null;
         $dueDate = $this->timestampToCarbon($dueTs) ?? $this->timestampToCarbon($invoice->created ?? null)?->addDay();
 
@@ -307,8 +306,8 @@ class StripeWebhookController extends Controller
 
     private function convertStripeObjectToArray($object): array
     {
-        
-        
+
+
         $initialDepth = 3;
 
         $convert = function ($value, $depth) use (&$convert) {
@@ -326,13 +325,13 @@ class StripeWebhookController extends Controller
             }
 
             if (is_object($value)) {
-                
+
                 if (method_exists($value, 'toArray')) {
                     $arr = $value->toArray();
                 } elseif ($value instanceof \JsonSerializable) {
                     $arr = $value->jsonSerialize();
                 } else {
-                    
+
                     try {
                         $arr = json_decode(json_encode($value), true) ?: [];
                     } catch (\Throwable $e) {
@@ -340,7 +339,7 @@ class StripeWebhookController extends Controller
                     }
                 }
 
-                
+
                 $out = [];
                 foreach ($arr as $k => $v) {
                     $out[$k] = $convert($v, $depth - 1);
@@ -349,14 +348,14 @@ class StripeWebhookController extends Controller
                 return $out;
             }
 
-            
+
             return $value;
         };
 
         return $convert($object, $initialDepth) ?: [];
     }
 
-    
+
     private function handleSubscriptionUpdated(object $stripeSubscription): void
     {
         $stripeSubscription = $this->convertStripeObjectToArray($stripeSubscription);
@@ -386,7 +385,7 @@ class StripeWebhookController extends Controller
         ])->save();
     }
 
-    
+
     private function handleSubscriptionDeleted(object $stripeSubscription): void
     {
         $stripeSubscription = $this->convertStripeObjectToArray($stripeSubscription);
@@ -402,13 +401,13 @@ class StripeWebhookController extends Controller
             return;
         }
 
-        
+
         $currentPeriodEnd = isset($stripeSubscription['current_period_end']) ? $this->timestampToCarbon($stripeSubscription['current_period_end']) : null;
 
         if ($currentPeriodEnd) {
             $sub->forceFill(['status' => $stripeSubscription['status'] ?? 'canceled', 'current_period_end' => $currentPeriodEnd, 'ends_at' => $currentPeriodEnd])->save();
         } else {
-            $sub->delete(); 
+            $sub->delete();
         }
     }
 

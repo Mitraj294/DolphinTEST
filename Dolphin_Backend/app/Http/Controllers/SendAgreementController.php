@@ -1,23 +1,25 @@
 <?php
+
 namespace App\Http\Controllers;
+
+use App\Models\Lead;
+use App\Models\Organization;
+use App\Models\Role;
+use App\Models\User;
+use App\Services\UrlBuilder;
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use App\Models\Lead;
-use App\Models\User;
-use App\Models\Role;
-use App\Models\Organization;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use Stripe\Stripe;
 use Stripe\Checkout\Session as StripeSession;
-use Exception;
-use App\Services\UrlBuilder;
+use Stripe\Stripe;
+
 class SendAgreementController extends Controller
 {
-
     public function send(Request $request)
     {
         try {
@@ -112,8 +114,8 @@ class SendAgreementController extends Controller
 
     private function buildPlansUrl(?User $user, array $validated): string
     {
-    $frontend = UrlBuilder::base();
-    $plansUrl = $frontend . '/register';
+        $frontend = UrlBuilder::base();
+        $plansUrl = $frontend . '/register';
         $qs = [];
         if (! empty($user) && ! empty($user->email)) {
             $qs['email'] = $user->email;

@@ -11,7 +11,7 @@ class StoreGroupRequest extends FormRequest
         return $this->user()->hasRole('organizationadmin');
     }
 
-    
+
     public function rules(): array
     {
         return [

@@ -6,8 +6,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class LeadResource extends JsonResource
 {
-    
-    
     public function toArray($request): array
     {
         return [

@@ -65,7 +65,6 @@
 </template>
 
 <script>
-
 import { FormInput, FormLabel, FormRow } from '@/components/Common/Common_UI/Form';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import Editor from '@tinymce/tinymce-vue';
@@ -77,14 +76,13 @@ export default {
 
   data() {
     return {
-      leadId: null, 
-      to: '', 
-      recipientName: '', 
-      subject: 'Agreement and Payment Link', 
-      templateContent: '', 
-      sending: false, 
+      leadId: null,
+      to: '',
+      recipientName: '',
+      subject: 'Agreement and Payment Link',
+      templateContent: '',
+      sending: false,
 
-      
       tinymceConfigSelfHosted: {
         height: 500,
         base_url: '/tinymce',
@@ -131,19 +129,16 @@ export default {
         content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; margin: 20px; }',
         license_key: 'gpl',
       },
-      tinyMceLoaded: false, 
-      tinyMceShimPatched: false, 
-      tinyMceShimRestoreTimer: null, 
+      tinyMceLoaded: false,
+      tinyMceShimPatched: false,
+      tinyMceShimRestoreTimer: null,
     };
   },
 
-  
   mounted() {
-    
     const leadId = this.$route.params.id || this.$route.query.lead_id || null;
     this.leadId = leadId;
 
-    
     this.loadTinyMceAssets()
       .then(() => {
         this.tinyMceLoaded = true;
@@ -153,7 +148,6 @@ export default {
         this.tinyMceLoaded = false;
       });
 
-    
     if (leadId) {
       this.loadInitialLeadData(leadId);
     } else {
@@ -161,9 +155,7 @@ export default {
     }
   },
 
-  
   watch: {
-    
     to(newEmail, oldEmail) {
       if (newEmail && newEmail !== oldEmail && !this.leadId) {
         this.fetchServerTemplate();
@@ -171,9 +163,7 @@ export default {
     },
   },
 
-  
   methods: {
-    
     async loadInitialLeadData(leadId) {
       try {
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
@@ -186,7 +176,7 @@ export default {
         if (leadObj) {
           this.to = leadObj.email || '';
           this.recipientName = `${leadObj.first_name || ''} ${leadObj.last_name || ''}`.trim();
-          
+
           this.fetchServerTemplate();
         }
       } catch (e) {
@@ -195,32 +185,33 @@ export default {
       }
     },
 
-    
     async fetchServerTemplate() {
       try {
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
         const name = this.recipientName || this.to.substring(0, this.to.indexOf('@')) || '';
-        
+
         const frontendBase = 'http://127.0.0.1:8080';
         const previewPlansLink = `${frontendBase}/subscriptions/plans`;
         const params = { checkout_url: previewPlansLink, name };
         const res = await axios.get(`${API_BASE_URL}/api/email-template/lead-agreement`, {
           params,
         });
-  let html = res?.data ? String(res.data) : '';
+        let html = res?.data ? String(res.data) : '';
 
-        
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
         const container = doc.querySelector('.email-container');
         if (container) html = container.innerHTML;
 
-        
-        
         if (html && typeof html === 'object' && typeof html.then === 'function') {
           try {
             const awaited = await html;
-            console.debug && console.debug('SendAgreement: awaited template promise, result type:', typeof awaited, awaited);
+            console.debug &&
+              console.debug(
+                'SendAgreement: awaited template promise, result type:',
+                typeof awaited,
+                awaited
+              );
             html = String(awaited || '');
           } catch (e) {
             console.debug && console.debug('SendAgreement: error awaiting template promise', e);
@@ -228,8 +219,8 @@ export default {
           }
         }
 
-        
-        console.debug && console.debug('SendAgreement: fetched server template, type:', typeof html, html);
+        console.debug &&
+          console.debug('SendAgreement: fetched server template, type:', typeof html, html);
         this.templateContent = html;
       } catch (e) {
         console.debug && console.debug('Failed to fetch server template:', e?.message || e);
@@ -237,13 +228,12 @@ export default {
       }
     },
 
-    
     async handleSendAgreement() {
       if (this.sending) return;
       this.sending = true;
       try {
         const name = this.recipientName || this.to.substring(0, this.to.indexOf('@')) || '';
-        
+
         const plansLink = 'http://127.0.0.1:8080/subscriptions/plans';
         const bodyWithLinks = String(this.templateContent).replaceAll(
           /href=(["'])#(?:0)?\1/g,
