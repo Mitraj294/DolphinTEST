@@ -65,11 +65,17 @@ export async function createCheckoutSession(priceId, opts = {}) {
 }
 
 export async function fetchSubscriptionStatus(orgId = null) {
-  // Always attempt to call the backend status endpoint. Previously we
-  // short-circuited for non-organization-admin roles (returning 'none') to
-  // avoid 403 responses, but that made it hard for callers to decide on UX.
-  // Let the backend return 403/unathorized and translate that into a clear
-  // `status: 'none'` payload with an explanatory `message` where appropriate.
+  // Short-circuit for non-admin roles to avoid unnecessary network calls.
+  // If role cannot be read from storage, fall back to attempting the API.
+  try {
+    const role = (storage.get('role') || '').toString().toLowerCase();
+    if (role !== 'organizationadmin' && role !== 'superadmin') {
+      return { status: 'none', message: 'Insufficient role', unauthorized: true };
+    }
+  } catch (e) {
+    console.debug?.('fetchSubscriptionStatus: could not read role from storage, attempting API call', e);
+  }
+
   try {
     const headers = authHeaders();
     const url = orgId
@@ -96,10 +102,6 @@ export async function fetchSubscriptionStatus(orgId = null) {
       unauthorized: false,
     };
   } catch (err) {
-    // If unauthorized (403), return a consistent payload indicating the
-    // user cannot view/manage subscription for this org. Callers can use
-    // `unauthorized` to surface alternate UX (CTA or info) instead of hiding
-    // subscription state completely.
     const statusCode = err?.response?.status;
     if (statusCode === 403) {
       const body = err.response?.data || {};

@@ -1,7 +1,7 @@
 <template>
   <div class="user-assessment-outer">
     <div class="user-assessment-card">
-      <template v-if="!submitted">
+      <template v-if="loaded && !transientSubmitted">
         <template v-if="showAssessment === false">
           <div class="user-assessment-no-assignment" style="padding: 40px; text-align: center">
             <h3 style="margin-bottom: 12px">No assigned assessments</h3>
@@ -88,7 +88,7 @@
           </div>
         </template>
       </template>
-      <template v-else>
+      <template v-else-if="transientSubmitted">
         <div class="user-assessment-success-card">
           <div class="user-assessment-success-icon">
             <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
@@ -118,102 +118,33 @@
           <div style="margin-top: 16px"></div>
         </div>
       </template>
+      <template v-else>
+        <div style="padding: 40px; text-align: center; color: #666">Loading...</div>
+      </template>
     </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
+
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { fetchSubscriptionStatus } from '@/services/subscription';
 import storage from '@/services/storage';
+import {
+  normalizeFormDefinition,
+  fetchAssessments,
+  fetchResponses,
+  fetchAssignments,
+  fetchSubmissions,
+  submitResponses,
+} from '@/services/assessments';
 
 const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || '';
 
-// Normalize a stored form definition to an array of option strings.
-// Pulled out to module scope to avoid deep nesting inside setup().
-function normalizeFormDefinition(def) {
-  let parsed = def;
-  try {
-    // If it's a string that looks like JSON, repeatedly parse up to a few times
-    let attempts = 0;
-    while (typeof parsed === 'string' && attempts < 5) {
-      const trimmed = parsed.trim();
-      // If it starts with [ or { or " then attempt parse
-      if (trimmed.startsWith('[') || trimmed.startsWith('{') || trimmed.startsWith('"')) {
-        parsed = JSON.parse(parsed);
-        attempts++;
-      } else {
-        break;
-      }
-    }
-  } catch (e) {
-    // If parsing fails, fallback to using the original value
-    // eslint-disable-next-line no-console
-    console.debug && console.debug('normalizeFormDefinition: failed to parse', e);
-    parsed = def;
-  }
-
-  // Now normalize into an array of strings. Avoid inline callbacks to reduce nesting.
-  if (Array.isArray(parsed)) {
-    // Are all items strings?
-    let allStrings = true;
-    for (const item of parsed) {
-      if (typeof item !== 'string') {
-        allStrings = false;
-        break;
-      }
-    }
-    if (allStrings) return parsed;
-
-    // Are all items objects?
-    let allObjects = true;
-    for (const item of parsed) {
-      if (!(item && typeof item === 'object')) {
-        allObjects = false;
-        break;
-      }
-    }
-    if (allObjects) {
-      const out = [];
-      for (const it of parsed) {
-        out.push(it.label || it.text || String(it));
-      }
-      return out;
-    }
-
-    // Mixed types - coerce to strings
-    const outMixed = [];
-    for (const item of parsed) {
-      outMixed.push(String(item));
-    }
-    return outMixed;
-  }
-
-  // If parsed is an object containing an options/choices field
-  if (parsed && typeof parsed === 'object') {
-    if (Array.isArray(parsed.options)) {
-      const out = [];
-      for (const it of parsed.options) {
-        out.push(typeof it === 'string' ? it : it.label || it.text || String(it));
-      }
-      return out;
-    }
-    if (Array.isArray(parsed.choices)) {
-      const out = [];
-      for (const it of parsed.choices) {
-        out.push(typeof it === 'string' ? it : it.label || it.text || String(it));
-      }
-      return out;
-    }
-  }
-
-  // Not parseable into an array - return empty array
-  return [];
-}
+// Normalization and API access moved to `@/services/assessments` for clarity.
 
 export default {
   name: 'UserAssessment',
@@ -224,8 +155,14 @@ export default {
     const step = ref(1);
     const questions = ref([]);
     const selectedWords = ref([]); // Array of arrays, one per question
-    const submitted = ref(false);
+    // `transientSubmitted` is only true for the current client session
+    // immediately after a successful submit. It is not persisted across
+    // refreshes or logouts. `serverSubmitted` reflects whether the backend
+    // reports a submission for the active organization-assessment.
+    const transientSubmitted = ref(false);
+    const serverSubmitted = ref(false);
     const showAssessment = ref(true); // whether to render the assessment UI
+    const loaded = ref(false); // becomes true after initial data load
 
     // For organization admins: whether they are assigned to any org-assessments
     // null = unknown, false = none, true = has assignments
@@ -252,172 +189,91 @@ export default {
 
     // Fetch assessments and previous responses from backend
     const fetchQuestionsAndAnswers = async () => {
-      // Helper to fetch assessments (replacing questions)
-      const loadQuestions = async (headers, params) => {
-        const resQ = await axios.get(`${API_BASE_URL}/api/assessments-list`, {
-          headers,
-          params,
-        });
-        if (Array.isArray(resQ.data)) {
-          // Transform assessment data to match old question format for compatibility
-
-          questions.value = resQ.data.map((assessment) => {
-            const options = normalizeFormDefinition(assessment.form_definition);
-
-            return {
-              id: assessment.id,
-              question: assessment.title,
-              description: assessment.description || '',
-              options: options,
-            };
-          });
-          // Initialize selectedWords, start times, and end times arrays
-          selectedWords.value = resQ.data.map(() => []);
-          questionStartTimes.value = resQ.data.map(() => null);
-          questionEndTimes.value = resQ.data.map(() => null);
-          // Set start time for first question
-          if (resQ.data.length > 0) {
-            questionStartTimes.value[0] = new Date().toISOString();
-          }
-        }
-      };
-
-      // Load any organization-assessment assignments for this user (if authenticated)
-      const loadAssignments = async (headers) => {
-        try {
-          const res = await axios.get(
-            `${API_BASE_URL}/api/organization-assessments/assigned-list`,
-            { headers }
-          );
-          if (res && res.data && Array.isArray(res.data.assigned)) {
-            return res.data.assigned;
-          }
-        } catch (e) {
-          console.debug && console.debug('Failed to load assignments', e);
-        }
-        return [];
-      };
-
-      // Helper to fetch previous responses (replacing answers)
-      const loadAnswers = async (headers, params) => {
-        const resA = await axios.get(`${API_BASE_URL}/api/assessment-responses`, {
-          headers,
-          params,
-        });
-        if (Array.isArray(resA.data)) {
-          for (const response of resA.data) {
-            const idx = questions.value.findIndex(
-              (q) => String(q.id) === String(response.assessment_id)
-            );
-            if (idx !== -1 && Array.isArray(response.selected_options)) {
-              selectedWords.value[idx] = response.selected_options;
-            }
-          }
-        }
-      };
-
+      // Simplified flow: delegate API calls to service, normalize data,
+      // and set minimal UI state here.
       try {
-        const storage = require('@/services/storage').default;
-        const authToken = storage.get('authToken');
-        const userId = storage.get('user_id');
+        const storageSvc = require('@/services/storage').default;
+        const authToken = storageSvc.get('authToken');
+        const userId = storageSvc.get('user_id');
         const headers = {};
-        if (authToken) {
-          headers['Authorization'] = `Bearer ${authToken}`;
-        }
+        if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
         const params = {};
-        if (userId) {
-          params['user_id'] = userId;
-        }
+        if (userId) params['user_id'] = userId;
 
-        await loadQuestions(headers, params);
-        await loadAnswers(headers, params);
+        // Fetch assessments and transform to UI format
+        const rawAssessments = await fetchAssessments(params, headers);
+        questions.value = Array.isArray(rawAssessments)
+          ? rawAssessments.map((a) => ({
+              id: a.id,
+              question: a.title,
+              description: a.description || '',
+              options: normalizeFormDefinition(a.form_definition),
+            }))
+          : [];
 
-        // load assignments (if logged in)
-        let assignments = [];
-        if (headers.Authorization) {
-          assignments = await loadAssignments(headers);
-        }
-        // If there are assignments, use the first one as the active org-assessment
-        const activeAssignment = assignments && assignments.length > 0 ? assignments[0] : null;
-        if (!activeAssignment) {
-          // no assignment → hide UI for all users (show 'No assigned assessments')
-          showAssessment.value = false;
-        } else {
-          // attach active assignment metadata so UI can display the org assessment name
-          for (const q of questions.value) {
-            q.organization_assessment = { id: activeAssignment.id, name: activeAssignment.name };
+        // Initialize selectedWords and timers
+        selectedWords.value = questions.value.map(() => []);
+        questionStartTimes.value = questions.value.map(() => null);
+        questionEndTimes.value = questions.value.map(() => null);
+        if (questions.value.length) questionStartTimes.value[0] = new Date().toISOString();
+
+        // Load previous responses (if any)
+        const rawResponses = await fetchResponses(params, headers).catch(() => []);
+        if (Array.isArray(rawResponses)) {
+          for (const r of rawResponses) {
+            const idx = questions.value.findIndex((q) => String(q.id) === String(r.assessment_id));
+            if (idx !== -1 && Array.isArray(r.selected_options)) selectedWords.value[idx] = r.selected_options;
           }
         }
 
-        // Fetch subscription status via shared service which will skip the
-        // network call for non-organization-admin roles to avoid 403s.
+        // Load assignments; choose first as active if available
+        const assignments = (authToken && (await fetchAssignments(headers).catch(() => []))) || [];
+        const activeAssignment = assignments.length ? assignments[0] : null;
+        if (activeAssignment) {
+          for (const q of questions.value) q.organization_assessment = { id: activeAssignment.id, name: activeAssignment.name };
+        } else {
+          showAssessment.value = false;
+        }
+
+        // subscription status is orthogonal; keep previous behaviour
         try {
           const s = await fetchSubscriptionStatus();
           isSubscribed.value = !!(s && (s.active || s.status === 'active' || s.subscribed));
-        } catch (err) {
-          console.debug && console.debug('Failed to fetch subscription status (via service):', err);
+        } catch (e) {
           isSubscribed.value = 'expired';
+          console.error('Failed to fetch subscription status', e);
         }
 
-        // assigned-count is no longer required; we already called assigned-list
-        // and set `showAssessment` accordingly. Keep `isOrgAdminAssigned` null
-        // unless further needs arise.
-
-        // Fetch submission status for the authenticated user so the frontend
-        // can detect when an admin-assigned assessment has already been
-        // submitted and show the thank-you view instead of the assessment.
-        try {
-          if (headers.Authorization) {
-            const subRes = await axios.get(`${API_BASE_URL}/api/assessment-submissions`, {
-              headers,
-            });
-              if (Array.isArray(subRes.data)) {
-                  const submittedMap = {};
-                  for (const row of subRes.data) {
-                    submittedMap[String(row.assessment_id)] = row.submitted_at || true;
-                  }
-
-                  const activeAssignment = assignments && assignments.length > 0 ? assignments[0] : null;
-                  const hasAnySubmission = Array.isArray(subRes.data) && subRes.data.length > 0;
-                  const hasPendingQuestion =
-                    questions.value.length > 0 &&
-                    questions.value.some((q) => !submittedMap[String(q.id)]);
-
-                  if (activeAssignment) {
-                    // If there's an active assignment, prefer showing the assessment
-                    // UI when any of the current questions are still pending.
-                    if (hasPendingQuestion) {
-                      submitted.value = false;
-                      showAssessment.value = true;
-                    } else if (hasAnySubmission) {
-                      // No pending questions -> user already submitted for this
-                      // assignment (or earlier) so show success.
-                      submitted.value = true;
-                      showAssessment.value = false;
-                    } else {
-                      // No submissions and no pending questions (edge case) — show assessment
-                      submitted.value = false;
-                      showAssessment.value = true;
-                    }
-                  } else {
-                    // No active assignment: if the user has any prior submissions,
-                    // show the success/thank-you view; otherwise show the "no
-                    // assigned assessments" message.
-                    if (hasAnySubmission) {
-                      submitted.value = true;
-                      showAssessment.value = false;
-                    } else {
-                      submitted.value = false;
-                      showAssessment.value = false;
-                    }
-                  }
-              }
+        // Fetch submissions and decide whether to display success view
+        if (authToken) {
+          const rawSubs = await fetchSubmissions(headers).catch(() => []);
+          const submittedMap = {};
+          const globalSubmittedMap = {};
+          if (Array.isArray(rawSubs)) {
+            for (const row of rawSubs) {
+              const aid = String(row.assessment_id);
+              const orgId = row.organization_assessment_id ? String(row.organization_assessment_id) : 'null';
+              submittedMap[`${aid}:${orgId}`] = row.submitted_at || true;
+              if (!globalSubmittedMap[aid]) globalSubmittedMap[aid] = row.submitted_at || true;
+            }
           }
-        } catch (err) {
-          // Non-fatal: if the endpoint is unavailable or returns 403 for
-          // non-admins, simply ignore and allow normal flow.
-          console.debug &&
-            console.debug('Failed to fetch assessment submissions status:', err?.message || err);
+
+          if (activeAssignment) {
+            const activeOrgId = String(activeAssignment.id);
+            const hasPendingQuestion = questions.value.some((q) => !submittedMap[`${String(q.id)}:${activeOrgId}`]);
+            if (hasPendingQuestion) {
+              serverSubmitted.value = false;
+              showAssessment.value = true;
+            } else {
+              const hasAnySubmissionActive = questions.value.some((q) => !!submittedMap[`${String(q.id)}:${activeOrgId}`]);
+              serverSubmitted.value = !!hasAnySubmissionActive;
+              showAssessment.value = !hasAnySubmissionActive;
+            }
+          } else {
+            const hasAnySubmissionForQuestions = questions.value.some((q) => !!globalSubmittedMap[String(q.id)]);
+            serverSubmitted.value = !!hasAnySubmissionForQuestions;
+            showAssessment.value = false;
+          }
         }
       } catch (error) {
         if (error.response?.status === 401) {
@@ -425,13 +281,10 @@ export default {
           return;
         }
         if (toast && typeof toast.add === 'function') {
-          toast.add({
-            severity: 'error',
-            summary: 'Load failed',
-            detail: 'Failed to load assessment questions or answers.',
-            sticky: true,
-          });
+          toast.add({ severity: 'error', summary: 'Load failed', detail: 'Failed to load assessment questions or answers.', sticky: true });
         }
+      } finally {
+        loaded.value = true;
       }
     };
 
@@ -514,54 +367,24 @@ export default {
 
       const submitAnswers = async (payload, token) => {
         try {
-          // Include active organization_assessment_id when present so backend
-          // persists the link between organization-assessment and responses.
-          const topOrgAssessmentId =
-            (questions.value[0] &&
-              questions.value[0].organization_assessment &&
-              questions.value[0].organization_assessment.id) ||
-            null;
-          const body = topOrgAssessmentId
-            ? { responses: payload, organization_assessment_id: topOrgAssessmentId }
-            : { responses: payload };
-
-          await axios.post(`${API_BASE_URL}/api/assessment-responses`, body, {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          submitted.value = true;
+          const topOrgAssessmentId = (questions.value[0] && questions.value[0].organization_assessment && questions.value[0].organization_assessment.id) || null;
+          const body = topOrgAssessmentId ? { responses: payload, organization_assessment_id: topOrgAssessmentId } : { responses: payload };
+          await submitResponses(body, { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` });
+          transientSubmitted.value = true;
+          serverSubmitted.value = true; // optimistic; server will confirm on reload
         } catch (error) {
           const status = error.response?.status;
-          // If backend returns 409 Conflict, the assessment was already submitted.
           if (status === 409) {
-            submitted.value = true;
-            if (toast && typeof toast.add === 'function') {
-              toast.add({
-                severity: 'info',
-                summary: 'Already submitted',
-                detail: 'This assessment has already been submitted.',
-                sticky: false,
-              });
-            }
+            transientSubmitted.value = true;
+            serverSubmitted.value = true;
+            if (toast && typeof toast.add === 'function')
+              toast.add({ severity: 'info', summary: 'Already submitted', detail: 'This assessment has already been submitted.' });
             return;
           }
-
           const isAuthError = status === 401;
-          const errorMessage = isAuthError
-            ? 'Your session has expired. Please log in again.'
-            : 'Failed to submit assessment. Please try again.';
           if (isAuthError) router.push('/login');
-
-          if (toast && typeof toast.add === 'function') {
-            toast.add({
-              severity: isAuthError ? 'warn' : 'error',
-              summary: 'Submission failed',
-              detail: errorMessage,
-              sticky: true,
-            });
-          }
+          if (toast && typeof toast.add === 'function')
+            toast.add({ severity: isAuthError ? 'warn' : 'error', summary: 'Submission failed', detail: isAuthError ? 'Your session has expired. Please log in again.' : 'Failed to submit assessment. Please try again.' });
         }
       };
 
@@ -589,8 +412,10 @@ export default {
       step,
       questions,
       selectedWords,
-      submitted,
+      transientSubmitted,
+      serverSubmitted,
       showAssessment,
+      loaded,
       isOrgAdminAssigned,
       role,
       totalSteps,
@@ -720,7 +545,7 @@ export default {
 
 .user-assessment-words-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 18px 24px;
   margin: 0 auto 32px auto;
   max-width: 900px;
@@ -862,12 +687,15 @@ export default {
     padding: 18px 8px 18px 8px;
     max-width: 100%;
   }
+ 
 
-  .user-assessment-words-grid {
-    gap: 12px 12px;
+}
+@media (max-width: 1100px) {
+    .user-assessment-words-grid {
+   grid-template-columns: repeat(4, 1fr);
+    gap: 8px 8px;
   }
 }
-
 @media (max-width: 900px) {
   .user-assessment-card {
     border-radius: 10px;
@@ -896,7 +724,20 @@ export default {
   }
 
   .user-assessment-words-grid {
-    grid-template-columns: 1fr;
+   grid-template-columns: repeat(3, 1fr);
+    gap: 8px 8px;
+  }
+
+}
+@media (max-width: 700px) {
+    .user-assessment-words-grid {
+   grid-template-columns: repeat(2, 1fr);
+    gap: 8px 8px;
+  }
+}
+@media (max-width: 500px) {
+    .user-assessment-words-grid {
+   grid-template-columns: repeat(1, 1fr);
     gap: 8px 8px;
   }
 }

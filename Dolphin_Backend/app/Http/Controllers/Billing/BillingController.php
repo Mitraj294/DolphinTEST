@@ -85,12 +85,16 @@ class BillingController extends Controller
     {
 
         $user = $request->user();
+        // For non-admin authenticated users, return a minimal safe payload
+        // instead of a 403 so clients can safely call this endpoint without
+        // special-casing network errors. Organization admins and superadmins
+        // continue to receive the full subscription payload below.
         if (
             ! $user ||
             ! method_exists($user, 'hasRole') ||
             (! $user->hasRole('organizationadmin') && ! $user->hasRole('superadmin'))
         ) {
-            return response()->json(['status' => 'none', 'message' => 'Unauthorized.'], 403);
+            return response()->json(['status' => 'none']);
         }
         try {
             $subscription = $this->resolveLatestSubscription($request);

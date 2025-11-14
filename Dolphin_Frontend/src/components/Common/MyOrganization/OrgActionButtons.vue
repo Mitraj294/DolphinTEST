@@ -204,11 +204,14 @@ export default {
             headers: { Authorization: `Bearer ${authToken}` },
           });
 
-          const membersData = Array.isArray(membersRes.data?.data)
-            ? membersRes.data.data
-            : Array.isArray(membersRes.data)
-            ? membersRes.data
-            : [];
+          let membersData = [];
+          if (Array.isArray(membersRes.data?.data)) {
+            membersData = membersRes.data.data;
+          } else if (Array.isArray(membersRes.data)) {
+            membersData = membersRes.data;
+          } else {
+            membersData = [];
+          }
 
           // Build a set of member ids for quick lookup
           const memberIds = new Set(membersData.map((m) => m.id));
@@ -217,9 +220,9 @@ export default {
           this.newMember.selectedUsers = this.availableUsersForMember.filter((u) =>
             memberIds.has(u.id)
           );
-        } catch (err2) {
+        } catch (error_) {
           // If the members endpoint fails, just leave selectedUsers empty
-          console.debug && console.debug('Failed to fetch current org members:', err2);
+          console.debug && console.debug('Failed to fetch current org members:', error_);
           this.newMember.selectedUsers = [];
         }
       } catch (e) {

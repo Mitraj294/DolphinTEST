@@ -121,12 +121,12 @@ const plan_name = computed(() => {
   const fromSubName = subscription.value?.plan_name;
   const fromLocal = planName.value;
   const subPlan = subscription.value?.plan;
-  const fromSubPlanName =
-    typeof subPlan === 'object' && subPlan
-      ? subPlan.name
-      : typeof subPlan === 'string'
-        ? subPlan
-        : null;
+  let fromSubPlanName = null;
+  if (typeof subPlan === 'object' && subPlan) {
+    fromSubPlanName = subPlan.name;
+  } else if (typeof subPlan === 'string') {
+    fromSubPlanName = subPlan;
+  }
   return fromStatusPlanObj || fromStatus || fromSubName || fromLocal || fromSubPlanName || '';
 });
 const subscription_end = ref(null);

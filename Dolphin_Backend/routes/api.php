@@ -153,10 +153,15 @@ Route::middleware('auth:api')->group(function () {
     });
 
     // Subscription endpoints (organization admin or superadmin)
+    // Keep detailed/current subscription info restricted to organization admins and superadmins
     Route::middleware('auth.role:organizationadmin,superadmin')->prefix('subscription')->group(function () {
         Route::get('/', [BillingController::class, 'current']);
-        Route::get('/status', [BillingController::class, 'status']);
     });
+
+    // Allow all authenticated users to check subscription status (returns a minimal/controlled response)
+    // This prevents a 403 when regular users query /subscription/status; controller should return
+    // an appropriate minimal response (e.g. { active: false } or organization-level status).
+    Route::get('/subscription/status', [BillingController::class, 'status']);
 
     // Billing endpoints (organization admin only)
     Route::middleware('auth.role:organizationadmin,superadmin')->prefix('billing')->group(function () {

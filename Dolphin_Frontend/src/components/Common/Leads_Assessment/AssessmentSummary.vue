@@ -23,8 +23,16 @@
               <table class="assessment-table">
                 <TableHeader :columns="tableColumns" @sort="sortBy" />
                 <tbody>
-                  <tr v-for="row in paginatedRows" :key="row.name">
-                    <td class="member-name-td">{{ row.name }}</td>
+                  <tr v-for="row in paginatedRows" :key="row.memberId || row.name">
+                    <td class="member-name-td">
+                      <div class="member-name-main">{{ row.name }}</div>
+                      <div class="member-meta">
+                        <span v-if="row.email" class="member-meta-item">{{ row.email }}</span>
+                        <span v-if="row.lastSubmittedAt" class="member-meta-item">
+                          Last Submitted: {{ formatTimestamp(row.lastSubmittedAt) }}
+                        </span>
+                      </div>
+                    </td>
                     <td>
                       <span v-if="row.result === 'Submitted'" class="status submitted">
                         <svg
@@ -110,20 +118,57 @@
         <div v-if="showModal" class="assessment-modal-overlay" @click.self="closeModal">
           <div class="assessment-modal-content">
             <div class="assessment-modal-header-row sticky-modal-header">
-              <h2>{{ selectedMember.name }}’s Assessments</h2>
+              <div>
+                <h2>
+                  {{
+                    selectedMember.name ? `${selectedMember.name}’s Attempts` : 'Member Attempts'
+                  }}
+                </h2>
+                <div class="modal-member-meta">
+                  <span v-if="selectedMember.email">{{ selectedMember.email }}</span>
+             
+                  <span v-if="selectedMember.lastSubmittedAt">
+                    Last Submitted: {{ formatTimestamp(selectedMember.lastSubmittedAt) }}
+                  </span>
+                </div>
+              </div>
               <button class="btn modal-close-btn" @click="closeModal">&times;</button>
             </div>
             <div class="assessment-modal-scrollable">
-              <div
-                v-for="(q, idx) in selectedMember.assessment || []"
-                :key="idx"
-                class="assessment-question-block"
-              >
-                <div class="assessment-question">Q.{{ idx + 1 }} {{ q.question }}</div>
-                <div class="assessment-answer">{{ q.answer }}</div>
+              <div v-if="selectedMember.attempts && selectedMember.attempts.length">
+                <div
+                  v-for="(attempt, idx) in selectedMember.attempts"
+                  :key="attempt.attempt_id || idx"
+                  class="attempt-block"
+                >
+                  <div class="attempt-header">
+                    <span>Attempt {{ idx + 1 }}</span>
+                    <span v-if="attempt.submitted_at">
+                      • {{ formatTimestamp(attempt.submitted_at) }}
+                    </span>
+                  </div>
+                  <div class="attempt-graph">
+                    <div class="attempt-graph-grid">
+                      <span
+                        v-for="(option, optIdx) in attempt.selected_options || []"
+                        :key="`${attempt.attempt_id || idx}-${optIdx}`"
+                        class="attempt-graph-chip"
+                      >
+                        <span class="attempt-graph-indicator"></span>
+                        <span>{{ option }}</span>
+                      </span>
+                      <div
+                        v-if="!(attempt.selected_options && attempt.selected_options.length)"
+                        class="attempt-no-options"
+                      >
+                        No options were recorded for this attempt.
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
+              <div v-else class="attempt-no-submissions">No submissions yet for this member.</div>
             </div>
-            <div class="assessment-modal-header-row sticky-modal-header"></div>
           </div>
         </div>
       </div>
@@ -156,7 +201,7 @@ export default {
       currentPage: 1,
       showPageDropdown: false,
       showModal: false,
-      selectedMember: {},
+      selectedMember: { name: '', attempts: [] },
     };
   },
   computed: {
@@ -174,31 +219,55 @@ export default {
       try {
         const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
         const params = {};
-        if (this.organizationAssessmentId) params.organization_assessment_id = this.organizationAssessmentId;
-        const res = await axios.get(`${API_BASE_URL}/api/assessments/${this.assessmentId}/summary`, { params });
-        const data = res.data;
-
-        // Set navbar title from the fetched data; prefer organization assignment name when present
-        const assessmentName = (data.assessment && (data.assessment.organization_assessment_name || data.assessment.name)) || null;
-        if (assessmentName) {
-          if (this.$root && this.$root.$emit) {
-            this.$root.$emit('page-title-override', `Assessment ${assessmentName} Summary`);
+        if (this.organizationAssessmentId) {
+          params.organization_assessment_id = this.organizationAssessmentId;
+        } else if (this.assessmentId) {
+          params.organization_assessment_id = this.assessmentId;
+        }
+        const res = await axios.get(
+          `${API_BASE_URL}/api/assessments/${this.assessmentId}/summary`,
+          {
+            params,
           }
+        );
+        const data = res && res.data ? res.data : {};
+        const orgAssessment = data.organization_assessment || {};
+        const assessmentName =
+          orgAssessment.name ||
+          orgAssessment.organization_assessment_name ||
+          orgAssessment.title ||
+          null;
+        if (assessmentName && this.$root && this.$root.$emit) {
+          this.$root.$emit('page-title-override', `Assessment ${assessmentName} Summary`);
         }
 
-        this.rows = (data.members || []).map((member) => ({
-          name: member.name || (member.member_id ? `Member #${member.member_id}` : 'Unknown'),
-          result: member.answers && member.answers.length > 0 ? 'Submitted' : 'Pending',
-          assessment: (member.answers || []).map((a) => ({
-            question: a.question,
-            answer: a.answer,
-          })),
+        const members = Array.isArray(data.members) ? data.members : [];
+        this.rows = members.map((member) => ({
+          memberId: member.member_id ?? member.user_id,
+          name:
+            member.name ||
+            member.email ||
+            (member.member_id
+              ? `Member #${member.member_id}`
+              : `Member ${member.user_id || 'Unknown'}`),
+          email: member.email || '',
+          status: member.status || '',
+          result: member.submitted ? 'Submitted' : 'Pending',
+          submitted: !!member.submitted,
+          lastSubmittedAt: member.last_submitted_at,
+          attempts: Array.isArray(member.attempts) ? member.attempts : [],
         }));
         this.summary = data.summary || {
           total_sent: 0,
           submitted: 0,
           pending: 0,
         };
+          if (data && this.$root && this.$root.$emit && this.assessmentId) {
+            this.$root.$emit('assessment-summary-data', {
+              assessmentId: this.assessmentId,
+              data,
+            });
+          }
       } catch (e) {
         this.rows = [];
         this.summary = { total_sent: 0, submitted: 0, pending: 0 };
@@ -206,11 +275,18 @@ export default {
       }
     },
     openModal(row) {
-      this.selectedMember = row;
+      this.selectedMember = {
+        name: row.name,
+        email: row.email,
+        status: row.status,
+        attempts: Array.isArray(row.attempts) ? row.attempts : [],
+        lastSubmittedAt: row.lastSubmittedAt,
+      };
       this.showModal = true;
     },
     closeModal() {
       this.showModal = false;
+      this.selectedMember = { name: '', attempts: [] };
     },
     goToPage(page) {
       if (page >= 1 && page <= this.totalPages) {
@@ -228,14 +304,41 @@ export default {
     sortBy() {
       // No-op
     },
+    formatTimestamp(value) {
+      if (!value) return '';
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) return value;
+      return parsed.toLocaleString();
+    },
+    getRouteOrganizationAssessmentId(route) {
+      if (!route) return null;
+      return (
+        (route.params &&
+          (route.params.organizationAssessmentId || route.params.organization_assessment_id)) ||
+        (route.query &&
+          (route.query.organizationAssessmentId || route.query.organization_assessment_id)) ||
+        null
+      );
+    },
+  },
+  watch: {
+    $route(to) {
+      const nextAssessmentId = to.params.assessmentId;
+      const nextOrgId = this.getRouteOrganizationAssessmentId(to);
+      if (nextAssessmentId === this.assessmentId && nextOrgId === this.organizationAssessmentId) {
+        return;
+      }
+      this.assessmentId = nextAssessmentId;
+      this.organizationAssessmentId = nextOrgId;
+      this.fetchSummary();
+    },
   },
   created() {
     this.assessmentId = this.$route.params.assessmentId;
-    this.organizationAssessmentId = this.$route.params.organizationAssessmentId || null;
+    this.organizationAssessmentId = this.getRouteOrganizationAssessmentId(this.$route);
     this.fetchSummary();
   },
   beforeDestroy() {
-    // Reset the override when leaving the page
     if (this.$root && this.$root.$emit) {
       this.$root.$emit('page-title-override', null);
     }
@@ -489,6 +592,75 @@ export default {
   line-height: 1.5;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
   text-align: left;
+}
+/* Additional layout tweaks for the updated member rows and modal */
+.member-name-main {
+  font-weight: 600;
+}
+.member-meta {
+  font-size: 0.85rem;
+  color: #666;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.member-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.modal-member-meta {
+  font-size: 0.9rem;
+  color: #666;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+.attempt-block {
+  margin-bottom: 24px;
+}
+.attempt-header {
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.attempt-graph {
+  margin-bottom: 16px;
+}
+.attempt-graph-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.attempt-graph-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #e8f0fe;
+  color: #1b3e66;
+  font-weight: 500;
+  font-size: 0.95rem;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+.attempt-graph-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #0074c2;
+  display: inline-block;
+}
+.attempt-no-options,
+.attempt-no-submissions {
+  color: #7c7c7c;
+  font-style: italic;
 }
 /* Responsive styles to match base pages */
 

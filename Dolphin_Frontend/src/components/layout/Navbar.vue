@@ -134,6 +134,7 @@ export default {
       orgNameFetching: {},
       assessmentNameCache: {},
       assessmentNameFetching: {},
+      assessmentSummaryCache: {},
       isNavbarAlive: false,
       boundFetchUnread: null,
       boundUpdateNotificationCount: null,
@@ -498,12 +499,20 @@ export default {
       return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     },
     async _fetchAssessmentSummary(assessmentId, config) {
+      if (!assessmentId) return null;
+      if (this.assessmentSummaryCache[assessmentId]) {
+        return this.assessmentSummaryCache[assessmentId];
+      }
       const API_BASE_URL = process.env.VUE_APP_API_BASE_URL;
       const res = await axios.get(
         `${API_BASE_URL}/api/assessments/${assessmentId}/summary`,
         config
       );
-      return res && res.data ? res.data : null;
+      const data = res && res.data ? res.data : null;
+      if (data && assessmentId) {
+        this.assessmentSummaryCache[assessmentId] = data;
+      }
+      return data;
     },
     _processAssessmentName(assessmentId, name) {
       if (!name || !this.isNavbarAlive) return;
@@ -513,8 +522,29 @@ export default {
         this.$root.$emit('page-title-override', `Assessment ${name} Summary`);
       }
     },
+    handleAssessmentSummaryData(payload) {
+      if (!payload || !payload.assessmentId || !payload.data) return;
+      const { assessmentId, data } = payload;
+      this.assessmentSummaryCache[assessmentId] = data;
+      const orgAssessment = data.organization_assessment || data.assessment || {};
+      const name =
+        orgAssessment.name || orgAssessment.organization_assessment_name || (data.assessment && data.assessment.name) || null;
+      if (name) {
+        this._processAssessmentName(assessmentId, name);
+      }
+    },
     async fetchAssessmentName(assessmentId) {
       if (!assessmentId) return null;
+      const cached = this.assessmentSummaryCache[assessmentId];
+      if (cached) {
+        const orgAssessment = cached.organization_assessment || cached.assessment || {};
+        const cachedName =
+          orgAssessment.name || orgAssessment.organization_assessment_name || (cached.assessment && cached.assessment.name) || null;
+        if (cachedName) {
+          this._processAssessmentName(assessmentId, cachedName);
+          return null;
+        }
+      }
       if (this.assessmentNameFetching[assessmentId]) return;
       this.assessmentNameFetching[assessmentId] = true;
       console.debug(`Navbar: fetchAssessmentName start id=${assessmentId}`);
@@ -657,6 +687,7 @@ export default {
       this.$root.$on('page-title-override', (val) => {
         this.overridePageTitle = val;
       });
+      this.$root.$on('assessment-summary-data', this.handleAssessmentSummaryData);
     }
 
     try {
@@ -703,6 +734,7 @@ export default {
     }
     document.body.classList.remove('logout-overlay-active');
     if (this.$root && this.$root.$off) this.$root.$off('page-title-override');
+    if (this.$root && this.$root.$off) this.$root.$off('assessment-summary-data', this.handleAssessmentSummaryData);
   },
 };
 </script>

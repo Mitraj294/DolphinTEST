@@ -6,8 +6,6 @@ use App\Http\Requests\IndexAssessmentRequest;
 use App\Http\Requests\StoreAssessmentRequest;
 use App\Models\Organization;
 use App\Models\OrganizationAssessment;
-use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -18,11 +16,6 @@ class AssessmentController extends Controller
     {
         return $this->show($request);
     }
-
-
-
-
-
     public function show(IndexAssessmentRequest $request): JsonResponse
     {
         try {
@@ -48,11 +41,6 @@ class AssessmentController extends Controller
             return response()->json(['message' => 'Failed to retrieve assessments.'], 500);
         }
     }
-
-
-
-
-
     public function store(StoreAssessmentRequest $request): JsonResponse
     {
         try {
@@ -86,114 +74,95 @@ class AssessmentController extends Controller
             return response()->json(['message' => 'Failed to create assessment.'], 500);
         }
     }
-
-
-
-
     public function summary($id): JsonResponse
     {
         try {
             $assessment = OrganizationAssessment::findOrFail($id);
 
+            $assignedMembers = DB::table('organization_assessment_member as oam')
+                ->join('users as u', 'u.id', '=', 'oam.user_id')
+                ->where('oam.organization_assessment_id', $assessment->id)
+                ->select(
+                    'oam.user_id',
+                    'oam.status',
+                    'oam.created_at as assigned_at',
+                    'oam.notified_at',
+                    'u.first_name',
+                    'u.last_name',
+                    'u.email'
+                )
+                ->get();
 
-            try {
-                $memberIds = DB::table('organization_assessment_member')
+            $memberIds = $assignedMembers->pluck('user_id')->unique()->values();
+
+            $responses = $memberIds->isEmpty()
+                ? collect()
+                : DB::table('assessment_responses')
                     ->where('organization_assessment_id', $assessment->id)
-                    ->pluck('user_id')
-                    ->unique()
-                    ->values();
-            } catch (\Throwable $e) {
-                Log::warning('[AssessmentController@summary] organization_assessment_member query failed', ['assessment_id' => $assessment->id, 'error' => $e->getMessage()]);
-                $memberIds = collect();
-            }
+                    ->whereIn('user_id', $memberIds)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
 
+            $responsesByUser = $responses->groupBy('user_id');
 
-
-
-
-
-
-            if ($memberIds->isEmpty()) {
-                $responses = collect();
-            } else {
-                try {
-                    $responsesQuery = DB::table('assessment_responses as ar')
-                        ->join('organization_assessment_member as oam', 'oam.user_id', '=', 'ar.user_id')
-                        ->where('oam.organization_assessment_id', $assessment->id)
-                        ->whereIn('ar.user_id', $memberIds)
-                        ->select('ar.*', 'oam.created_at as assigned_at');
-                } catch (\Throwable $e) {
-                    Log::warning('[AssessmentController@summary] assessment_responses join query failed', ['assessment_id' => $assessment->id, 'error' => $e->getMessage()]);
-                    $responses = collect();
-
+            $members = $assignedMembers->map(function ($memberRow) use ($responsesByUser) {
+                $name = trim(($memberRow->first_name ?? '') . ' ' . ($memberRow->last_name ?? ''));
+                if ($name === '') {
+                    $name = $memberRow->email ?: 'Unknown';
                 }
 
-
-                if (!isset($responses)) {
-
-                    $responsesQuery->whereColumn('ar.created_at', '>=', 'oam.created_at');
-
-
-                    if (!empty($assessment->date)) {
-                        try {
-
-                            $scheduledAt = $assessment->time instanceof Carbon
-                                ? Carbon::parse($assessment->date->toDateString() . ' ' . $assessment->time->format('H:i:s'))
-                                : Carbon::parse($assessment->date->toDateString() . ' 00:00:00');
-                            $responsesQuery->where('ar.created_at', '>=', $scheduledAt);
-                        } catch (\Exception $e) {
-                            Log::warning('[AssessmentController@summary] failed to parse scheduled date/time', ['assessment_id' => $assessment->id, 'error' => $e->getMessage()]);
-                        }
-                    }
-
-                    $responses = $responsesQuery->orderBy('ar.created_at', 'desc')->get();
-                }
-            }
-
-
-            $userIds = $responses->pluck('user_id')->unique();
-            $users = User::whereIn('id', $userIds)->get()->keyBy('id');
-
-
-            $members = [];
-            foreach ($responses as $response) {
-                $user = $users->get($response->user_id);
-                $userId = $response->user_id;
-
-                if (!isset($members[$userId])) {
-                    $memberName = 'Unknown';
-                    if ($user) {
-                        $fullName = trim("{$user->first_name} {$user->last_name}");
-                        $memberName = !empty($fullName) ? $fullName : $user->email;
-                    }
-
-                    $members[$userId] = [
-                        'member_id' => $userId,
-                        'user_id' => $userId,
-                        'name' => $memberName,
-                        'responses' => [],
+                $memberResponses = $responsesByUser->get($memberRow->user_id) ?? collect();
+                $attempts = $memberResponses->groupBy('attempt_id')->map(function ($attemptRows, $attemptId) {
+                    $latest = $attemptRows->sortByDesc('created_at')->first();
+                    return [
+                        'attempt_id' => $attemptId,
+                        'submitted_at' => $latest->created_at ?? null,
+                        'selected_options' => $attemptRows
+                            ->map(function ($row) {
+                                return $this->decodeSelectedOptions($row->selected_options);
+                            })
+                            ->filter()
+                            ->values()
+                            ->toArray(),
                     ];
-                }
+                })->values();
 
-                $members[$userId]['responses'][] = [
-                    'attempt_id' => $response->attempt_id,
-                    'selected_options' => $response->selected_options,
-                    'created_at' => $response->created_at,
+                $lastSubmitted = $memberResponses->isNotEmpty()
+                    ? $memberResponses->sortByDesc('created_at')->first()->created_at
+                    : null;
+
+                return [
+                    'member_id' => $memberRow->user_id,
+                    'user_id' => $memberRow->user_id,
+                    'name' => $name,
+                    'email' => $memberRow->email,
+                    'assigned_at' => $memberRow->assigned_at,
+                    'status' => $memberRow->status,
+                    'notified_at' => $memberRow->notified_at,
+                    'submitted' => $memberResponses->isNotEmpty(),
+                    'last_submitted_at' => $lastSubmitted,
+                    'attempts' => $attempts->toArray(),
                 ];
-            }
+            })->toArray();
 
-            $summaryCounts = [
-                'total_responses' => $responses->count(),
-                'unique_users' => count($members),
-            ];
+            $totalSent = $assignedMembers->count();
+            $submittedCount = collect($members)->where('submitted', true)->count();
+            $pendingCount = max(0, $totalSent - $submittedCount);
 
             return response()->json([
-                'assessment' => [
+                'organization_assessment' => [
                     'id' => $assessment->id,
                     'name' => $assessment->name,
+                    'organization_id' => $assessment->organization_id,
+                    'date' => $assessment->date ? $assessment->date->toDateString() : null,
+                    'time' => $assessment->time,
                 ],
-                'members' => array_values($members),
-                'summary' => $summaryCounts,
+                'summary' => [
+                    'total_sent' => $totalSent,
+                    'submitted' => $submittedCount,
+                    'pending' => $pendingCount,
+                ],
+                'members' => $members,
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['message' => 'Assessment not found.'], 404);
@@ -202,13 +171,6 @@ class AssessmentController extends Controller
             return response()->json(['message' => 'Failed to generate assessment summary.'], 500);
         }
     }
-
-
-    /**
-     * Return a small payload indicating how many organization-assessments
-     * the authenticated user is a member of. Frontend uses this to decide
-     * whether an organization-admin should be shown assignment pages.
-     */
     public function assignedCount(): JsonResponse
     {
         try {
@@ -227,12 +189,6 @@ class AssessmentController extends Controller
             return response()->json(['count' => 0], 500);
         }
     }
-
-
-    /**
-     * Return the list of organization assessments the authenticated user
-     * is a member of. This returns id, name and assigned_at for each.
-     */
     public function assignedList(): JsonResponse
     {
         try {
@@ -254,11 +210,19 @@ class AssessmentController extends Controller
             return response()->json(['assigned' => []], 500);
         }
     }
+    private function decodeSelectedOptions($value): ?array
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
 
+        $decoded = json_decode($value, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return null;
+        }
 
-
-
-
+        return is_array($decoded) ? $decoded : null;
+    }
 
     private function resolveOrganizationId(StoreAssessmentRequest $request, array $validated): ?int
     {

@@ -64,7 +64,7 @@
       </div>
 
       <ScheduleDetailsModal
-        v-if="showScheduleDetailsModal"
+        v-if="showScheduleDetailsModal && scheduleDetails"
         :scheduleDetails="scheduleDetails"
         :allGroups="allGroups"
         :allMembers="allMembers"
@@ -115,6 +115,7 @@ export default {
       showCreateModal: false,
       showScheduleModal: false,
       showScheduleDetailsModal: false,
+      loadingScheduleDetails: false,
       loading: false,
       toast: null,
       // Pagination
@@ -291,6 +292,47 @@ export default {
       }
     },
 
+    async loadScheduleDetailsWithMembers(assessment) {
+      const base = process.env.VUE_APP_API_BASE_URL;
+      const authToken = storage.get('authToken');
+      const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+      const res = await axios.get(`${base}/api/assessment-schedules`, {
+        headers,
+        params: { assessment_id: assessment.id },
+      });
+      let payload = res?.data;
+      if (Array.isArray(payload)) payload = payload[0] || null;
+      if (!payload) return null;
+      return this.normalizeScheduleDetailsPayload(payload, assessment);
+    },
+
+    normalizeScheduleDetailsPayload(payload, assessment) {
+      if (!payload) return null;
+      const scheduleSource = assessment?.schedule || {};
+      const schedule = {
+        date: payload.date || scheduleSource.date || null,
+        time: payload.time || scheduleSource.time || null,
+        timezone: payload.timezone || scheduleSource.timezone || null,
+        group_ids: payload.group_ids ?? scheduleSource.group_ids ?? [],
+        member_ids: payload.member_ids ?? scheduleSource.member_ids ?? [],
+        notified_member_ids:
+          payload.notified_member_ids ?? scheduleSource.notified_member_ids ?? [],
+        send_at: payload.send_at ?? scheduleSource.send_at ?? null,
+      };
+      return {
+        ...payload,
+        schedule,
+        assessment: { id: assessment.id, name: assessment.name },
+      };
+    },
+
+    buildScheduleDetailsFallback(assessment) {
+      return {
+        assessment: { id: assessment.id, name: assessment.name },
+        schedule: assessment.schedule || null,
+      };
+    },
+
     // --- Modal Control ---
     openScheduleModal(item) {
       this.selectedAssessment = item;
@@ -300,13 +342,20 @@ export default {
       this.showScheduleModal = false;
       this.selectedAssessment = null;
     },
-    openScheduleDetails(item) {
+    async openScheduleDetails(item) {
       this.selectedAssessment = item;
-      // Pass a normalized object the modal expects: { assessment, schedule }
-      this.scheduleDetails = {
-        assessment: { id: item.id, name: item.name },
-        schedule: item.schedule || null,
-      };
+      this.loadingScheduleDetails = true;
+      let normalized = null;
+      try {
+        normalized = await this.loadScheduleDetailsWithMembers(item);
+      } catch (err) {
+        console.debug &&
+          console.debug('[AssessmentsCard] loadScheduleDetailsWithMembers failed', err?.message || err);
+      } finally {
+        this.loadingScheduleDetails = false;
+      }
+
+      this.scheduleDetails = normalized || this.buildScheduleDetailsFallback(item);
       this.showScheduleDetailsModal = true;
     },
     closeScheduleDetailsModal() {
@@ -318,9 +367,9 @@ export default {
     },
 
     // --- Event Handlers ---
-    onScheduleButtonClick(item) {
+    async onScheduleButtonClick(item) {
       if (item?.schedule) {
-        this.openScheduleDetails(item);
+        await this.openScheduleDetails(item);
       } else {
         this.openScheduleModal(item);
       }

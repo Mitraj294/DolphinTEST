@@ -49,35 +49,6 @@
               </div>
             </div>
           </div>
-
-          <div class="schedule-header-right">
-            <span
-              v-if="scheduleStatus === 'sent'"
-              :class="['status-green', { active: scheduleStatus === 'sent' }]"
-            >
-              Sent
-            </span>
-            <span
-              v-if="scheduleStatus === 'scheduled'"
-              :class="['status-yellow', { active: scheduleStatus === 'scheduled' }]"
-            >
-              Scheduled
-              <span
-                v-if="totalRecipients > 0"
-                class="sent-count"
-                :title="sendAtTooltip"
-                style="margin-left: 12px; font-size: 13px; color: #444"
-              >
-                {{ sentSummary }}
-              </span>
-            </span>
-            <span
-              v-if="scheduleStatus === 'failed'"
-              :class="['status-red', { active: scheduleStatus === 'failed' }]"
-            >
-              Failed
-            </span>
-          </div>
         </div>
 
         <div v-if="scheduleDetails && scheduleDetails.schedule">
@@ -114,29 +85,35 @@
                           <td v-if="ei === 0" :rowspan="g.items.length" class="group-cell">
                             {{ g.name || 'Ungrouped' }}
                           </td>
-                          <td style="padding: 0px 8px !important">
+                          <td>
                             {{
+                              e.displayName ||
                               (e.member_id && memberDetailMap[e.member_id]
                                 ? memberDetailMap[e.member_id].name
-                                : e.recipient_email || e.email || e.to) || 'Unknown'
+                                : e.recipient_email || e.email || e.to) ||
+                              'Unknown'
                             }}
                           </td>
                           <td>
                             {{
+                              e.displayEmail ||
                               (e.member_id && memberDetailMap[e.member_id]
                                 ? memberDetailMap[e.member_id].email
-                                : e.recipient_email || e.email || e.to) || ''
+                                : e.recipient_email || e.email || e.to) ||
+                              ''
                             }}
                           </td>
                           <td>
                             {{
+                              e.displayRoles ||
                               (e.member_id && memberDetailMap[e.member_id]
                                 ? memberDetailMap[e.member_id].rolesDisplay
                                 : Array.isArray(e.memberRoles) && e.memberRoles.length
                                   ? e.memberRoles.map((r) => (r && r.name) || r).join(', ')
                                   : Array.isArray(e.member_role_ids) && e.member_role_ids.length
                                     ? e.member_role_ids.map((r) => (r && r.name) || r).join(', ')
-                                    : e.member_role) || ''
+                                    : e.member_role) ||
+                              'User'
                             }}
                           </td>
                         </tr>
@@ -183,27 +160,6 @@
               </div>
             </div>
           </div>
-
-          <div class="schedule-header-right">
-            <span
-              v-if="scheduleStatus === 'sent'"
-              :class="['status-green', { active: scheduleStatus === 'sent' }]"
-            >
-              Sent
-            </span>
-            <span
-              v-if="scheduleStatus === 'scheduled'"
-              :class="['status-yellow', { active: scheduleStatus === 'scheduled' }]"
-            >
-              Scheduled
-            </span>
-            <span
-              v-if="scheduleStatus === 'failed'"
-              :class="['status-red', { active: scheduleStatus === 'failed' }]"
-            >
-              Failed
-            </span>
-          </div>
         </div>
         <div class="detail-row">
           <div
@@ -243,7 +199,7 @@
                       <td>
                         {{ m.groups && m.groups.length ? m.groups.join(', ') : '' }}
                       </td>
-                      <td>{{ m.rolesDisplay || '' }}</td>
+                      <td>{{ m.rolesDisplay || 'User' }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -291,7 +247,7 @@ export default {
       const map = {};
       this.fillMemberMapFromEnhanced(map);
       this.fillMemberMapFromGroups(map);
-      if (Object.keys(map).length === 0) this.fillMemberMapFromAllMembers(map);
+      this.fillMemberMapFromAllMembers(map);
       return map;
     },
     filteredEmails() {
@@ -310,111 +266,17 @@ export default {
       if (!schedule) return '';
       return this.formatLocalDateTime(schedule.date, schedule.time);
     },
-    scheduleStatus() {
-      const details = this.scheduleDetails;
-      if (!details || !details.schedule) {
-        return 'failed';
-      }
-
-      const nowUtc = Date.now();
-      const schedule = details.schedule || {};
-
-      const scheduleTimestamp = (() => {
-        const datePart = (schedule.date || '').trim();
-        if (!datePart) return null;
-
-        const [year, month, day] = datePart.split('-').map(Number);
-        if ([year, month, day].some(Number.isNaN)) {
-          return null;
-        }
-
-        const [hour = 0, minute = 0, second = 0] = (schedule.time || '00:00:00')
-          .split(':')
-          .map(Number);
-
-        const timestamp = Date.UTC(
-          Number(year),
-          Number(month) - 1,
-          Number(day),
-          Number(hour) || 0,
-          Number(minute) || 0,
-          Number(second) || 0
-        );
-
-        return Number.isNaN(timestamp) ? null : timestamp;
-      })();
-
-      const scheduleInFuture = typeof scheduleTimestamp === 'number' && scheduleTimestamp >= nowUtc;
-      // Prefer backend-tracked delivery status via schedule.notified_member_ids when available
-      try {
-        const schedule = (this.scheduleDetails && this.scheduleDetails.schedule) || null;
-        if (schedule) {
-          const memberIds = this.parseArrayFieldGeneric(schedule.member_ids);
-          const notifiedIds = this.parseArrayFieldGeneric(schedule.notified_member_ids);
-          const total = memberIds.length;
-          const notified = notifiedIds.length;
-          if (total > 0 && notified >= total) return 'sent';
-          if (scheduleInFuture) return 'scheduled';
-          if (notified > 0) return 'scheduled'; // partial
-        }
-      } catch (err) {
-        console.debug && console.debug('scheduleStatus: parse error', err);
-      }
-
-      // Fallback to older heuristics using emails/notifications
-      const emails = (this.filteredEmails || []).filter(Boolean);
-      // If backend returned matching in-app notifications for this assessment, treat as sent
-      const notifications = (this.scheduleDetails && this.scheduleDetails.notifications) || [];
-      if (notifications.length) {
-        return 'sent';
-      }
-      if (emails.length) {
-        const allSent = emails.every((email) => !!email.sent);
-        if (allSent) {
-          return 'sent';
-        }
-
-        const someSent = emails.some((email) => !!email.sent);
-        if (someSent) {
-          return 'scheduled';
-        }
-
-        const hasFutureEmail = emails.some((email) => {
-          const sendAt = email.send_at || email.scheduled_at || '';
-          if (!sendAt) return false;
-
-          const [datePart, timePart = '00:00:00'] = sendAt.trim().split(/\s+/);
-          if (!datePart) return false;
-
-          const [year, month, day] = datePart.split('-').map(Number);
-          if ([year, month, day].some(Number.isNaN)) {
-            return false;
-          }
-
-          const [hour = 0, minute = 0, second = 0] = timePart.split(':').map(Number);
-
-          const timestamp = Date.UTC(
-            Number(year),
-            Number(month) - 1,
-            Number(day),
-            Number(hour) || 0,
-            Number(minute) || 0,
-            Number(second) || 0
-          );
-
-          return !Number.isNaN(timestamp) && timestamp >= nowUtc;
-        });
-
-        if (hasFutureEmail || scheduleInFuture) {
-          return 'scheduled';
-        }
-
-        return 'failed';
-      }
-
-      return scheduleInFuture ? 'scheduled' : 'failed';
-    },
     groupedEmails() {
+      const normalizedGroups =
+        (this.scheduleDetails && this.scheduleDetails.groups_with_members) || [];
+      if (normalizedGroups.length) {
+        return normalizedGroups.map((group) => ({
+          id: group.id || group.name || 'ungrouped',
+          name: group.name || `Group ${group.id || 'Unknown'}`,
+          items: this.buildGroupMemberItems(group),
+        }));
+      }
+
       const list = this.filteredEmails || [];
       const schedule = (this.scheduleDetails && this.scheduleDetails.schedule) || null;
       const scheduleGroupIds = schedule ? this.parseIdArray(schedule.group_ids) : [];
@@ -423,89 +285,44 @@ export default {
         : this.groupedByExistingList(list);
     },
     memberWiseRows() {
-      const rows = [];
-      const schedule = (this.scheduleDetails && this.scheduleDetails.schedule) || null;
+      const normalized = this.scheduleDetails;
+      if (!normalized) return [];
 
-      const parseArrayField = (v) => {
-        if (!v) return [];
-        if (Array.isArray(v)) return v.map(Number);
-        try {
-          const p = JSON.parse(v);
-          return Array.isArray(p) ? p.map(Number) : [];
-        } catch (e) {
-          // log debug info and fall back to string parsing
-          console.debug && console.debug('parseArrayField JSON parse failed', e);
+      const memberIds = this.parseArrayFieldGeneric(
+        normalized.schedule ? normalized.schedule.member_ids : normalized.member_ids
+      );
+      const idSet = new Set(memberIds);
+
+      if (!idSet.size && Array.isArray(normalized.members_with_details)) {
+        for (const member of normalized.members_with_details) {
+          const mid = Number(member.id);
+          if (!Number.isNaN(mid)) idSet.add(mid);
         }
-        const cleaned = v.toString().replaceAll('[', '').replaceAll(']', '').replaceAll(/\s+/g, '');
-        return cleaned.split(',').filter(Boolean).map(Number);
-      };
+      }
 
-      const memberIds = schedule ? parseArrayField(schedule.member_ids) : [];
-      const emailMemberIds = (this.filteredEmails || [])
-        .filter(Boolean)
-        .map((e) => Number(e.member_id))
-        .filter(Boolean);
-      const uniqueIds = new Set(memberIds.length ? memberIds : emailMemberIds);
+      if (!idSet.size && Array.isArray(this.allMembers)) {
+        for (const member of this.allMembers) {
+          const mid = Number(member.id);
+          if (!Number.isNaN(mid)) idSet.add(mid);
+        }
+      }
 
-      for (const mid of uniqueIds) {
+      if (!idSet.size) return [];
+
+      return Array.from(idSet).map((mid) => {
         const detail = this.memberDetailMap[mid] || {
           name: `Member ${mid}`,
           email: '',
+          rolesDisplay: '',
         };
-
-        let groups = [];
-        const fromAllGroups = (this.allGroups || [])
-          .filter(
-            (g) =>
-              Array.isArray(g.members) &&
-              g.members.some((m) => Number(m.id || m.member_id || m) === mid)
-          )
-          .map((g) => Number(g.id));
-
-        if (fromAllGroups.length) {
-          groups = fromAllGroups;
-        } else {
-          groups = (this.filteredEmails || [])
-            .filter((e) => Number(e.member_id) === mid && (e.group_id || e.group))
-            .map((e) => Number(e.group_id || e.group));
-        }
-
-        const uniqueGroups = [...new Set(groups)];
-        const groupNames = uniqueGroups.map((gid) => {
-          const gobj = (this.allGroups || []).find((gg) => Number(gg.id) === gid);
-          return (gobj && (gobj.name || gobj.group)) || `Group ${gid}`;
-        });
-
-        rows.push({
+        return {
           id: mid,
-          name: detail.name,
-          email: detail.email,
-          groups: groupNames,
+          name: detail.name || `Member ${mid}`,
+          email: detail.email || '',
+          groups: this.memberGroupNames(mid),
           rolesDisplay: detail.rolesDisplay || '',
-        });
-      }
-
-      return rows;
-    },
-    totalRecipients() {
-      const schedule = (this.scheduleDetails && this.scheduleDetails.schedule) || null;
-      return this.parseArrayFieldGeneric(schedule ? schedule.member_ids : null).length;
-    },
-    notifiedCount() {
-      const schedule = (this.scheduleDetails && this.scheduleDetails.schedule) || null;
-      return this.parseArrayFieldGeneric(schedule ? schedule.notified_member_ids : null).length;
-    },
-    sentSummary() {
-      const total = this.totalRecipients || 0;
-      const notf = this.notifiedCount || 0;
-      return `${notf}/${total} Sent`;
-    },
-    sendAtTooltip() {
-      const schedule = (this.scheduleDetails && this.scheduleDetails.schedule) || null;
-      if (!schedule) return '';
-      const tz = schedule.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-      const when = this.formatLocalDateTime(schedule.date, schedule.time) || '';
-      return tz ? `${when} (${tz})` : when;
+        };
+      });
     },
   },
   methods: {
@@ -515,16 +332,7 @@ export default {
       const list = details && details.members_with_details;
       if (!Array.isArray(list) || list.length === 0) return;
       for (const m of list) {
-        const rolesDisplay =
-          Array.isArray(m.member_roles) && m.member_roles.length
-            ? m.member_roles.map((r) => r.name || r).join(', ')
-            : '';
-        map[m.id] = {
-          name: m.name || 'Unknown',
-          email: m.email || '',
-          memberRoles: m.member_roles || [],
-          rolesDisplay,
-        };
+        this.assignMemberDetail(map, m);
       }
     },
     fillMemberMapFromGroups(map) {
@@ -538,46 +346,154 @@ export default {
     fillGroupMembersIntoMap(group, map) {
       if (!group || !Array.isArray(group.members) || !group.members.length) return;
       for (const m of group.members) {
-        if (map[m.id]) continue;
-        const rolesDisplay =
-          Array.isArray(m.member_roles) && m.member_roles.length
-            ? m.member_roles.map((r) => r.name || r).join(', ')
-            : '';
-        map[m.id] = {
-          name: m.name || 'Unknown',
-          email: m.email || '',
-          memberRoles: m.member_roles || [],
-          rolesDisplay,
-        };
+        this.assignMemberDetail(map, m);
       }
     },
     fillMemberMapFromAllMembers(map) {
       const list = this.allMembers || [];
       for (const m of list) {
-        const { name, memberRoles, rolesDisplay } = this.computeNameAndRoles(m);
-        map[m.id] = { name, email: m.email || '', memberRoles, rolesDisplay };
+        this.assignMemberDetail(map, m);
       }
     },
-    computeNameAndRoles(m) {
-      const first = (m.first_name || m.name || '').toString().trim();
-      const last = (m.last_name || '').toString().trim();
+    buildMemberDisplayInfo(member) {
+      if (!member) {
+        return { name: 'Unknown', email: '', memberRoles: [], rolesDisplay: '' };
+      }
+      const first = (member.first_name || member.name || '').toString().trim();
+      const last = (member.last_name || '').toString().trim();
       let name = first;
       if (last) name = name ? `${name} ${last}` : last;
-      if (!name) name = m.email || `Member ${m.id}`;
+      if (!name) name = member.email || `Member ${member.id || member.member_id || ''}`;
 
-      let memberRoles = [];
-      if (Array.isArray(m.memberRoles) && m.memberRoles.length) {
-        memberRoles = m.memberRoles.map((r) =>
-          typeof r === 'object' ? r : { id: r, name: String(r) }
-        );
-      } else if (Array.isArray(m.member_role_ids) && m.member_role_ids.length) {
-        memberRoles = m.member_role_ids.map((id) => ({ id, name: String(id) }));
+      const memberRoles = Array.isArray(member.member_roles)
+        ? member.member_roles.map((r) => (typeof r === 'object' ? r : { id: r, name: String(r) }))
+        : [];
+      let rolesDisplay = memberRoles.length ? memberRoles.map((r) => r.name || r).join(', ') : '';
+      if (!rolesDisplay) {
+        const fallbackRole = member.member_role || member.role || '';
+        rolesDisplay = fallbackRole ? String(fallbackRole) : '';
       }
-      const rolesDisplay =
-        memberRoles.length > 0
-          ? memberRoles.map((r) => r.name || r).join(', ')
-          : m.member_role || '';
-      return { name, memberRoles, rolesDisplay };
+
+      return {
+        name,
+        email: member.email || member.recipient_email || '',
+        memberRoles,
+        rolesDisplay,
+      };
+    },
+
+    assignMemberDetail(map, member) {
+      const memberId = Number(member.id || member.member_id || member.user_id);
+      if (Number.isNaN(memberId)) return;
+      const info = this.buildMemberDisplayInfo(member);
+      const existing = map[memberId] || {};
+      map[memberId] = {
+        name: existing.name || info.name,
+        email: existing.email || info.email,
+        memberRoles: info.memberRoles.length > 0 ? info.memberRoles : existing.memberRoles || [],
+        rolesDisplay: info.rolesDisplay || existing.rolesDisplay || '',
+      };
+    },
+
+    memberGroupNames(memberId) {
+      const normalizedGroups =
+        (this.scheduleDetails && this.scheduleDetails.groups_with_members) || [];
+      const numericId = Number(memberId);
+      const matched = new Set();
+      if (!Number.isNaN(numericId)) {
+        for (const group of normalizedGroups) {
+          const members = Array.isArray(group.members) ? group.members : [];
+          if (
+            members.some(
+              (member) => Number(member.id || member.member_id || member.user_id) === numericId
+            )
+          ) {
+            const label = group.name || `Group ${group.id}`;
+            if (label) matched.add(label);
+          }
+        }
+      }
+      if (matched.size === 0 && Array.isArray(this.allGroups)) {
+        for (const group of this.allGroups) {
+          const members = Array.isArray(group.members) ? group.members : [];
+          if (
+            members.some((member) => Number(member.id || member.member_id || member) === numericId)
+          ) {
+            const label = group.name || `Group ${group.id}`;
+            if (label) matched.add(label);
+          }
+        }
+      }
+      return Array.from(matched);
+    },
+
+    buildGroupMemberItems(group) {
+      const members = Array.isArray(group.members) ? group.members : [];
+      if (!members.length) {
+        return [
+          {
+            member_id: null,
+            displayName: 'No members assigned',
+            displayEmail: '',
+            displayRoles: '',
+            memberRoles: [],
+            member_role_ids: [],
+            member_role: '',
+            recipient_email: '',
+          },
+        ];
+      }
+      const items = [];
+      for (const member of members) {
+        const normalized = this.normalizeGroupMemberItem(member);
+        if (normalized) items.push(normalized);
+      }
+      return items;
+    },
+
+    normalizeGroupMemberItem(member) {
+      if (!member) return null;
+      const memberId = Number(member.id || member.member_id || member.user_id);
+      const detail = memberId ? this.memberDetailMap[memberId] : null;
+      const displayName =
+        (detail && detail.name) ||
+        this.buildMemberDisplayName(member) ||
+        member.email ||
+        member.recipient_email ||
+        `Member ${memberId || 'Unknown'}`;
+      const displayEmail = (detail && detail.email) || member.email || member.recipient_email || '';
+      let displayRoles = detail && detail.rolesDisplay;
+      if (!displayRoles) {
+        if (Array.isArray(member.member_roles) && member.member_roles.length) {
+          displayRoles = member.member_roles.map((r) => (r && r.name) || r).join(', ');
+        } else if (member.member_role) {
+          displayRoles = member.member_role;
+        } else {
+          displayRoles = '';
+        }
+      }
+      return {
+        member_id: memberId,
+        displayName,
+        displayEmail,
+        displayRoles,
+        memberRoles: member.member_roles,
+        member_role_ids: member.member_role_ids,
+        member_role: member.member_role,
+        recipient_email: member.email || member.recipient_email || '',
+      };
+    },
+
+    buildMemberDisplayName(member) {
+      if (!member) return '';
+      const first = (member.first_name || member.name || '').toString().trim();
+      const last = (member.last_name || '').toString().trim();
+      let name = first;
+      if (last) name = name ? `${name} ${last}` : last;
+      if (!name) {
+        name = member.email || member.recipient_email || '';
+      }
+      return name;
     },
 
     // ---- Helpers for groupedEmails ----
